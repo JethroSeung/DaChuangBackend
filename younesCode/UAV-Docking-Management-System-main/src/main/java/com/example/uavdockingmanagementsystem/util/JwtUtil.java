@@ -25,7 +25,10 @@ public class JwtUtil {
                 .withClaim("claims", claims)
                 .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRE_TIME))
                 .sign(Algorithm.HMAC256(KEY));
+
         LoginVO loginVO = new LoginVO();
+        loginVO.setSuccess(true);  // 添加登录成功状态
+        loginVO.setUser(user);     // 添加用户信息
         loginVO.setToken(token);
         loginVO.setNeedComplete(user.getPhone() == null);
         return loginVO;
@@ -39,4 +42,5 @@ public class JwtUtil {
                 .getClaim("claims")
                 .asMap();
     }
+
 }

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>登录结果</title>
+</head>
+<body>
+<h1>登录结果</h1>
+
+<!-- 检查 loginVO 是否为 null -->
+<p th:if="${loginVO == null}">
+    <span style="color: red;">系统错误：未获取到登录结果</span>
+</p>
+
+<!-- 只有 loginVO 不为 null 时才渲染以下内容 -->
+<div th:if="${loginVO != null}">
+    <p>登录状态：<span th:text="${loginVO.success ? '成功' : '失败'}">未知</span></p>
+
+    <p th:if="${loginVO.success}">
+        欢迎，<span th:text="${loginVO.user?.nickname ?: '用户'}">用户</span>
+    </p>
+
+    <p th:if="${!loginVO.success}">
+        错误信息：<span th:text="${loginVO.errorMsg ?: '无'}">无</span>
+    </p>
+
+    <!-- 显示 token 和是否需要完善信息 -->
+    <p th:if="${loginVO.success}">
+        Token：<span th:text="${loginVO.token}">无</span>
+    </p>
+
+    <p th:if="${loginVO.success}">
+        是否需要完善信息：<span th:text="${loginVO.needComplete ? '是' : '否'}">否</span>
+    </p>
+</div>
+</body>
+</html>

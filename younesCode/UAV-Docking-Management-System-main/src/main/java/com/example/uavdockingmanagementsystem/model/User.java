@@ -5,6 +5,14 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * <p>
+ * 用户 实体类
+ * </p>
+ *
+ * @author 刘文清
+ * @since 2025-07-12
+ */
 @Entity
 @Data
 public class User {

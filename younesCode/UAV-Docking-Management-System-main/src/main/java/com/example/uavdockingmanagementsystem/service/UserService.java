@@ -47,17 +47,30 @@ public class UserService {
     /**
      * 用户登录
      */
-    public LoginVO userLogin(LoginDTO loginDTO) {
-        User user = userRepository.findByAccount(loginDTO.getAccount());
-        if (user == null) {
-            throw new BusinessException("用户不存在，请稍后再试!");
+     public LoginVO userLogin(LoginDTO loginDTO) {
+        try {
+            User user = userRepository.findByAccount(loginDTO.getAccount());
+            if (user == null) {
+                return createFailedLoginVO("用户不存在");
+            }
+
+            String password = user.getPassword();
+            String md5DigestAsHex = DigestUtils.md5DigestAsHex(loginDTO.getPassword().getBytes());
+            if (!md5DigestAsHex.equals(password)) {
+                return createFailedLoginVO("密码错误");
+            }
+
+            return JwtUtil.loginStatus(user); // 调用修改后的 JwtUtil 方法
+        } catch (Exception e) {
+            return createFailedLoginVO("登录失败：" + e.getMessage());
         }
-        String password = user.getPassword();
-        String md5DigestAsHex = DigestUtils.md5DigestAsHex(loginDTO.getPassword().getBytes());
-        if (!md5DigestAsHex.equals(password)) {
-            throw new BusinessException("密码错误");
-        }
-        return JwtUtil.loginStatus(user);
+    }
+
+    private LoginVO createFailedLoginVO(String errorMsg) {
+        LoginVO vo = new LoginVO();
+        vo.setSuccess(false);
+        vo.setErrorMsg(errorMsg);
+        return vo;
     }
 
     /**
