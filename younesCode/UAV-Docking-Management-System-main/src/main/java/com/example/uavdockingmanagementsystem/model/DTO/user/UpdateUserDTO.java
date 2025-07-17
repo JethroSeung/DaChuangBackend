@@ -11,4 +11,5 @@ public class UpdateUserDTO implements Serializable {
     private String avatarUrl;
     private String gender;
     private String phone;
+    private String email;
 }

@@ -18,6 +18,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import com.example.uavdockingmanagementsystem.response.BusinessException;
@@ -76,33 +77,41 @@ public class UserService {
     /**
      * 管理员获取用户列表（分页可根据实际情况实现）
      */
-    public PageVO<User> getUserListForAdmin(GetUserListForAdminDTO getUserListForAdminDTO) {
+    public PageVO<User> getUserListForAdmin(GetUserListForAdminDTO dto) {
+        // 构建查询条件
         Specification<User> spec = (root, query, cb) -> {
-            var predicates = new java.util.ArrayList<Predicate>();
-            if (getUserListForAdminDTO.getNickname() != null) {
-                predicates.add(cb.like(root.get("nickname"), "%" + getUserListForAdminDTO.getNickname() + "%"));
+            var predicates = new ArrayList<Predicate>();
+            if (dto.getNickname() != null) {
+                predicates.add(cb.like(root.get("nickname"), "%" + dto.getNickname() + "%"));
             }
-            if (getUserListForAdminDTO.getUserType() != null) {
-                predicates.add(cb.equal(root.get("userType"), getUserListForAdminDTO.getUserType()));
+            if (dto.getUserType() != null) {
+                predicates.add(cb.equal(root.get("userType"), dto.getUserType()));
             }
-            if (getUserListForAdminDTO.getPhone() != null) {
-                predicates.add(cb.like(root.get("phone"), "%" + getUserListForAdminDTO.getPhone() + "%"));
+            if (dto.getPhone() != null) {
+                predicates.add(cb.like(root.get("phone"), "%" + dto.getPhone() + "%"));
             }
             query.orderBy(cb.desc(root.get("createTime")));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        int page = getUserListForAdminDTO.getPageNum() != null ? getUserListForAdminDTO.getPageNum() - 1 : 0;
-        int size = getUserListForAdminDTO.getPageSize() != null ? getUserListForAdminDTO.getPageSize() : 10;
+        // 处理分页参数（Spring Data JPA 的 PageRequest 从0开始）
+        int page = dto.getPageNum() != null ? dto.getPageNum() - 1 : 0;
+        int size = dto.getPageSize() != null ? dto.getPageSize() : 10;
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createTime"));
+
+        // 执行分页查询
         Page<User> userPage = userRepository.findAll(spec, pageRequest);
 
+        // 转换为自定义 PageVO
         PageVO<User> vo = new PageVO<>();
-        vo.setList(userPage.getContent());
-        vo.setTotal(userPage.getTotalElements());
-        vo.setPageNum((long) (page + 1));
-        vo.setPageSize((long) size);
-        vo.setPages((long) userPage.getTotalPages());
+        vo.setRecords(userPage.getContent());     // 设置数据列表（使用records）
+        vo.setTotal(userPage.getTotalElements()); // 总记录数
+        vo.setPageNum((long) (page + 1));         // 当前页（转换为从1开始）
+        vo.setPageSize((long) size);              // 每页大小
+        vo.setPages((long) userPage.getTotalPages()); // 总页数
+        vo.setHasNext(userPage.hasNext());        // 是否有下一页
+        vo.setHasPrevious(userPage.hasPrevious()); // 是否有上一页
+
         return vo;
     }
 
