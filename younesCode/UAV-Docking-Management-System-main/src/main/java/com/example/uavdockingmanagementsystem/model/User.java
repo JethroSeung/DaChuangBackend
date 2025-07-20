@@ -1,25 +1,20 @@
 package com.example.uavdockingmanagementsystem.model;
 
+import cn.hutool.core.lang.Snowflake;
+import cn.hutool.core.util.IdUtil;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/**
- * <p>
- * 用户 实体类
- * </p>
- *
- * @author 刘文清
- * @since 2025-07-12
- */
 @Entity
 @Data
 public class User {
 
+    private static final long serialVersionUID = 1L;
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id = IdUtil.createSnowflake(1, 1).nextId(); // 雪花算法生成
 
     @Column(nullable = false, unique = true)
     private String account;
@@ -42,7 +37,7 @@ public class User {
 
     private LocalDateTime updateTime;
 
-    private Integer isDelete;
+    private Integer isDelete = 0;
 
     private LocalDateTime lastLoginTime;
 
@@ -50,8 +45,9 @@ public class User {
 
     @PrePersist
     protected void onCreate() {
-        createTime = LocalDateTime.now();
-        updateTime = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        createTime = now;
+        updateTime = now;
     }
 
     @PreUpdate

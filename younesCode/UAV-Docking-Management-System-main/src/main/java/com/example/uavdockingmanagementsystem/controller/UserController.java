@@ -1,6 +1,9 @@
 package com.example.uavdockingmanagementsystem.controller;
 
 import com.example.uavdockingmanagementsystem.model.User;
+import com.example.uavdockingmanagementsystem.model.VO.userVO.UserInfoVO;
+import com.example.uavdockingmanagementsystem.response.BusinessException;
+import com.example.uavdockingmanagementsystem.response.ErrorCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -59,17 +62,21 @@ public class UserController {
     public String getUserListForAdmin(@RequestParam(required = false) Integer page,
                                       @RequestParam(required = false) Integer size,
                                       Model model) {
-        // 假设GetUserListForAdminDTO有分页参数
         GetUserListForAdminDTO dto = new GetUserListForAdminDTO(page, size);
         PageVO<User> userList = userService.getUserListForAdmin(dto);
         model.addAttribute("userList", userList);
         return "user/list";
     }
 
-    // 管理员修改用户信息
+    // 管理员或本人修改用户信息
     @PostMapping("/update")
     public String updateUser(@ModelAttribute UpdateUserDTO updateUserDTO, Model model) {
         Long userId = updateUserDTO.getUserId();
+        UserInfoVO currentUser = baseContext.getCurrentUser();
+        // 只允许管理员或本人修改
+        if (!"admin".equals(currentUser.getUserType()) && !currentUser.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
         User user = userService.getById(userId);
         BeanUtils.copyProperties(updateUserDTO, user);
         boolean updated = userService.updateById(user);
@@ -86,14 +93,47 @@ public class UserController {
         return "user/info";
     }
 
-    // 用户完善信息
-    @PostMapping("/complete")
-    public String complete(@ModelAttribute CompleteDTO completeDTO, Model model) {
-        Long userId = baseContext.getCurrentUser().getUserId();
+    /**
+     * 软删除用户（仅管理员可操作）
+     * 采用表单提交ID，结合权限校验和参数校验
+     */
+    @PostMapping("/delete")
+    public String deleteUser(@RequestParam("userId") Long userId, Model model) {
+        // 1. 获取当前登录用户（假设拦截器已确保用户登录）
+        UserInfoVO currentUser = baseContext.getCurrentUser();
+
+        // 2. 校验权限（仅管理员可删除）
+        if (!"admin".equals(currentUser.getUserType())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无删除权限");
+        }
+
+        // 3. 校验用户ID合法性
+        if (userId == null || userId <= 0) {
+            model.addAttribute("success", false);
+            model.addAttribute("message", "无效的用户ID");
+            return "user/deleteResult";
+        }
+
+        // 4. 校验用户是否存在且未被删除
         User user = userService.getById(userId);
-        BeanUtils.copyProperties(completeDTO, user);
-        userService.updateById(user);
-        model.addAttribute("user", user);
-        return "user/completeResult";
+        if (user == null) {
+            model.addAttribute("success", false);
+            model.addAttribute("message", "用户不存在");
+            return "user/deleteResult";
+        }
+        if (user.getIsDelete() == 1) {
+            model.addAttribute("success", false);
+            model.addAttribute("message", "用户已被删除");
+            return "user/deleteResult";
+        }
+
+        // 5. 执行软删除
+        user.setIsDelete(1);
+        boolean deleted = userService.updateById(user);
+
+        // 6. 返回结果
+        model.addAttribute("success", deleted);
+        model.addAttribute("message", deleted ? "删除成功" : "删除失败");
+        return "user/deleteResult";
     }
 }

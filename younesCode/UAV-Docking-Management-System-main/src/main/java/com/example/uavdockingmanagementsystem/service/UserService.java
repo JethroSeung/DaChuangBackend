@@ -1,5 +1,6 @@
 package com.example.uavdockingmanagementsystem.service;
 
+import cn.hutool.core.lang.Snowflake;
 import com.example.uavdockingmanagementsystem.model.DTO.user.GetUserListForAdminDTO;
 import com.example.uavdockingmanagementsystem.model.DTO.user.LoginDTO;
 import com.example.uavdockingmanagementsystem.model.DTO.user.RegisterDTO;
@@ -10,6 +11,8 @@ import com.example.uavdockingmanagementsystem.repository.UserRepository;
 import com.example.uavdockingmanagementsystem.util.JwtUtil;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.BeanUtils;
+import org.slf4j.Logger;  // 添加日志包导入
+import org.slf4j.LoggerFactory;  // 添加日志工厂导入
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,11 +23,14 @@ import org.springframework.util.DigestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import com.example.uavdockingmanagementsystem.response.BusinessException;
 
 @Service
 public class UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);  // 定义日志记录器
 
     @Autowired
     private UserRepository userRepository;
@@ -33,37 +39,53 @@ public class UserService {
      * 管理员注册
      */
     public User adminRegister(RegisterDTO registerDTO) {
-        User user = userRepository.findByAccount(registerDTO.getAccount());
-        if (user != null) {
-            throw new BusinessException("账户已存在，请更换账户");
+        // 检查账号是否已存在
+        if (userRepository.existsByAccount(registerDTO.getAccount())) {
+            throw new IllegalArgumentException("账号已存在");
         }
-        user = new User();
-        BeanUtils.copyProperties(registerDTO, user);
-        user.setUserType("admin");
-        user.setPassword(DigestUtils.md5DigestAsHex(registerDTO.getPassword().getBytes()));
-        userRepository.save(user);
-        return user;
+
+        // 创建用户对象
+        User user = new User();
+        user.setAccount(registerDTO.getAccount());
+        user.setPassword((DigestUtils.md5DigestAsHex(registerDTO.getPassword().getBytes())));
+        user.setNickname(registerDTO.getNickname());
+        user.setPhone(registerDTO.getPhone());
+        user.setEmail(registerDTO.getEmail());
+        user.setUserType("admin"); // 管理员注册
+
+        // 自动生成 createTime 和 updateTime（通过 @PrePersist 注解）
+        // 主键 ID 由 MyBatis-Plus 自动生成，无需手动设置
+
+        return userRepository.save(user);
     }
 
     /**
      * 用户登录
      */
-     public LoginVO userLogin(LoginDTO loginDTO) {
+    public LoginVO userLogin(LoginDTO loginDTO) {
         try {
-            User user = userRepository.findByAccount(loginDTO.getAccount());
-            if (user == null) {
+            // 1. 检查用户是否存在
+            if (!userRepository.existsByAccount(loginDTO.getAccount())) {
                 return createFailedLoginVO("用户不存在");
             }
 
-            String password = user.getPassword();
-            String md5DigestAsHex = DigestUtils.md5DigestAsHex(loginDTO.getPassword().getBytes());
-            if (!md5DigestAsHex.equals(password)) {
+            // 2. 获取用户信息（确保返回类型正确）
+            Optional<User> userOptional = userRepository.findByAccount(loginDTO.getAccount());
+            User user = userOptional.orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+
+            // 3. 验证密码
+            String encryptedPassword = DigestUtils.md5DigestAsHex(loginDTO.getPassword().getBytes());
+            if (!Objects.equals(user.getPassword(), encryptedPassword)) {
                 return createFailedLoginVO("密码错误");
             }
 
-            return JwtUtil.loginStatus(user); // 调用修改后的 JwtUtil 方法
+            // 4. 生成 JWT
+            return JwtUtil.loginStatus(user);
+        } catch (IllegalArgumentException e) {
+            return createFailedLoginVO(e.getMessage());
         } catch (Exception e) {
-            return createFailedLoginVO("登录失败：" + e.getMessage());
+            log.error("登录异常", e);
+            return createFailedLoginVO("登录失败，请稍后重试");
         }
     }
 

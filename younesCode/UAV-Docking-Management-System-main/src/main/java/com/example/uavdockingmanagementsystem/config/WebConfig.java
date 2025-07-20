@@ -9,27 +9,27 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/css/**")
-                .addResourceLocations("classpath:/static/css/");
-        
-        registry.addResourceHandler("/js/**")
-                .addResourceLocations("classpath:/static/js/");
-        
-        registry.addResourceHandler("/images/**")
-                .addResourceLocations("classpath:/static/images/");
+    private final AuthInterceptor authInterceptor; // 通过构造函数注入
+
+    public WebConfig(AuthInterceptor authInterceptor) {
+        this.authInterceptor = authInterceptor;
     }
 
-    // 注册拦截器
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/css/**").addResourceLocations("classpath:/static/css/");
+        registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/js/");
+        registry.addResourceHandler("/images/**").addResourceLocations("classpath:/static/images/");
+    }
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new AuthInterceptor())
-                .addPathPatterns("/**") // 拦截所有请求
+        registry.addInterceptor(authInterceptor) // 使用注入的拦截器，而非手动 new
+                .addPathPatterns("/**")
                 .excludePathPatterns(
-                        "/user/login",  // 登录接口排除
-                        "/user/register", // 注册接口排除
-                        "/css/**",      // 静态资源排除
+                        "/user/login",
+                        "/user/register",
+                        "/css/**",
                         "/js/**",
                         "/images/**"
                 );

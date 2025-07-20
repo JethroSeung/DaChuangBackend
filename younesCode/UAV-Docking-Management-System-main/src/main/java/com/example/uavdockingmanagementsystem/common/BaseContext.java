@@ -1,31 +1,30 @@
 package com.example.uavdockingmanagementsystem.common;
 
-
 import com.example.uavdockingmanagementsystem.model.VO.userVO.UserInfoVO;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
 
 @Component
 public class BaseContext {
-    private static final String USERINFO = "USERINFO";
+    private static final ThreadLocal<UserInfoVO> threadLocal = new ThreadLocal<>();
 
     /**
-     * Sets current user.
-     *
-     * @param user the user
+     * 设置当前用户信息
      */
     public void setCurrentUser(UserInfoVO user) {
-        RequestContextHolder.currentRequestAttributes().setAttribute(USERINFO, user, RequestAttributes.SCOPE_REQUEST);
+        threadLocal.set(user);
     }
 
     /**
-     * Gets current user.
-     *
-     * @return the current user
+     * 获取当前用户信息
      */
     public UserInfoVO getCurrentUser() {
-        return (UserInfoVO) RequestContextHolder.currentRequestAttributes().getAttribute(USERINFO, RequestAttributes.SCOPE_REQUEST);
+        return threadLocal.get();
     }
 
+    /**
+     * 移除当前用户信息（必须在请求结束时调用，避免内存泄漏）
+     */
+    public void removeCurrentUser() {
+        threadLocal.remove();
+    }
 }
