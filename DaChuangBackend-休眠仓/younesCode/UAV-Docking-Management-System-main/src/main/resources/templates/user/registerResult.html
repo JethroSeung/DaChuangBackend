@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org"> <!-- 必须加这个命名空间，否则 Thymeleaf 标签不生效 -->
+<head>
+    <meta charset="UTF-8">
+    <title>注册结果</title>
+</head>
+<body>
+<h1>注册成功啦！</h1>
+<!-- 从 Model 里取 user 对象的 account 属性展示，没数据时显示“默认账号” -->
+<p th:text="${user.account}">默认账号</p>
+</body>
+</html>

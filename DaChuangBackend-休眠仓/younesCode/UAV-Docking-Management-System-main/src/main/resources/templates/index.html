@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UAV Docking Management System</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <!-- Ensure Font Awesome is loaded properly -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" integrity="sha512-fD9DI5bZwQxOi7MhYWnnNPlvXdp/2Pj3XSTRrFs5FQa4mizyGLnJcN6tuvUS6LbmgN1ut+XGSABKvjN0H6Aoow==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        /* Ensure proper icon display */
+        .fas {
+            display: inline-block !important;
+            width: auto !important;
+            height: auto !important;
+            vertical-align: middle;
+        }
+        .form-icon .fas {
+            font-size: 1rem;
+        }
+        /* Add a fallback for missing drone icon */
+        .fa-drone:before {
+            content: "\f72e"; /* Using helicopter icon as fallback */
+        }
+    </style>
+    </head>
+    <body>
+    <div class="container">
+    <h1><i class="fas fa-plane"></i> UAV Docking Management System</h1>
+
+    <h2><i class="fas fa-plus-circle"></i> Register New UAV</h2>
+    
+    <div class="form-card hover-card">
+        <div class="form-card-header">
+            <i class="fas fa-helicopter"></i> Quick UAV Registration
+        </div>
+        <div class="form-card-body">
+            <form action="/uav/add" method="POST" th:action="@{/uav/add}">
+                <div class="form-row">
+                    <div class="form-col">
+                        <label for="rfidTag" class="required">RFID Tag</label>
+                        <div class="form-icon">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <input type="text" id="rfidTag" name="rfidTag" required placeholder="Enter RFID tag">
+                    </div>
+                    
+                    <div class="form-col">
+                        <label for="ownerName" class="required">Owner Name</label>
+                        <div class="form-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <input type="text" id="ownerName" name="ownerName" required placeholder="Enter owner's name">
+                    </div>
+                    
+                    <div class="form-col">
+                        <label for="model" class="required">Model</label>
+                        <div class="form-icon">
+                            <i class="fas fa-helicopter"></i>
+                        </div>
+                        <input type="text" id="model" name="model" required placeholder="Enter UAV model">
+                    </div>
+                    <!-- 在注册表单中增加休眠仓选项 -->
+                    <div class="form-col">
+                        <label for="inHibernatePod" class="required">加入休眠仓</label>
+                        <div class="form-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <select name="inHibernatePod" id="inHibernatePod" required th:disabled="${hibernatePodFull}">
+                            <option value="inHibernatePod">Yes</option>
+                            <option value="notInHibernatePod">No</option>
+                        </select>
+                        <span th:if="${hibernatePodFull}" style="color:#c55757;">休眠仓已满，无法加入</span>
+                    </div>
+                    
+                    <div class="form-col">
+                        <label for="status" class="required">Status</label>
+                        <div class="form-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <select name="status" id="status" required>
+                            <option value="AUTHORIZED">Authorized</option>
+                            <option value="UNAUTHORIZED">Unauthorized</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-col" style="flex: 3;">
+                        <label for="regionIds">Regions (Hold Ctrl/Cmd to select multiple)</label>
+                        <div class="form-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <select name="regionIds" id="regionIds" multiple style="height: 70px;">
+                            <option th:if="${allRegions == null || #lists.isEmpty(allRegions)}" disabled>No regions available</option>
+                            <option th:unless="${allRegions == null || #lists.isEmpty(allRegions)}" 
+                                    th:each="region : ${allRegions}" 
+                                    th:value="${region.id}" 
+                                    th:text="${region.regionName}"></option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-col" style="flex: 1; display: flex; align-items: flex-end;">
+                        <button type="submit" style="width: 100%; margin-bottom: 0;">
+                            <i class="fas fa-plus"></i> Register UAV
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <h2><i class="fas fa-list"></i> UAV List</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th><i class="fas fa-id-card"></i> ID</th>
+                <th><i class="fas fa-tag"></i> RFID Tag</th>
+                <th><i class="fas fa-user"></i> Owner Name</th>
+                <th><i class="fas fa-helicopter"></i> Model</th>
+                <th><i class="fas fa-shield-alt"></i> Status</th>
+                <th><i class="fas fa-map-marker-alt"></i> Regions</th>
+                <th><i class="fas fa-calendar-plus"></i> Created At</th>
+                <th><i class="fas fa-calendar-check"></i> Updated At</th>
+                <th> HibernatePod</th>
+                <th><i class="fas fa-tools"></i> Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="uav : ${uavs}">
+                <td th:text="${uav.id}"></td>
+                <td th:text="${uav.rfidTag}"></td>
+                <td th:text="${uav.ownerName}"></td>
+                <td th:text="${uav.model}"></td>
+                <td>
+                    <span th:text="${uav.status}" 
+                          th:class="'status-pill ' + ${uav.status == T(com.example.uavdockingmanagementsystem.model.UAV.Status).AUTHORIZED ? 'authorized' : 'unauthorized'}">
+                    </span>
+                </td>
+                <td class="regions">
+                    <span th:if="${uav.regions == null || #lists.isEmpty(uav.regions)}">No regions assigned</span>
+                    <span th:unless="${uav.regions == null || #lists.isEmpty(uav.regions)}">
+                        <span th:each="region, iterStat : ${uav.regions}">
+                            <span th:text="${region.regionName}"></span>
+                            <a th:href="@{/uav/{uavId}/remove-region/{regionId}(uavId=${uav.id},regionId=${region.id})}" 
+                               class="btn-remove"><i class="fas fa-times"></i></a>
+                            <span th:if="${!iterStat.last}">, </span>
+                        </span>
+                    </span>
+                    <a th:href="@{/uav/{id}/add-region(id=${uav.id})}" 
+                       class="btn-add"><i class="fas fa-plus"></i></a>
+                </td>
+                <td th:text="${#temporals.format(uav.createdAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                <td th:text="${#temporals.format(uav.updatedAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                <td>
+                    <span th:if="${uav.inHibernatePod}">Yes</span>
+                    <span th:unless="${uav.inHibernatePod}">No</span>
+                </td>
+                <td>
+                    <a th:href="@{/uav/update-status/{id}(id=${uav.id})}" class="action-btn btn-toggle">
+                        <i class="fas fa-exchange-alt"></i> Toggle
+                    </a>
+                    <a th:href="@{/uav/delete/{id}(id=${uav.id})}" class="action-btn btn-delete">
+                        <i class="fas fa-trash"></i> Delete
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 UAV Docking Management System | <i class="fas fa-code"></i> with <i class="fas fa-heart" style="color:#e74c3c;"></i></p>
+    </footer>
+</div>
+
+<script>
+    // Add simple animation to the header
+    document.addEventListener('DOMContentLoaded', function() {
+        const header = document.querySelector('h1');
+        header.classList.add('pulse');
+        
+        // Add hover effects to table rows
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.01)';
+                this.style.transition = 'transform 0.2s';
+                this.style.backgroundColor = 'rgba(52, 152, 219, 0.05)';
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.backgroundColor = '';
+            });
+        });
+    });
+</script>
+</body>
+</html>

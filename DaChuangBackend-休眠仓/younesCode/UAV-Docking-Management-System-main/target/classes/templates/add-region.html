@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Region to UAV</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        select, button {
+            padding: 8px;
+            margin: 10px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px 15px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .go-back {
+            margin-top: 20px;
+            display: inline-block;
+            background-color: #2196F3;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .go-back:hover {
+            background-color: #0b7dda;
+        }
+        .error-message {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+
+</head>
+<body>
+    <h1>Add Region to UAV</h1>
+    
+    <div th:if="${availableRegions == null || #lists.isEmpty(availableRegions)}" class="error-message">
+        <p>No available regions to add to this UAV. Either all regions are already assigned or no regions exist in the system.</p>
+    </div>
+    
+    <form th:unless="${availableRegions == null || #lists.isEmpty(availableRegions)}" 
+          th:action="@{/uav/{uavId}/add-region(uavId=${uavId})}" 
+          method="POST">
+        <div>
+            <label for="regionId">Select Region to Add:</label>
+            <select id="regionId" name="regionId" required>
+                <option value="">-- Select Region --</option>
+                <option th:each="region : ${availableRegions}" 
+                        th:value="${region.id}" 
+                        th:text="${region.regionName}"></option>
+            </select>
+        </div>
+        <button type="submit">Add Region</button>
+    </form>
+    
+    <a href="/" class="go-back">Back to UAV List</a>
+</body>
+</html>
