@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>用户管理</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; }
+    .container { max-width: 900px; margin: 40px auto; background: #fff; padding: 24px; border-radius: 8px; }
+    h2 { margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+    tr:nth-child(even) { background: #fafafa; }
+    .pagination { text-align: right; }
+    .pagination a, .pagination span { display: inline-block; margin: 0 2px; padding: 4px 10px; border: 1px solid #ccc; border-radius: 4px; text-decoration: none; color: #333; }
+    .pagination .active { background: #1976d2; color: #fff; border-color: #1976d2; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>用户管理</h2>
+  <table>
+    <thead>
+    <tr>
+      <th>用户ID</th>
+      <th>用户名</th>
+      <th>用户类型</th>
+      <th>邮箱</th>
+      <th>状态</th>
+      <th>注册时间</th>
+      <th>操作</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- 使用 userList.records 遍历数据，与PageVO保持一致 -->
+    <tr th:each="user : ${userList.records}">
+      <td th:text="${user.id}"></td>
+      <td>
+        <!-- 用account替代username（User类中实际字段是account） -->
+        <span th:text="${user.account}"></span>
+        <br>
+        <small th:text="${user.nickname}"></small> <!-- nickname字段存在，直接使用 -->
+      </td>
+      <!-- userType字段存在，直接使用 -->
+      <td th:text="${user.userType eq 'admin' ? '管理员' : '普通用户'}"></td>
+      <!-- email字段存在，直接使用，处理null情况 -->
+      <td th:text="${user.email != null ? user.email : '未设置'}"></td>
+      <!-- 状态用isDelete判断（0=正常，1=删除） -->
+      <td th:text="${user.isDelete == 0 ? '正常' : '已删除'}"></td>
+      <!-- 格式化注册时间（createTime是LocalDateTime类型） -->
+      <td th:text="${#temporals.format(user.createTime, 'yyyy-MM-dd HH:mm')}"></td>
+      <td>
+        <a th:href="@{/user/detail/{id}(id=${user.id})}">查看</a>
+        <a th:href="@{/user/edit/{id}(id=${user.id})}">编辑</a>
+        <a th:href="@{/user/delete/{id}(id=${user.id})}">删除</a>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+  <div class="pagination">
+    <!-- 分页导航，与PageVO字段匹配 -->
+    <a th:if="${userList.hasPrevious}"
+       th:href="@{/user/list(page=${userList.pageNum - 1}, size=${userList.pageSize})}">
+      上一页
+    </a>
+
+    <span th:each="i : ${#numbers.sequence(1, userList.pages)}"
+          th:classappend="${i == userList.pageNum} ? 'active'"
+          th:text="${i}"
+          th:href="@{/user/list(page=${i}, size=${userList.pageSize})}">
+    </span>
+
+    <a th:if="${userList.hasNext}"
+       th:href="@{/user/list(page=${userList.pageNum + 1}, size=${userList.pageSize})}">
+      下一页
+    </a>
+  </div>
+</div>
+</body>
+</html>
