@@ -158,7 +158,7 @@ docker-compose -f docker-compose.dev.yml down
 ```
 src/
 ├── main/
-│   ├── java/com/example/uavdockingmanagementsystem/
+│   ├── java/com/uav/dockingmanagement/
 │   │   ├── config/          # Configuration classes
 │   │   ├── controller/      # REST controllers
 │   │   ├── model/          # Entity classes

@@ -62,7 +62,7 @@ This project includes extensive documentation covering all aspects of the system
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Setup instructions, workflow, testing, and contribution guidelines
 
 ### Component Documentation
-- **[Backend Services](src/main/java/com/example/uavdockingmanagementsystem/service/README.md)** - Service layer architecture and business logic
+- **[Backend Services](src/main/java/com/uav/dockingmanagement/service/README.md)** - Service layer architecture and business logic
 - **[Frontend Components](frontend/src/components/README.md)** - React component library and usage patterns
 - **[API Client Layer](frontend/src/api/README.md)** - Frontend-backend integration and error handling
 
