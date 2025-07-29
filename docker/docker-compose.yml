@@ -3,8 +3,8 @@ version: '3.8'
 services:
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
       target: runtime
     container_name: uav-management-app
     restart: unless-stopped
@@ -83,7 +83,7 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
       - mysql-config:/etc/mysql/conf.d
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ../db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - uav-network
     command: >

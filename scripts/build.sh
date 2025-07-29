@@ -157,7 +157,7 @@ if [ "$DOCKER_BUILD" = true ]; then
     VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
     IMAGE_NAME="uav-docking-management-system:$VERSION"
     
-    if docker build -t "$IMAGE_NAME" .; then
+    if docker build -t "$IMAGE_NAME" -f ../docker/Dockerfile ..; then
         print_success "Docker image built successfully: $IMAGE_NAME"
         
         # Also tag as latest
@@ -174,8 +174,8 @@ print_success "Build process completed successfully!"
 # Show build artifacts
 if [ "$BUILD_TYPE" = "package" ] || [ "$BUILD_TYPE" = "install" ]; then
     print_info "Build artifacts:"
-    if [ -d "target" ]; then
-        ls -la target/*.jar 2>/dev/null || print_warning "No JAR files found in target directory"
+    if [ -d "../target" ]; then
+        ls -la ../target/*.jar 2>/dev/null || print_warning "No JAR files found in target directory"
     fi
 fi
 
@@ -240,8 +240,8 @@ detect_maven() {
     print_info "Detecting Maven installation..."
 
     # Check if Maven wrapper exists
-    if [ -f "./mvnw" ]; then
-        MVN_CMD="./mvnw"
+    if [ -f "../mvnw" ]; then
+        MVN_CMD="../mvnw"
         print_info "Using Maven wrapper"
         return 0
     fi

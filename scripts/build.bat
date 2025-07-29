@@ -198,8 +198,8 @@ REM Function to detect Maven
 call :print_info "Detecting Maven installation..."
 
 REM Check if mvnw.cmd exists
-if exist "mvnw.cmd" (
-    set MVN_CMD=mvnw.cmd
+if exist "..\mvnw.cmd" (
+    set MVN_CMD=..\mvnw.cmd
     call :print_info "Using Maven wrapper"
     exit /b 0
 )
