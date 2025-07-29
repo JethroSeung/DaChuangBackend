@@ -1,0 +1,951 @@
+openapi: 3.0.3
+info:
+  title: UAV Docking Management System API
+  description: |
+    Comprehensive REST API for managing UAV operations, real-time tracking, geofencing, and fleet management.
+    
+    ## Authentication
+    The API uses role-based authentication with three user roles:
+    - **USER**: Read-only access
+    - **OPERATOR**: Can perform UAV operations and updates  
+    - **ADMIN**: Full system access including delete operations
+    
+    ## Rate Limiting
+    - Default: 100 requests per minute
+    - Admin: 1000 requests per minute
+    - API Key: 2000 requests per minute
+  version: 1.0.0
+  contact:
+    name: UAV Management System Team
+    email: support@uavmanagement.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.uavmanagement.com
+    description: Production server
+
+security:
+  - sessionAuth: []
+  - apiKeyAuth: []
+
+paths:
+  /api/uav/all:
+    get:
+      tags:
+        - UAV Management
+      summary: Get all UAVs
+      description: Retrieve all UAVs with their associated regions
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: List of UAVs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UAV'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/uav/add:
+    post:
+      tags:
+        - UAV Management
+      summary: Add new UAV
+      description: Create a new UAV in the system
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UAVCreateRequest'
+      responses:
+        '201':
+          description: UAV created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 6
+                      rfidTag:
+                        type: string
+                        example: "UAV-006"
+                      message:
+                        type: string
+                        example: "UAV added successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/uav/update/{id}:
+    put:
+      tags:
+        - UAV Management
+      summary: Update UAV
+      description: Update an existing UAV's information
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: UAV ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UAVUpdateRequest'
+      responses:
+        '200':
+          description: UAV updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/uav/delete/{id}:
+    delete:
+      tags:
+        - UAV Management
+      summary: Delete UAV
+      description: Remove a UAV from the system (Admin only)
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: UAV ID
+      responses:
+        '200':
+          description: UAV deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/location/update/{uavId}:
+    post:
+      tags:
+        - Location Tracking
+      summary: Update UAV location
+      description: Update the current location of a UAV
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: uavId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: UAV ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationUpdateRequest'
+      responses:
+        '200':
+          description: Location updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/location/current:
+    get:
+      tags:
+        - Location Tracking
+      summary: Get current locations
+      description: Get current locations of all UAVs
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Current locations retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LocationHistory'
+
+  /api/location/history/{uavId}:
+    get:
+      tags:
+        - Location Tracking
+      summary: Get location history
+      description: Get historical location data for a specific UAV
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: uavId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: UAV ID
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start date (ISO 8601 format)
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End date (ISO 8601 format)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+          description: Maximum number of records
+      responses:
+        '200':
+          description: Location history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LocationHistory'
+
+  /api/docking-stations:
+    get:
+      tags:
+        - Docking Stations
+      summary: Get all docking stations
+      description: Retrieve all docking stations
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Docking stations retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DockingStation'
+    post:
+      tags:
+        - Docking Stations
+      summary: Create docking station
+      description: Create a new docking station (Admin only)
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DockingStationCreateRequest'
+      responses:
+        '201':
+          description: Docking station created successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/geofences:
+    get:
+      tags:
+        - Geofences
+      summary: Get all geofences
+      description: Retrieve all geofences
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Geofences retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Geofence'
+    post:
+      tags:
+        - Geofences
+      summary: Create geofence
+      description: Create a new geofence (Admin only)
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeofenceCreateRequest'
+      responses:
+        '201':
+          description: Geofence created successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/geofences/check-point:
+    get:
+      tags:
+        - Geofences
+      summary: Check point against geofences
+      description: Check if a point violates any geofences
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+          description: Point latitude
+        - name: longitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+          description: Point longitude
+        - name: altitude
+          in: query
+          schema:
+            type: number
+            format: double
+          description: Point altitude (optional)
+      responses:
+        '200':
+          description: Point check completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeofenceCheckResponse'
+
+  /api/access/validate:
+    post:
+      tags:
+        - Access Control
+      summary: Validate UAV access
+      description: Validate if a UAV has access to a specific region
+      parameters:
+        - name: rfidId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: UAV RFID tag
+        - name: regionName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Region name
+      responses:
+        '200':
+          description: Access validation completed
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OPEN THE DOOR"
+        '400':
+          description: Invalid request parameters
+        '403':
+          description: Access denied
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    UAV:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        rfidTag:
+          type: string
+          example: "UAV-001"
+        ownerName:
+          type: string
+          example: "John Smith"
+        model:
+          type: string
+          example: "DJI Phantom 4"
+        status:
+          type: string
+          enum: [AUTHORIZED, UNAUTHORIZED]
+          example: "AUTHORIZED"
+        operationalStatus:
+          type: string
+          enum: [READY, IN_FLIGHT, MAINTENANCE, OFFLINE]
+          example: "READY"
+        inHibernatePod:
+          type: boolean
+          example: false
+        serialNumber:
+          type: string
+          example: "SNUAV001"
+        manufacturer:
+          type: string
+          example: "DJI"
+        weightKg:
+          type: number
+          format: double
+          example: 1.38
+        maxFlightTimeMinutes:
+          type: integer
+          example: 28
+        maxAltitudeMeters:
+          type: integer
+          example: 120
+        maxSpeedKmh:
+          type: integer
+          example: 72
+        totalFlightHours:
+          type: integer
+          example: 45
+        totalFlightCycles:
+          type: integer
+          example: 123
+        currentLatitude:
+          type: number
+          format: double
+          example: 40.7589
+        currentLongitude:
+          type: number
+          format: double
+          example: -73.9851
+        lastLocationUpdate:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:25:00Z"
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Region'
+
+    Region:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        regionName:
+          type: string
+          example: "Zone A"
+
+    UAVCreateRequest:
+      type: object
+      required:
+        - rfidTag
+        - ownerName
+        - model
+      properties:
+        rfidTag:
+          type: string
+          example: "UAV-006"
+        ownerName:
+          type: string
+          example: "Jane Doe"
+        model:
+          type: string
+          example: "DJI Mavic Pro"
+        serialNumber:
+          type: string
+          example: "SNUAV006"
+        manufacturer:
+          type: string
+          example: "DJI"
+        weightKg:
+          type: number
+          format: double
+          example: 0.9
+        maxFlightTimeMinutes:
+          type: integer
+          example: 27
+        maxAltitudeMeters:
+          type: integer
+          example: 120
+        maxSpeedKmh:
+          type: integer
+          example: 65
+        regionIds:
+          type: array
+          items:
+            type: integer
+          example: [1, 2]
+        inHibernatePod:
+          type: boolean
+          example: false
+
+    UAVUpdateRequest:
+      type: object
+      properties:
+        ownerName:
+          type: string
+          example: "Jane Smith"
+        model:
+          type: string
+          example: "DJI Mavic Pro 2"
+        weightKg:
+          type: number
+          format: double
+          example: 0.95
+
+    LocationUpdateRequest:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: double
+          example: 40.7589
+        longitude:
+          type: number
+          format: double
+          example: -73.9851
+        altitude:
+          type: number
+          format: double
+          example: 85.5
+        speed:
+          type: number
+          format: double
+          example: 25.3
+        heading:
+          type: number
+          format: double
+          example: 180.0
+        batteryLevel:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 75
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    LocationHistory:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        uavId:
+          type: integer
+          example: 1
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        latitude:
+          type: number
+          format: double
+          example: 40.7589
+        longitude:
+          type: number
+          format: double
+          example: -73.9851
+        altitudeMeters:
+          type: number
+          format: double
+          example: 85.5
+        speedKmh:
+          type: number
+          format: double
+          example: 25.3
+        headingDegrees:
+          type: number
+          format: double
+          example: 180.0
+        batteryLevel:
+          type: integer
+          example: 75
+        locationSource:
+          type: string
+          enum: [GPS, CELLULAR, WIFI, MANUAL, ESTIMATED, RADAR]
+          example: "GPS"
+
+    DockingStation:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Station Alpha"
+        description:
+          type: string
+          example: "Primary docking station for Zone A"
+        latitude:
+          type: number
+          format: double
+          example: 40.7589
+        longitude:
+          type: number
+          format: double
+          example: -73.9851
+        capacity:
+          type: integer
+          example: 4
+        currentOccupancy:
+          type: integer
+          example: 2
+        status:
+          type: string
+          enum: [OPERATIONAL, MAINTENANCE, OFFLINE, FULL]
+          example: "OPERATIONAL"
+        stationType:
+          type: string
+          enum: [CHARGING, MAINTENANCE, STORAGE, MULTI_PURPOSE]
+          example: "CHARGING"
+
+    DockingStationCreateRequest:
+      type: object
+      required:
+        - name
+        - latitude
+        - longitude
+        - capacity
+      properties:
+        name:
+          type: string
+          example: "Station Alpha"
+        description:
+          type: string
+          example: "Primary docking station for Zone A"
+        latitude:
+          type: number
+          format: double
+          example: 40.7589
+        longitude:
+          type: number
+          format: double
+          example: -73.9851
+        capacity:
+          type: integer
+          minimum: 1
+          example: 4
+        stationType:
+          type: string
+          enum: [CHARGING, MAINTENANCE, STORAGE, MULTI_PURPOSE]
+          example: "CHARGING"
+        operationalHours:
+          type: string
+          example: "24/7"
+        contactInfo:
+          type: string
+          example: "station-alpha@company.com"
+
+    Geofence:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Restricted Zone 1"
+        description:
+          type: string
+          example: "No-fly zone around airport"
+        fenceType:
+          type: string
+          enum: [CIRCULAR, POLYGON]
+          example: "CIRCULAR"
+        boundaryType:
+          type: string
+          enum: [INCLUSION, EXCLUSION]
+          example: "EXCLUSION"
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, EXPIRED]
+          example: "ACTIVE"
+        centerLatitude:
+          type: number
+          format: double
+          example: 40.7589
+        centerLongitude:
+          type: number
+          format: double
+          example: -73.9851
+        radiusMeters:
+          type: number
+          format: double
+          example: 1000.0
+        minAltitudeMeters:
+          type: number
+          format: double
+          example: 0.0
+        maxAltitudeMeters:
+          type: number
+          format: double
+          example: 120.0
+        priorityLevel:
+          type: integer
+          example: 1
+        violationAction:
+          type: string
+          example: "RETURN_TO_BASE"
+
+    GeofenceCreateRequest:
+      type: object
+      required:
+        - name
+        - fenceType
+        - boundaryType
+      properties:
+        name:
+          type: string
+          example: "Restricted Zone 1"
+        description:
+          type: string
+          example: "No-fly zone around airport"
+        fenceType:
+          type: string
+          enum: [CIRCULAR, POLYGON]
+          example: "CIRCULAR"
+        boundaryType:
+          type: string
+          enum: [INCLUSION, EXCLUSION]
+          example: "EXCLUSION"
+        centerLatitude:
+          type: number
+          format: double
+          example: 40.7589
+        centerLongitude:
+          type: number
+          format: double
+          example: -73.9851
+        radiusMeters:
+          type: number
+          format: double
+          example: 1000.0
+        minAltitudeMeters:
+          type: number
+          format: double
+          example: 0.0
+        maxAltitudeMeters:
+          type: number
+          format: double
+          example: 120.0
+        priorityLevel:
+          type: integer
+          example: 1
+        violationAction:
+          type: string
+          example: "RETURN_TO_BASE"
+        notificationEmails:
+          type: string
+          example: "admin@company.com,operator@company.com"
+
+    GeofenceCheckResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            violations:
+              type: array
+              items:
+                type: object
+                properties:
+                  geofenceId:
+                    type: integer
+                    example: 1
+                  geofenceName:
+                    type: string
+                    example: "Restricted Zone 1"
+                  violationType:
+                    type: string
+                    example: "EXCLUSION_VIOLATION"
+                  distance:
+                    type: number
+                    format: double
+                    example: 0
+                  action:
+                    type: string
+                    example: "RETURN_TO_BASE"
+            isViolation:
+              type: boolean
+              example: true
+            totalViolations:
+              type: integer
+              example: 1
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "UAV_NOT_FOUND"
+            message:
+              type: string
+              example: "UAV with specified ID not found"
+            details:
+              type: object
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+tags:
+  - name: UAV Management
+    description: Operations for managing UAVs
+  - name: Location Tracking
+    description: Real-time location tracking and history
+  - name: Docking Stations
+    description: Docking station management and operations
+  - name: Geofences
+    description: Geofence management and violation checking
+  - name: Access Control
+    description: UAV access validation and control

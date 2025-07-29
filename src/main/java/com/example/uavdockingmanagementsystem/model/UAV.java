@@ -7,21 +7,91 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-
+/**
+ * Entity representing an Unmanned Aerial Vehicle (UAV) in the management system.
+ *
+ * <p>This entity serves as the core model for UAV management, containing comprehensive
+ * information about each drone including identification, specifications, operational
+ * status, location data, and relationships to other system entities.</p>
+ *
+ * <p>Key features and relationships:</p>
+ * <ul>
+ * <li><strong>Identification:</strong> RFID tag and serial number for unique identification</li>
+ * <li><strong>Specifications:</strong> Physical and performance characteristics</li>
+ * <li><strong>Location Tracking:</strong> Current position and historical data</li>
+ * <li><strong>Region Access:</strong> Many-to-many relationship with authorized regions</li>
+ * <li><strong>Flight History:</strong> One-to-many relationship with flight logs</li>
+ * <li><strong>Maintenance:</strong> One-to-many relationship with maintenance records</li>
+ * <li><strong>Battery Monitoring:</strong> One-to-one relationship with battery status</li>
+ * </ul>
+ *
+ * <p>The entity supports both operational and administrative use cases, providing
+ * real-time status information for flight operations and comprehensive data for
+ * fleet management and analytics.</p>
+ *
+ * @author UAV Management System Team
+ * @version 1.0
+ * @since 1.0
+ *
+ * @see Region
+ * @see FlightLog
+ * @see MaintenanceRecord
+ * @see BatteryStatus
+ * @see LocationHistory
+ */
 @Entity
 public class UAV {
 
+    /**
+     * Unique identifier for the UAV entity.
+     * Auto-generated primary key used for database relationships.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    /**
+     * RFID tag identifier for physical UAV identification.
+     * Used for access control and real-time tracking operations.
+     * Must be unique across all UAVs in the system.
+     */
     private String rfidTag;
+
+    /**
+     * Name of the UAV owner or operator.
+     * Used for contact and responsibility tracking.
+     */
     private String ownerName;
+
+    /**
+     * UAV model designation (e.g., "DJI Phantom 4", "DJI Mavic Pro").
+     * Used for specifications lookup and maintenance planning.
+     */
     private String model;
+
+    /**
+     * Flag indicating if the UAV is currently stored in the hibernate pod.
+     * Used for capacity management and operational status tracking.
+     */
     boolean inHibernatePod;
+
+    /**
+     * Authorization status of the UAV for system operations.
+     * Determines access permissions and operational capabilities.
+     */
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    /**
+     * Many-to-many relationship with regions that this UAV is authorized to access.
+     *
+     * <p>This relationship defines the geographical areas where the UAV is permitted
+     * to operate. Access control systems use this information to grant or deny
+     * entry to restricted zones.</p>
+     *
+     * <p>The relationship is managed through a join table 'uav_regions' with
+     * foreign keys to both UAV and Region entities.</p>
+     */
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinTable(
             name = "uav_regions",
@@ -30,24 +100,58 @@ public class UAV {
     )
     private Set<Region> regions = new HashSet<>();
 
-    // Flight logs relationship
+    /**
+     * One-to-many relationship with flight log records.
+     *
+     * <p>Contains historical flight data including start/end times, routes,
+     * performance metrics, and operational notes. Used for analytics,
+     * compliance reporting, and operational analysis.</p>
+     */
     @OneToMany(mappedBy = "uav", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<FlightLog> flightLogs = new ArrayList<>();
 
-    // Maintenance records relationship
+    /**
+     * One-to-many relationship with maintenance records.
+     *
+     * <p>Tracks all maintenance activities including scheduled maintenance,
+     * repairs, upgrades, and inspections. Critical for airworthiness
+     * compliance and operational safety.</p>
+     */
     @OneToMany(mappedBy = "uav", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<MaintenanceRecord> maintenanceRecords = new ArrayList<>();
 
-    // Battery status relationship
+    /**
+     * One-to-one relationship with current battery status.
+     *
+     * <p>Provides real-time battery information including charge level,
+     * health status, and charging state. Essential for flight safety
+     * and operational planning.</p>
+     */
     @OneToOne(mappedBy = "uav", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private BatteryStatus batteryStatus;
 
-    // Additional UAV properties
+    /**
+     * Manufacturer's serial number for the UAV.
+     * Must be unique across all UAVs for warranty and support purposes.
+     */
     @Column(name = "serial_number", unique = true, length = 50)
     private String serialNumber;
+
+    // Location tracking properties
+    @Column(name = "current_latitude")
+    private Double currentLatitude;
+
+    @Column(name = "current_longitude")
+    private Double currentLongitude;
+
+    @Column(name = "current_altitude_meters")
+    private Double currentAltitudeMeters;
+
+    @Column(name = "last_location_update")
+    private LocalDateTime lastLocationUpdate;
 
     @Column(name = "manufacturer", length = 50)
     private String manufacturer;
@@ -335,6 +439,43 @@ public class UAV {
 
     public Integer getMaintenanceRecordCount() {
         return maintenanceRecords != null ? maintenanceRecords.size() : 0;
+    }
+
+    // Location getters and setters
+    public Double getCurrentLatitude() {
+        return currentLatitude;
+    }
+
+    public void setCurrentLatitude(Double currentLatitude) {
+        this.currentLatitude = currentLatitude;
+    }
+
+    public Double getCurrentLongitude() {
+        return currentLongitude;
+    }
+
+    public void setCurrentLongitude(Double currentLongitude) {
+        this.currentLongitude = currentLongitude;
+    }
+
+    public Double getCurrentAltitudeMeters() {
+        return currentAltitudeMeters;
+    }
+
+    public void setCurrentAltitudeMeters(Double currentAltitudeMeters) {
+        this.currentAltitudeMeters = currentAltitudeMeters;
+    }
+
+    public LocalDateTime getLastLocationUpdate() {
+        return lastLocationUpdate;
+    }
+
+    public void setLastLocationUpdate(LocalDateTime lastLocationUpdate) {
+        this.lastLocationUpdate = lastLocationUpdate;
+    }
+
+    public boolean hasLocationData() {
+        return currentLatitude != null && currentLongitude != null;
     }
 
     public enum Status {

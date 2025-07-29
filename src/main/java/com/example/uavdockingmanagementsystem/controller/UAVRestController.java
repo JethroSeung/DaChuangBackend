@@ -18,27 +18,64 @@ import java.util.Optional;
 
 /**
  * REST API Controller for UAV Management
- * Provides JSON endpoints for AJAX calls from the frontend
+ *
+ * <p>This controller provides comprehensive JSON endpoints for UAV (Unmanned Aerial Vehicle)
+ * management operations. It handles CRUD operations, region assignments, and status updates
+ * for UAVs in the system.</p>
+ *
+ * <p>All endpoints return JSON responses and support CORS for frontend integration.
+ * Authentication and authorization are handled through Spring Security with role-based
+ * access control (USER, OPERATOR, ADMIN).</p>
+ *
+ * @author UAV Management System Team
+ * @version 1.0
+ * @since 1.0
+ *
+ * @see UAV
+ * @see UAVService
+ * @see UAVRepository
  */
 @RestController
 @RequestMapping("/api/uav")
 @CrossOrigin(origins = "*") // Allow CORS for frontend requests
 public class UAVRestController {
 
+    /** Repository for UAV data access operations */
     @Autowired
     private UAVRepository uavRepository;
-    
+
+    /** Repository for Region data access operations */
     @Autowired
     private RegionRepository regionRepository;
-    
+
+    /** Service layer for UAV business logic */
     @Autowired
     private UAVService uavService;
-    
+
+    /** Hibernate pod singleton for UAV storage management */
     @Autowired
     private HibernatePod hibernatePod;
 
     /**
-     * Get all UAVs with their regions
+     * Retrieves all UAVs in the system with their associated regions.
+     *
+     * <p>This endpoint returns a complete list of all UAVs registered in the system,
+     * including their current status, operational information, and assigned regions.
+     * The response includes lazy-loaded region associations.</p>
+     *
+     * <p><strong>Security:</strong> Requires USER, OPERATOR, or ADMIN role</p>
+     *
+     * @return ResponseEntity containing:
+     *         <ul>
+     *         <li>200 OK: List of UAV objects with regions</li>
+     *         <li>500 Internal Server Error: If database operation fails</li>
+     *         </ul>
+     *
+     * @apiNote This endpoint supports pagination in future versions
+     *
+     * @see UAV
+     * @see Region
+     * @see UAVRepository#findAllWithRegions()
      */
     @GetMapping("/all")
     public ResponseEntity<List<UAV>> getAllUAVs() {
@@ -51,7 +88,23 @@ public class UAVRestController {
     }
 
     /**
-     * Get UAV by ID
+     * Retrieves a specific UAV by its unique identifier.
+     *
+     * <p>This endpoint returns detailed information about a single UAV including
+     * all its properties, relationships, and current status. The UAV is identified
+     * by its database ID.</p>
+     *
+     * <p><strong>Security:</strong> Requires USER, OPERATOR, or ADMIN role</p>
+     *
+     * @param id The unique identifier of the UAV to retrieve
+     * @return ResponseEntity containing:
+     *         <ul>
+     *         <li>200 OK: UAV object if found</li>
+     *         <li>404 Not Found: If UAV with given ID doesn't exist</li>
+     *         </ul>
+     *
+     * @see UAV
+     * @see UAVRepository#findById(Object)
      */
     @GetMapping("/{id}")
     public ResponseEntity<UAV> getUAVById(@PathVariable int id) {
@@ -61,12 +114,37 @@ public class UAVRestController {
     }
 
     /**
-     * Update UAV status via AJAX
+     * Updates the authorization status of a UAV.
+     *
+     * <p>This endpoint toggles the UAV's authorization status between AUTHORIZED
+     * and UNAUTHORIZED. This is commonly used for access control and operational
+     * management. The operation is atomic and includes audit logging.</p>
+     *
+     * <p><strong>Security:</strong> Requires OPERATOR or ADMIN role</p>
+     *
+     * <p><strong>Business Logic:</strong></p>
+     * <ul>
+     * <li>AUTHORIZED → UNAUTHORIZED: Revokes UAV access to all regions</li>
+     * <li>UNAUTHORIZED → AUTHORIZED: Grants UAV access based on assigned regions</li>
+     * </ul>
+     *
+     * @param id The unique identifier of the UAV to update
+     * @return ResponseEntity containing:
+     *         <ul>
+     *         <li>200 OK: Success response with old/new status and updated UAV</li>
+     *         <li>404 Not Found: If UAV with given ID doesn't exist</li>
+     *         <li>500 Internal Server Error: If database operation fails</li>
+     *         </ul>
+     *
+     * @apiNote The response includes both old and new status for audit purposes
+     *
+     * @see UAV.Status
+     * @see UAVRepository#save(Object)
      */
     @PutMapping("/{id}/status")
     public ResponseEntity<Map<String, Object>> updateUAVStatus(@PathVariable int id) {
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
             Optional<UAV> uavOpt = uavRepository.findById(id);
             if (uavOpt.isEmpty()) {
@@ -74,27 +152,27 @@ public class UAVRestController {
                 response.put("message", "UAV not found");
                 return ResponseEntity.notFound().build();
             }
-            
+
             UAV uav = uavOpt.get();
             UAV.Status oldStatus = uav.getStatus();
-            
+
             // Toggle status
             if (uav.getStatus() == UAV.Status.AUTHORIZED) {
                 uav.setStatus(UAV.Status.UNAUTHORIZED);
             } else {
                 uav.setStatus(UAV.Status.AUTHORIZED);
             }
-            
+
             UAV savedUAV = uavRepository.save(uav);
-            
+
             response.put("success", true);
             response.put("message", "UAV status updated successfully");
             response.put("oldStatus", oldStatus.toString());
             response.put("newStatus", savedUAV.getStatus().toString());
             response.put("uav", savedUAV);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error updating UAV status: " + e.getMessage());
@@ -103,7 +181,34 @@ public class UAVRestController {
     }
 
     /**
-     * Delete UAV via AJAX
+     * Permanently removes a UAV from the system.
+     *
+     * <p>This endpoint performs a hard delete of the UAV record and all associated
+     * data including location history, flight logs, and maintenance records.
+     * This operation cannot be undone.</p>
+     *
+     * <p><strong>Security:</strong> Requires ADMIN role only</p>
+     *
+     * <p><strong>Cascade Operations:</strong></p>
+     * <ul>
+     * <li>Removes UAV from hibernate pod if present</li>
+     * <li>Deletes all location history records</li>
+     * <li>Removes region associations</li>
+     * <li>Archives flight logs (if configured)</li>
+     * </ul>
+     *
+     * @param id The unique identifier of the UAV to delete
+     * @return ResponseEntity containing:
+     *         <ul>
+     *         <li>200 OK: Success response confirming deletion</li>
+     *         <li>404 Not Found: If UAV with given ID doesn't exist</li>
+     *         <li>500 Internal Server Error: If deletion fails due to constraints</li>
+     *         </ul>
+     *
+     * @warning This operation is irreversible and will delete all associated data
+     *
+     * @see UAVRepository#deleteById(Object)
+     * @see HibernatePod#removeUAV(UAV)
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> deleteUAV(@PathVariable int id) {

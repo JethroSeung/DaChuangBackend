@@ -9,6 +9,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.lang.NonNull;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -25,7 +26,7 @@ public class WebConfig implements WebMvcConfigurer {
     private RateLimitInterceptor rateLimitInterceptor;
 
     @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
         // Static resources with caching
         registry.addResourceHandler("/css/**")
                 .addResourceLocations("classpath:/static/css/")
@@ -55,7 +56,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void addInterceptors(InterceptorRegistry registry) {
+    public void addInterceptors(@NonNull InterceptorRegistry registry) {
         // Add rate limiting interceptor
         registry.addInterceptor(rateLimitInterceptor)
                 .addPathPatterns("/api/**")
@@ -63,7 +64,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void addCorsMappings(CorsRegistry registry) {
+    public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/api/**")
                 .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
@@ -79,7 +80,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void addViewControllers(ViewControllerRegistry registry) {
+    public void addViewControllers(@NonNull ViewControllerRegistry registry) {
         // Map root to dashboard
         registry.addViewController("/").setViewName("redirect:/dashboard");
 
@@ -89,6 +90,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addViewController("/admin").setViewName("admin");
         registry.addViewController("/analytics").setViewName("analytics");
         registry.addViewController("/monitoring").setViewName("monitoring");
+        registry.addViewController("/map").setViewName("map");
 
         // Error page mappings
         registry.addViewController("/error/403").setViewName("error/403");
@@ -97,10 +99,9 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+    public void configureContentNegotiation(@NonNull ContentNegotiationConfigurer configurer) {
         configurer
                 .favorParameter(false)
-                .favorPathExtension(false)
                 .ignoreAcceptHeader(false)
                 .defaultContentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .mediaType("json", org.springframework.http.MediaType.APPLICATION_JSON)
@@ -110,7 +111,7 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Override
-    public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
+    public void configureAsyncSupport(@NonNull AsyncSupportConfigurer configurer) {
         configurer.setDefaultTimeout(30000); // 30 seconds
         configurer.setTaskExecutor(asyncTaskExecutor());
     }

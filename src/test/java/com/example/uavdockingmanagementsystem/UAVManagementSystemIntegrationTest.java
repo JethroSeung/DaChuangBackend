@@ -1,5 +1,6 @@
 package com.example.uavdockingmanagementsystem;
 
+import com.example.uavdockingmanagementsystem.config.TestRateLimitingConfig;
 import com.example.uavdockingmanagementsystem.model.HibernatePod;
 import com.example.uavdockingmanagementsystem.model.Region;
 import com.example.uavdockingmanagementsystem.model.UAV;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureWebMvc
 @ActiveProfiles("test")
+@Import(TestRateLimitingConfig.class)
 @Transactional
 public class UAVManagementSystemIntegrationTest {
 

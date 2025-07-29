@@ -33,18 +33,32 @@ public class SecurityConfig {
                 // Admin endpoints - require ADMIN role
                 .requestMatchers("/api/uav/delete/**").hasRole("ADMIN")
                 .requestMatchers("/api/hibernate-pod/add", "/api/hibernate-pod/remove").hasRole("ADMIN")
-                
+                .requestMatchers("/api/docking-stations/*/delete", "/api/docking-stations").hasRole("ADMIN")
+                .requestMatchers("/api/geofences/*/delete", "/api/geofences").hasRole("ADMIN")
+
                 // Operator endpoints - require OPERATOR or ADMIN role
                 .requestMatchers("/api/uav/add", "/api/uav/update/**").hasAnyRole("OPERATOR", "ADMIN")
                 .requestMatchers("/api/uav/*/add-region", "/api/uav/*/remove-region").hasAnyRole("OPERATOR", "ADMIN")
-                
+                .requestMatchers("/api/location/update/**", "/api/location/bulk-update").hasAnyRole("OPERATOR", "ADMIN")
+                .requestMatchers("/api/docking-stations/**").hasAnyRole("OPERATOR", "ADMIN")
+                .requestMatchers("/api/geofences/**").hasAnyRole("OPERATOR", "ADMIN")
+
                 // Read-only endpoints - require USER, OPERATOR, or ADMIN role
                 .requestMatchers("/api/uav/all", "/api/uav/*/regions").hasAnyRole("USER", "OPERATOR", "ADMIN")
                 .requestMatchers("/api/hibernate-pod/status", "/api/hibernate-pod/uavs").hasAnyRole("USER", "OPERATOR", "ADMIN")
                 .requestMatchers("/api/uav/statistics").hasAnyRole("USER", "OPERATOR", "ADMIN")
+                .requestMatchers("/api/location/current/**", "/api/location/history/**").hasAnyRole("USER", "OPERATOR", "ADMIN")
+                .requestMatchers("/api/location/flight-path/**", "/api/location/area", "/api/location/active").hasAnyRole("USER", "OPERATOR", "ADMIN")
+                .requestMatchers("/api/location/stats/**", "/api/location/nearby").hasAnyRole("USER", "OPERATOR", "ADMIN")
+                .requestMatchers("/api/docking-stations/operational", "/api/docking-stations/available").hasAnyRole("USER", "OPERATOR", "ADMIN")
+                .requestMatchers("/api/docking-stations/nearest", "/api/docking-stations/area").hasAnyRole("USER", "OPERATOR", "ADMIN")
+                .requestMatchers("/api/docking-stations/statistics").hasAnyRole("USER", "OPERATOR", "ADMIN")
+                .requestMatchers("/api/geofences/active", "/api/geofences/check-point").hasAnyRole("USER", "OPERATOR", "ADMIN")
+                .requestMatchers("/api/geofences/area", "/api/geofences/statistics").hasAnyRole("USER", "OPERATOR", "ADMIN")
                 
                 // Web interface - require authentication
                 .requestMatchers("/uav/**").hasAnyRole("USER", "OPERATOR", "ADMIN")
+                .requestMatchers("/map").hasAnyRole("USER", "OPERATOR", "ADMIN")
                 .requestMatchers("/").hasAnyRole("USER", "OPERATOR", "ADMIN")
                 
                 // All other requests require authentication

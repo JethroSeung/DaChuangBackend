@@ -1,4 +1,2 @@
-com\example\uavdockingmanagementsystem\service\UAVServiceTest.class
 com\example\uavdockingmanagementsystem\UAVManagementSystemIntegrationTest.class
-com\example\uavdockingmanagementsystem\model\HibernatePodTest.class
 com\example\uavdockingmanagementsystem\UavDockingManagementSystemApplicationTests.class

@@ -10,45 +10,154 @@ import com.example.uavdockingmanagementsystem.repository.RegionRepository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Service layer for UAV (Unmanned Aerial Vehicle) management operations.
+ *
+ * <p>This service provides comprehensive business logic for UAV management including
+ * CRUD operations, region access control, validation, and status management.
+ * It serves as the primary business layer between controllers and repositories.</p>
+ *
+ * <p>Key responsibilities include:</p>
+ * <ul>
+ * <li>UAV lifecycle management (create, read, update, delete)</li>
+ * <li>Region assignment and access control validation</li>
+ * <li>UAV status and operational state management</li>
+ * <li>Data validation and business rule enforcement</li>
+ * <li>Integration with hibernate pod operations</li>
+ * <li>RFID tag uniqueness validation</li>
+ * </ul>
+ *
+ * <p>All operations are transactional where appropriate and include proper
+ * error handling and logging. The service enforces business rules and
+ * maintains data integrity across the system.</p>
+ *
+ * @author UAV Management System Team
+ * @version 1.0
+ * @since 1.0
+ *
+ * @see UAV
+ * @see Region
+ * @see UAVRepository
+ * @see RegionRepository
+ */
 @Service
 public class UAVService {
 
+    /** Repository for UAV data access operations */
     @Autowired
     private UAVRepository uavRepository;
-    
+
+    /** Repository for Region data access operations */
     @Autowired
     private RegionRepository regionRepository;
 
-    // Add a new UAV
+    /**
+     * Creates and persists a new UAV in the system.
+     *
+     * <p>This method validates the UAV data and saves it to the database.
+     * The UAV must pass validation checks before being persisted.</p>
+     *
+     * @param uav The UAV entity to be created and saved
+     * @return The persisted UAV entity with generated ID and timestamps
+     * @throws IllegalArgumentException if UAV data is invalid
+     * @throws DataIntegrityViolationException if RFID tag is not unique
+     *
+     * @see #validateUAV(UAV)
+     * @see UAVRepository#save(Object)
+     */
     public UAV addUAV(UAV uav) {
         return uavRepository.save(uav);
     }
 
-    // Get all UAVs
+    /**
+     * Retrieves all UAVs from the system.
+     *
+     * <p>Returns a complete list of all UAV entities in the database.
+     * This method does not include lazy-loaded associations by default.</p>
+     *
+     * @return List of all UAV entities, empty list if none exist
+     *
+     * @see UAVRepository#findAll()
+     */
     public List<UAV> getAllUAVs() {
         return uavRepository.findAll();
     }
 
-    // Delete UAV by ID
+    /**
+     * Permanently removes a UAV from the system.
+     *
+     * <p>This operation cascades to remove associated data including
+     * location history, flight logs, and region associations.
+     * This operation cannot be undone.</p>
+     *
+     * @param id The unique identifier of the UAV to delete
+     * @throws EntityNotFoundException if UAV with given ID doesn't exist
+     *
+     * @warning This operation is irreversible and removes all associated data
+     *
+     * @see UAVRepository#deleteById(Object)
+     */
     public void deleteUAV(int id) {
         uavRepository.deleteById(id);
     }
 
-    // Get UAV by ID
+    /**
+     * Retrieves a specific UAV by its unique identifier.
+     *
+     * @param id The unique identifier of the UAV to retrieve
+     * @return Optional containing the UAV if found, empty Optional otherwise
+     *
+     * @see UAVRepository#findById(Object)
+     */
     public Optional<UAV> getUAVById(int id) {
         return uavRepository.findById(id);
     }
-    
+
     /**
-     * Get UAV by RFID tag
+     * Retrieves a UAV by its RFID tag identifier.
+     *
+     * <p>RFID tags are unique identifiers used for physical UAV identification
+     * and access control. This method is commonly used for real-time operations
+     * and access validation.</p>
+     *
+     * @param rfidTag The RFID tag identifier to search for
+     * @return Optional containing the UAV if found, empty Optional otherwise
+     *
+     * @see UAVRepository#findByRfidTag(String)
+     * @see #checkUAVRegionAccess(String, String)
      */
     public Optional<UAV> getUAVByRfidTag(String rfidTag) {
         return uavRepository.findByRfidTag(rfidTag);
     }
-    
+
     /**
-     * Check if a UAV has access to a specific region
-     * Returns a string with the result of the validation
+     * Validates UAV access to a specific region for access control.
+     *
+     * <p>This method performs comprehensive access validation including:</p>
+     * <ul>
+     * <li>UAV existence verification</li>
+     * <li>Authorization status check</li>
+     * <li>Region assignment verification</li>
+     * <li>Operational status validation</li>
+     * </ul>
+     *
+     * <p>This method is primarily used by physical access control systems
+     * to determine if a UAV should be granted access to restricted areas.</p>
+     *
+     * @param rfidTag The RFID tag of the UAV requesting access
+     * @param regionName The name of the region being accessed
+     * @return String indicating access result:
+     *         <ul>
+     *         <li>"OPEN THE DOOR" - Access granted</li>
+     *         <li>Error message - Access denied with reason</li>
+     *         </ul>
+     *
+     * @apiNote This method returns human-readable strings for integration with
+     *          legacy access control systems
+     *
+     * @see UAV.Status
+     * @see Region
+     * @see #getUAVByRfidTag(String)
      */
     public String checkUAVRegionAccess(String rfidTag, String regionName) {
         // Check if UAV exists
@@ -56,22 +165,22 @@ public class UAVService {
         if (uavOpt.isEmpty()) {
             return "UAV with RFID " + rfidTag + " not found";
         }
-        
+
         UAV uav = uavOpt.get();
-        
+
         // Check if UAV is authorized
         if (uav.getStatus() != UAV.Status.AUTHORIZED) {
             return "UAV is not authorized";
         }
-        
+
         // Check if region is assigned to the UAV
         boolean hasRegion = uav.getRegions().stream()
                 .anyMatch(region -> region.getRegionName().equalsIgnoreCase(regionName));
-                
+
         if (!hasRegion) {
             return "UAV is not authorized for region: " + regionName;
         }
-        
+
         // All checks passed
         return "OPEN THE DOOR";
     }

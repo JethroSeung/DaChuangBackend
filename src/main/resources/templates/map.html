@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UAV Tracking Map - UAV Management System</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <!-- Leaflet Draw CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    
+    <style>
+        .map-container {
+            display: flex;
+            height: calc(100vh - 120px);
+            gap: 10px;
+            margin: 20px;
+        }
+        
+        .map-sidebar {
+            width: 300px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .map-main {
+            flex: 1;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .control-panel {
+            background: white;
+            border-radius: 6px;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+        
+        .control-group select,
+        .control-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .btn-control {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .btn-control:hover {
+            background: var(--primary-color);
+        }
+        
+        .btn-control.active {
+            background: var(--accent-color);
+        }
+        
+        .uav-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .uav-item {
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .uav-item:hover {
+            background: #f8f9fa;
+            border-color: var(--secondary-color);
+        }
+        
+        .uav-item.selected {
+            background: var(--light-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .uav-rfid {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .uav-status {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: white;
+        }
+        
+        .uav-status.authorized {
+            background: var(--success-color);
+        }
+        
+        .uav-status.unauthorized {
+            background: var(--danger-color);
+        }
+        
+        .uav-location {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .station-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .station-item {
+            padding: 8px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .station-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .station-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .station-status {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .geofence-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .geofence-item {
+            padding: 8px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .geofence-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .geofence-name {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .geofence-type {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .legend {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-size: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-size: 14px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .status-value {
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        /* Custom popup styles */
+        .leaflet-popup-content {
+            margin: 8px 12px;
+            line-height: 1.4;
+        }
+        
+        .popup-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        
+        .popup-info {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .popup-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .popup-btn {
+            padding: 4px 8px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .popup-btn:hover {
+            background: var(--primary-color);
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .map-container {
+                flex-direction: column;
+                height: auto;
+                margin: 10px;
+            }
+            
+            .map-sidebar {
+                width: 100%;
+                order: 2;
+                max-height: 300px;
+            }
+            
+            .map-main {
+                height: 400px;
+                order: 1;
+            }
+            
+            .map-controls {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-map-marked-alt" aria-hidden="true"></i> UAV Tracking Map</h1>
+            <nav>
+                <a href="/uav/" class="nav-link"><i class="fas fa-list"></i> UAV List</a>
+                <a href="/dashboard" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                <a href="/map" class="nav-link active"><i class="fas fa-map"></i> Map</a>
+            </nav>
+        </header>
+
+        <div class="map-container">
+            <div class="map-sidebar">
+                <div class="control-group">
+                    <label>Map Layers</label>
+                    <button class="btn-control" id="toggleUAVs">
+                        <i class="fas fa-drone"></i> Show UAVs
+                    </button>
+                    <button class="btn-control" id="toggleStations">
+                        <i class="fas fa-charging-station"></i> Show Stations
+                    </button>
+                    <button class="btn-control" id="toggleGeofences">
+                        <i class="fas fa-shield-alt"></i> Show Geofences
+                    </button>
+                    <button class="btn-control" id="toggleFlightPaths">
+                        <i class="fas fa-route"></i> Show Flight Paths
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <label>Time Range</label>
+                    <select id="timeRange">
+                        <option value="30">Last 30 minutes</option>
+                        <option value="60" selected>Last 1 hour</option>
+                        <option value="180">Last 3 hours</option>
+                        <option value="360">Last 6 hours</option>
+                        <option value="720">Last 12 hours</option>
+                        <option value="1440">Last 24 hours</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Active UAVs (<span id="uavCount">0</span>)</label>
+                    <div class="uav-list" id="uavList">
+                        <!-- UAV items will be populated here -->
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Docking Stations (<span id="stationCount">0</span>)</label>
+                    <div class="station-list" id="stationList">
+                        <!-- Station items will be populated here -->
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Geofences (<span id="geofenceCount">0</span>)</label>
+                    <div class="geofence-list" id="geofenceList">
+                        <!-- Geofence items will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-main">
+                <div class="status-indicator">
+                    <div class="status-item">
+                        <span>Active UAVs:</span>
+                        <span class="status-value" id="activeUAVCount">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Online Stations:</span>
+                        <span class="status-value" id="onlineStationCount">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Active Geofences:</span>
+                        <span class="status-value" id="activeGeofenceCount">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span>Last Update:</span>
+                        <span class="status-value" id="lastUpdate">--:--</span>
+                    </div>
+                </div>
+
+                <div class="map-controls">
+                    <div class="control-panel">
+                        <button class="btn-control" id="centerMap">
+                            <i class="fas fa-crosshairs"></i> Center Map
+                        </button>
+                        <button class="btn-control" id="refreshData">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <button class="btn-control" id="fullscreen">
+                            <i class="fas fa-expand"></i> Fullscreen
+                        </button>
+                    </div>
+
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #2ecc71;"></div>
+                            <span>Authorized UAV</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #e74c3c;"></div>
+                            <span>Unauthorized UAV</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #3498db;"></div>
+                            <span>Docking Station</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f39c12;"></div>
+                            <span>Geofence</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Leaflet Draw JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    
+    <!-- WebSocket for real-time updates -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    
+    <!-- Map functionality -->
+    <script src="/js/map.js" defer></script>
+</body>
+</html>
