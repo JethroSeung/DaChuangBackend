@@ -1,17 +1,18 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Search, 
-  Plane, 
-  Map, 
-  Battery, 
-  Settings, 
-  Users, 
+import {
+  Search,
+  Plane,
+  Map,
+  Battery,
+  Settings,
+  Users,
   FileText,
   Clock,
   ArrowRight,
@@ -104,7 +105,7 @@ export function SearchCommand({ onClose, className }: SearchCommandProps) {
 
   const getItemIcon = (item: any) => {
     if (item.icon) return item.icon
-    
+
     switch (item.type) {
       case 'uav':
         return Plane
@@ -221,15 +222,15 @@ export function SearchCommand({ onClose, className }: SearchCommandProps) {
                     {results.map((item, index) => {
                       const Icon = getItemIcon(item)
                       const isSelected = index === selectedIndex
-                      
+
                       return (
                         <button
                           key={item.id}
                           onClick={() => handleSelect(item)}
                           className={cn(
                             'w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors',
-                            isSelected 
-                              ? 'bg-primary text-primary-foreground' 
+                            isSelected
+                              ? 'bg-primary text-primary-foreground'
                               : 'hover:bg-accent'
                           )}
                         >
@@ -241,8 +242,8 @@ export function SearchCommand({ onClose, className }: SearchCommandProps) {
                             <div className="flex flex-col">
                               <span className="text-sm font-medium">{item.title}</span>
                               {item.status && (
-                                <Badge 
-                                  variant="outline" 
+                                <Badge
+                                  variant="outline"
                                   className={cn('text-xs mt-1', getStatusColor(item.status))}
                                 >
                                   {item.status}

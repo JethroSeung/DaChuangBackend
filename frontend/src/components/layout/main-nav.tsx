@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import {
@@ -103,11 +104,24 @@ interface MainNavProps {
 
 export function MainNav({ className, onNavigate, mobile = false }: MainNavProps) {
   const pathname = usePathname()
+  const { t } = useTranslation('navigation')
+
+  // Get navigation items with translations
+  const getNavigationItems = () => navigation.map(item => {
+    const key = item.name.toLowerCase().replace(/\s+/g, '').replace(/-/g, '')
+    return {
+      ...item,
+      name: t(key),
+      description: t(key + 'Description')
+    }
+  })
+
+  const navigationItems = getNavigationItems()
 
   if (mobile) {
     return (
       <nav className={cn('flex flex-col space-y-1', className)}>
-        {navigation.map((item) => {
+        {navigationItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           const Icon = item.icon
 
@@ -150,7 +164,7 @@ export function MainNav({ className, onNavigate, mobile = false }: MainNavProps)
 
   return (
     <nav className={cn('flex flex-col space-y-1', className)}>
-      {navigation.map((item) => {
+      {navigationItems.map((item) => {
         const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
         const Icon = item.icon
 

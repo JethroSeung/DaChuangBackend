@@ -1,9 +1,40 @@
 'use client'
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card'
 import { Button } from './button'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+
+// Default error fallback component that can use hooks
+function DefaultErrorFallback({ error, resetError }: { error?: Error; resetError: () => void }) {
+  const { t } = useTranslation('common')
+
+  return (
+    <Card className="border-destructive">
+      <CardHeader>
+        <CardTitle className="flex items-center text-destructive">
+          <AlertTriangle className="h-5 w-5 mr-2" />
+          {t('somethingWentWrong')}
+        </CardTitle>
+        <CardDescription>
+          {t('errorOccurred')}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {error && (
+          <div className="text-sm text-muted-foreground bg-muted p-3 rounded">
+            <code>{error.message}</code>
+          </div>
+        )}
+        <Button onClick={resetError} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          {t('tryAgain')}
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
 
 interface ErrorBoundaryState {
   hasError: boolean
@@ -40,30 +71,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         return <FallbackComponent error={this.state.error} resetError={this.resetError} />
       }
 
-      return (
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center text-destructive">
-              <AlertTriangle className="h-5 w-5 mr-2" />
-              Something went wrong
-            </CardTitle>
-            <CardDescription>
-              An error occurred while rendering this component.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {this.state.error && (
-              <div className="text-sm text-muted-foreground bg-muted p-3 rounded">
-                <code>{this.state.error.message}</code>
-              </div>
-            )}
-            <Button onClick={this.resetError} variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Try again
-            </Button>
-          </CardContent>
-        </Card>
-      )
+      return <DefaultErrorFallback error={this.state.error} resetError={this.resetError} />
     }
 
     return this.props.children

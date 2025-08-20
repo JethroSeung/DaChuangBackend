@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -32,6 +33,7 @@ import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
   const { isMobile } = useResponsive()
+  const { t } = useTranslation(['dashboard', 'common'])
   const {
     metrics,
     alerts,
@@ -42,7 +44,7 @@ export default function DashboardPage() {
     getUnacknowledgedAlerts,
     getCriticalAlerts,
   } = useDashboardStore()
-  
+
   const { stats, fetchStats } = useUAVStore()
 
   useEffect(() => {
@@ -77,7 +79,7 @@ export default function DashboardPage() {
   // Quick stats from UAV store and dashboard metrics
   const quickStats = [
     {
-      title: 'Total UAVs',
+      title: t('dashboard:totalUAVs'),
       value: stats?.total || metrics?.totalUAVs || 0,
       icon: Plane,
       color: 'text-blue-600',
@@ -85,7 +87,7 @@ export default function DashboardPage() {
       href: '/uavs',
     },
     {
-      title: 'Active Flights',
+      title: t('dashboard:activeFlights'),
       value: metrics?.activeFlights || 0,
       icon: Activity,
       color: 'text-green-600',
@@ -93,7 +95,7 @@ export default function DashboardPage() {
       href: '/map',
     },
     {
-      title: 'Low Battery',
+      title: t('dashboard:lowBattery'),
       value: stats?.lowBattery || metrics?.lowBatteryCount || 0,
       icon: Battery,
       color: 'text-orange-600',
@@ -101,7 +103,7 @@ export default function DashboardPage() {
       href: '/battery',
     },
     {
-      title: 'Alerts',
+      title: t('dashboard:alerts'),
       value: unacknowledgedAlerts.length,
       icon: AlertTriangle,
       color: criticalAlerts.length > 0 ? 'text-red-600' : 'text-yellow-600',
@@ -112,28 +114,28 @@ export default function DashboardPage() {
 
   const systemOverview = [
     {
-      title: 'Authorized UAVs',
+      title: t('dashboard:unauthorizedUAVs'),
       value: stats?.authorized || metrics?.authorizedUAVs || 0,
       total: stats?.total || metrics?.totalUAVs || 0,
       icon: Shield,
       color: 'text-green-600',
     },
     {
-      title: 'Hibernating',
+      title: t('dashboard:hibernatingUAVs'),
       value: stats?.hibernating || metrics?.hibernatingUAVs || 0,
       total: stats?.total || metrics?.totalUAVs || 0,
       icon: Home,
       color: 'text-blue-600',
     },
     {
-      title: 'Charging',
+      title: t('dashboard:chargingUAVs'),
       value: stats?.charging || metrics?.chargingCount || 0,
       total: stats?.total || metrics?.totalUAVs || 0,
       icon: Zap,
       color: 'text-yellow-600',
     },
     {
-      title: 'Maintenance',
+      title: t('dashboard:maintenanceUAVs'),
       value: stats?.maintenance || metrics?.maintenanceCount || 0,
       total: stats?.total || metrics?.totalUAVs || 0,
       icon: Users,
@@ -156,13 +158,13 @@ export default function DashboardPage() {
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
             <h1 className="text-3xl font-bold tracking-tight font-orbitron">
-              Dashboard
+              {t('dashboard:title')}
             </h1>
             <p className="text-muted-foreground">
-              Real-time UAV fleet monitoring and system overview
+              {t('dashboard:subtitle')}
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
@@ -171,12 +173,12 @@ export default function DashboardPage() {
               disabled={loading}
             >
               <RefreshCw className={cn('h-4 w-4 mr-2', loading && 'animate-spin')} />
-              Refresh
+              {t('common:refresh')}
             </Button>
             <Badge variant="secondary" className="text-xs">
               <Clock className="h-3 w-3 mr-1" />
-              Last updated: {metrics?.realtimeData?.lastUpdate ? 
-                new Date(metrics.realtimeData.lastUpdate).toLocaleTimeString() : 
+              Last updated: {metrics?.realtimeData?.lastUpdate ?
+                new Date(metrics.realtimeData.lastUpdate).toLocaleTimeString() :
                 'Never'
               }
             </Badge>
@@ -216,7 +218,7 @@ export default function DashboardPage() {
           {systemOverview.map((item) => {
             const Icon = item.icon
             const percentage = item.total > 0 ? Math.round((item.value / item.total) * 100) : 0
-            
+
             return (
               <Card key={item.title}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -250,7 +252,7 @@ export default function DashboardPage() {
           <div className="space-y-6">
             {/* System Health */}
             <SystemHealth />
-            
+
             {/* Recent Alerts */}
             <RealtimeAlerts />
           </div>

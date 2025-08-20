@@ -1,16 +1,17 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { 
-  Bell, 
-  AlertTriangle, 
-  Info, 
-  CheckCircle, 
-  X, 
+import {
+  Bell,
+  AlertTriangle,
+  Info,
+  CheckCircle,
+  X,
   Settings,
   MoreHorizontal,
   Trash2,
@@ -95,18 +96,18 @@ export function NotificationCenter() {
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
 
   const unreadCount = notifications.filter(n => !n.read).length
-  const filteredNotifications = filter === 'unread' 
+  const filteredNotifications = filter === 'unread'
     ? notifications.filter(n => !n.read)
     : notifications
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => 
+    setNotifications(prev =>
       prev.map(n => n.id === id ? { ...n, read: true } : n)
     )
   }
 
   const markAllAsRead = () => {
-    setNotifications(prev => 
+    setNotifications(prev =>
       prev.map(n => ({ ...n, read: true }))
     )
   }
@@ -228,14 +229,14 @@ export function NotificationCenter() {
             <div className="space-y-2">
               {filteredNotifications.map((notification) => {
                 const Icon = getNotificationIcon(notification.type)
-                
+
                 return (
                   <div
                     key={notification.id}
                     className={cn(
                       'p-3 rounded-lg border transition-colors',
-                      notification.read 
-                        ? 'bg-muted/30 border-muted' 
+                      notification.read
+                        ? 'bg-muted/30 border-muted'
                         : 'bg-card border-border shadow-sm'
                     )}
                   >
@@ -287,7 +288,7 @@ export function NotificationCenter() {
                                   </>
                                 )}
                               </DropdownMenuItem>
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => deleteNotification(notification.id)}
                                 className="text-red-600"
                               >
@@ -301,8 +302,8 @@ export function NotificationCenter() {
                         {/* Footer */}
                         <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center space-x-2">
-                            <Badge 
-                              variant="outline" 
+                            <Badge
+                              variant="outline"
                               className={cn('text-xs', getCategoryColor(notification.category))}
                             >
                               {notification.category}

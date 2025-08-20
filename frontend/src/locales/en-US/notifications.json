@@ -1,0 +1,40 @@
+{
+  "title": "Notifications",
+  "subtitle": "System alerts and updates",
+  "markAllRead": "Mark all as read",
+  "clearAll": "Clear all",
+  "noNotifications": "No notifications",
+  "noNotificationsMessage": "You're all caught up! No new notifications.",
+  "markAsRead": "Mark as read",
+  "markAsUnread": "Mark as unread",
+  "delete": "Delete",
+  "viewDetails": "View details",
+  "categories": {
+    "all": "All",
+    "system": "System",
+    "uav": "UAV",
+    "battery": "Battery",
+    "security": "Security",
+    "maintenance": "Maintenance"
+  },
+  "types": {
+    "info": "Info",
+    "warning": "Warning",
+    "error": "Error",
+    "success": "Success"
+  },
+  "mockNotifications": {
+    "lowBatteryAlert": "Low Battery Alert",
+    "lowBatteryMessage": "UAV-001 battery level is at 15%. Consider charging soon.",
+    "unauthorizedAccess": "Unauthorized Access Attempt",
+    "unauthorizedMessage": "Failed login attempt detected from unknown IP address.",
+    "maintenanceComplete": "Maintenance Complete",
+    "maintenanceMessage": "UAV-003 maintenance has been completed successfully.",
+    "systemUpdate": "System Update Available",
+    "systemUpdateMessage": "A new system update is available. Update recommended.",
+    "geofenceViolation": "Geofence Violation",
+    "geofenceMessage": "UAV-002 has exited the authorized flight zone.",
+    "dockingComplete": "Docking Complete",
+    "dockingMessage": "UAV-004 has successfully docked at Station Alpha."
+  }
+}

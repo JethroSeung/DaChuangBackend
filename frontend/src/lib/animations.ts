@@ -18,15 +18,15 @@ export const pageVariants: Variants = {
 
 // Sidebar animation variants
 export const sidebarVariants: Variants = {
-  open: {
-    width: 280,
+  expanded: {
+    width: 256,
     transition: {
       duration: 0.3,
       ease: 'easeInOut',
     },
   },
-  closed: {
-    width: 80,
+  collapsed: {
+    width: 64,
     transition: {
       duration: 0.3,
       ease: 'easeInOut',
@@ -117,8 +117,25 @@ export const transitions = {
   },
 }
 
-// Utility function to get animation variants
-export function getAnimationVariants(type: 'page' | 'sidebar' | 'card' | 'alert' | 'stagger'): Variants {
+// Utility function to get animation variants based on user preference
+export const getAnimationVariants = (variants: Variants): Variants => {
+  if (prefersReducedMotion()) {
+    // Return simplified variants for reduced motion
+    return Object.keys(variants).reduce((acc, key) => {
+      const variant = variants[key]
+      if (typeof variant === 'object' && variant !== null) {
+        acc[key] = { opacity: (variant as any).opacity || 1 }
+      } else {
+        acc[key] = { opacity: 1 }
+      }
+      return acc
+    }, {} as Variants)
+  }
+  return variants
+}
+
+// Legacy function for backward compatibility
+export function getAnimationVariantsByType(type: 'page' | 'sidebar' | 'card' | 'alert' | 'stagger'): Variants {
   switch (type) {
     case 'page':
       return pageVariants

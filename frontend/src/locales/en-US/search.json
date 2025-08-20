@@ -1,0 +1,40 @@
+{
+  "title": "Search",
+  "placeholder": "Search UAVs, pages, or commands...",
+  "noResults": "No results found",
+  "noResultsMessage": "Try adjusting your search terms",
+  "recent": "Recent",
+  "suggestions": "Suggestions",
+  "uavs": "UAVs",
+  "pages": "Pages",
+  "commands": "Commands",
+  "clearRecent": "Clear recent",
+  "viewAll": "View all",
+  "searchResults": "Search Results",
+  "showingResults": "Showing {{count}} results for \"{{query}}\"",
+  "categories": {
+    "all": "All",
+    "uav": "UAVs",
+    "page": "Pages",
+    "command": "Commands",
+    "user": "Users",
+    "log": "Logs"
+  },
+  "mockData": {
+    "uavStatus": "UAV Status",
+    "batteryMonitor": "Battery Monitor",
+    "flightLogs": "Flight Logs",
+    "dashboard": "Dashboard",
+    "uavManagement": "UAV Management",
+    "mapView": "Map View",
+    "settings": "Settings",
+    "users": "Users",
+    "reports": "Reports"
+  },
+  "status": {
+    "active": "Active",
+    "hibernating": "Hibernating",
+    "charging": "Charging",
+    "maintenance": "Maintenance"
+  }
+}

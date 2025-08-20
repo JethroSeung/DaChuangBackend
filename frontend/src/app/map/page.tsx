@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -35,8 +36,9 @@ import toast from 'react-hot-toast'
 
 export default function MapPage() {
   const { isMobile } = useResponsive()
+  const { t } = useTranslation(['map', 'common'])
   const { uavs, loading, error, fetchUAVs } = useUAVStore()
-  
+
   const [selectedUAV, setSelectedUAV] = useState<UAV | null>(null)
   const [mapLayers, setMapLayers] = useState({
     uavs: true,
@@ -62,7 +64,7 @@ export default function MapPage() {
 
   const handleRefresh = () => {
     fetchUAVs()
-    toast.success('Map data refreshed')
+    toast.success(t('map:mapDataRefreshed'))
   }
 
   const handleLayerToggle = (layer: keyof typeof mapLayers) => {
@@ -81,12 +83,12 @@ export default function MapPage() {
   }
 
   const filteredUAVs = uavs.filter(uav => {
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       uav.rfidTag.toLowerCase().includes(searchQuery.toLowerCase()) ||
       uav.region?.toLowerCase().includes(searchQuery.toLowerCase())
-    
+
     const matchesStatus = filterStatus === 'all' || uav.status === filterStatus
-    
+
     return matchesSearch && matchesStatus
   })
 
@@ -150,13 +152,13 @@ export default function MapPage() {
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
             <h1 className="text-3xl font-bold tracking-tight font-orbitron">
-              Map View
+              {t('map:title')}
             </h1>
             <p className="text-muted-foreground">
-              Real-time UAV tracking and location monitoring
+              {t('map:subtitle')}
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
@@ -165,7 +167,7 @@ export default function MapPage() {
               disabled={loading}
             >
               <RefreshCw className={cn('h-4 w-4 mr-2', loading && 'animate-spin')} />
-              Refresh
+              {t('common:refresh')}
             </Button>
           </div>
         </div>
@@ -176,34 +178,34 @@ export default function MapPage() {
             {/* Search and Filters */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Search & Filter</CardTitle>
+                <CardTitle className="text-lg">{t('map:searchAndFilter')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
-                    placeholder="Search UAVs..."
+                    placeholder={t('map:searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
                   />
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="status-filter">Filter by Status</Label>
+                  <Label htmlFor="status-filter">{t('map:filterByStatus')}</Label>
                   <Select value={filterStatus} onValueChange={setFilterStatus}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder={t('map:selectStatus')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All ({statusCounts.all})</SelectItem>
-                      <SelectItem value="AUTHORIZED">Authorized ({statusCounts.AUTHORIZED})</SelectItem>
-                      <SelectItem value="UNAUTHORIZED">Unauthorized ({statusCounts.UNAUTHORIZED})</SelectItem>
-                      <SelectItem value="ACTIVE">Active ({statusCounts.ACTIVE})</SelectItem>
-                      <SelectItem value="HIBERNATING">Hibernating ({statusCounts.HIBERNATING})</SelectItem>
-                      <SelectItem value="CHARGING">Charging ({statusCounts.CHARGING})</SelectItem>
-                      <SelectItem value="MAINTENANCE">Maintenance ({statusCounts.MAINTENANCE})</SelectItem>
-                      <SelectItem value="EMERGENCY">Emergency ({statusCounts.EMERGENCY})</SelectItem>
+                      <SelectItem value="all">{t('map:all')} ({statusCounts.all})</SelectItem>
+                      <SelectItem value="AUTHORIZED">{t('map:authorized')} ({statusCounts.AUTHORIZED})</SelectItem>
+                      <SelectItem value="UNAUTHORIZED">{t('map:unauthorized')} ({statusCounts.UNAUTHORIZED})</SelectItem>
+                      <SelectItem value="ACTIVE">{t('map:active')} ({statusCounts.ACTIVE})</SelectItem>
+                      <SelectItem value="HIBERNATING">{t('map:hibernating')} ({statusCounts.HIBERNATING})</SelectItem>
+                      <SelectItem value="CHARGING">{t('map:charging')} ({statusCounts.CHARGING})</SelectItem>
+                      <SelectItem value="MAINTENANCE">{t('map:maintenance')} ({statusCounts.MAINTENANCE})</SelectItem>
+                      <SelectItem value="EMERGENCY">{t('map:emergency')} ({statusCounts.EMERGENCY})</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -215,7 +217,7 @@ export default function MapPage() {
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
                   <Layers className="h-5 w-5 mr-2" />
-                  Map Layers
+                  {t('map:mapLayers')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -238,7 +240,7 @@ export default function MapPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  UAVs ({filteredUAVs.length})
+                  {t('map:uavs')} ({filteredUAVs.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -263,23 +265,23 @@ export default function MapPage() {
                             {uav.batteryLevel}%
                           </Badge>
                         </div>
-                        
+
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {uav.region && <div>Region: {uav.region}</div>}
+                          {uav.region && <div>{t('map:region')}: {uav.region}</div>}
                           {uav.location && (
                             <div>
-                              Lat: {uav.location.latitude.toFixed(4)}, 
-                              Lng: {uav.location.longitude.toFixed(4)}
+                              {t('map:latitude')}: {uav.location.latitude.toFixed(4)},
+                              {t('map:longitude')}: {uav.location.longitude.toFixed(4)}
                             </div>
                           )}
                         </div>
                       </div>
                     )
                   })}
-                  
+
                   {filteredUAVs.length === 0 && (
                     <div className="text-center py-4 text-muted-foreground">
-                      No UAVs found
+                      {t('map:noUAVsFound')}
                     </div>
                   )}
                 </div>
@@ -292,13 +294,13 @@ export default function MapPage() {
             <Card className="h-[600px] lg:h-[800px]">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Interactive Map</span>
+                  <span>{t('map:interactiveMap')}</span>
                   <Badge variant="outline">
-                    {filteredUAVs.filter(u => u.location).length} UAVs with location
+                    {filteredUAVs.filter(u => u.location).length} {t('map:uavsWithLocation')}
                   </Badge>
                 </CardTitle>
                 <CardDescription>
-                  Real-time UAV positions and tracking
+                  {t('map:realtimePositions')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0 h-full">
@@ -320,23 +322,23 @@ export default function MapPage() {
         {selectedUAV && (
           <Card>
             <CardHeader>
-              <CardTitle>Selected UAV: {selectedUAV.rfidTag}</CardTitle>
+              <CardTitle>{t('map:selectedUAV')}: {selectedUAV.rfidTag}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <div>
-                  <Label className="text-sm font-medium">Status</Label>
+                  <Label className="text-sm font-medium">{t('map:status')}</Label>
                   <div className="flex items-center space-x-2 mt-1">
                     <Badge variant={selectedUAV.status === 'AUTHORIZED' ? 'default' : 'destructive'}>
                       {selectedUAV.status}
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div>
-                  <Label className="text-sm font-medium">Battery Level</Label>
+                  <Label className="text-sm font-medium">{t('map:batteryLevel')}</Label>
                   <div className="mt-1">
-                    <span className={cn('font-semibold', 
+                    <span className={cn('font-semibold',
                       selectedUAV.batteryLevel > 60 ? 'text-green-600' :
                       selectedUAV.batteryLevel > 30 ? 'text-yellow-600' : 'text-red-600'
                     )}>
@@ -344,14 +346,14 @@ export default function MapPage() {
                     </span>
                   </div>
                 </div>
-                
+
                 <div>
-                  <Label className="text-sm font-medium">Region</Label>
-                  <div className="mt-1">{selectedUAV.region || 'Not assigned'}</div>
+                  <Label className="text-sm font-medium">{t('map:region')}</Label>
+                  <div className="mt-1">{selectedUAV.region || t('map:notAssigned')}</div>
                 </div>
-                
+
                 <div>
-                  <Label className="text-sm font-medium">Last Seen</Label>
+                  <Label className="text-sm font-medium">{t('map:lastSeen')}</Label>
                   <div className="mt-1 text-sm">
                     {new Date(selectedUAV.lastSeen).toLocaleString()}
                   </div>

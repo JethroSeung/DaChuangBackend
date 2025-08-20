@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,21 +15,19 @@ import { useUAVStore } from '@/stores/uav-store'
 import { UAV, UAVStatus, CreateUAVRequest } from '@/types/uav'
 import { Loader2 } from 'lucide-react'
 
-const uavFormSchema = z.object({
-  rfidTag: z.string().min(3, 'RFID tag must be at least 3 characters').max(50, 'RFID tag must be less than 50 characters'),
-  ownerName: z.string().min(2, 'Owner name must be at least 2 characters').max(100, 'Owner name must be less than 100 characters'),
-  model: z.string().min(2, 'Model must be at least 2 characters').max(100, 'Model must be less than 100 characters'),
-  status: z.enum(['AUTHORIZED', 'UNAUTHORIZED']),
-  inHibernatePod: z.boolean().optional(),
-  serialNumber: z.string().optional(),
-  manufacturer: z.string().optional(),
-  weightKg: z.number().positive().optional(),
-  maxFlightTimeMinutes: z.number().positive().optional(),
-  maxAltitudeMeters: z.number().positive().optional(),
-  maxSpeedKmh: z.number().positive().optional(),
-})
-
-type UAVFormData = z.infer<typeof uavFormSchema>
+type UAVFormData = {
+  rfidTag: string
+  ownerName: string
+  model: string
+  status: 'AUTHORIZED' | 'UNAUTHORIZED'
+  inHibernatePod?: boolean
+  serialNumber?: string
+  manufacturer?: string
+  weightKg?: number
+  maxFlightTimeMinutes?: number
+  maxAltitudeMeters?: number
+  maxSpeedKmh?: number
+}
 
 interface UAVFormProps {
   uav?: UAV
@@ -38,6 +37,22 @@ interface UAVFormProps {
 
 export function UAVForm({ uav, onSuccess, onCancel }: UAVFormProps) {
   const { createUAV, updateUAV, loading, regions, fetchRegions } = useUAVStore()
+  const { t } = useTranslation(['uav', 'forms', 'common'])
+
+  // Create validation schema with translations
+  const uavFormSchema = z.object({
+    rfidTag: z.string().min(3, t('forms:validation.minLength', { min: 3 })).max(50, t('forms:validation.maxLength', { max: 50 })),
+    ownerName: z.string().min(2, t('forms:validation.minLength', { min: 2 })).max(100, t('forms:validation.maxLength', { max: 100 })),
+    model: z.string().min(2, t('forms:validation.minLength', { min: 2 })).max(100, t('forms:validation.maxLength', { max: 100 })),
+    status: z.enum(['AUTHORIZED', 'UNAUTHORIZED']),
+    inHibernatePod: z.boolean().optional(),
+    serialNumber: z.string().optional(),
+    manufacturer: z.string().optional(),
+    weightKg: z.number().positive(t('forms:validation.positive')).optional(),
+    maxFlightTimeMinutes: z.number().positive(t('forms:validation.positive')).optional(),
+    maxAltitudeMeters: z.number().positive(t('forms:validation.positive')).optional(),
+    maxSpeedKmh: z.number().positive(t('forms:validation.positive')).optional(),
+  })
 
   const {
     register,
@@ -103,14 +118,14 @@ export function UAVForm({ uav, onSuccess, onCancel }: UAVFormProps) {
         {/* Basic Information */}
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
+            <CardTitle>{t('uav:basicInformation')}</CardTitle>
             <CardDescription>
-              Essential UAV identification and ownership details
+              {t('uav:basicInfoDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="rfidTag">RFID Tag *</Label>
+              <Label htmlFor="rfidTag">{t('uav:rfidTag')} *</Label>
               <Input
                 id="rfidTag"
                 {...register('rfidTag')}
@@ -123,7 +138,7 @@ export function UAVForm({ uav, onSuccess, onCancel }: UAVFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ownerName">Owner Name *</Label>
+              <Label htmlFor="ownerName">{t('uav:ownerName')} *</Label>
               <Input
                 id="ownerName"
                 {...register('ownerName')}
@@ -254,7 +269,7 @@ export function UAVForm({ uav, onSuccess, onCancel }: UAVFormProps) {
           onClick={onCancel}
           disabled={isSubmitting}
         >
-          Cancel
+          {t('common:cancel')}
         </Button>
         <Button
           type="submit"
@@ -262,7 +277,7 @@ export function UAVForm({ uav, onSuccess, onCancel }: UAVFormProps) {
           className="flex items-center space-x-2"
         >
           {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          <span>{uav ? 'Update UAV' : 'Create UAV'}</span>
+          <span>{uav ? t('uav:editUAV') : t('uav:createUAV')}</span>
         </Button>
       </div>
     </form>

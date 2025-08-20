@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -47,6 +48,7 @@ import toast from 'react-hot-toast'
 
 export default function UAVManagementPage() {
   const { isMobile } = useResponsive()
+  const { t } = useTranslation(['uav', 'common'])
   const {
     uavs,
     loading,
@@ -152,7 +154,7 @@ export default function UAVManagementPage() {
               Manage your UAV fleet and monitor their status
             </p>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
@@ -163,7 +165,7 @@ export default function UAVManagementPage() {
               <RefreshCw className={cn('h-4 w-4 mr-2', loading && 'animate-spin')} />
               Refresh
             </Button>
-            
+
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
               <DialogTrigger asChild>
                 <Button>
@@ -209,7 +211,7 @@ export default function UAVManagementPage() {
                   />
                 </div>
               </div>
-              
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
@@ -286,7 +288,7 @@ export default function UAVManagementPage() {
                       <div className="p-2 bg-primary/10 rounded-md">
                         <Plane className="h-5 w-5 text-primary" />
                       </div>
-                      
+
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
                           <h3 className="font-semibold">{uav.rfidTag}</h3>
@@ -297,20 +299,20 @@ export default function UAVManagementPage() {
                             <Badge variant="outline">Hibernating</Badge>
                           )}
                         </div>
-                        
+
                         <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                           <div className="flex items-center space-x-1">
                             <Battery className={cn('h-4 w-4', getBatteryColor(uav.batteryLevel))} />
                             <span>{uav.batteryLevel}%</span>
                           </div>
-                          
+
                           {uav.region && (
                             <div className="flex items-center space-x-1">
                               <MapPin className="h-4 w-4" />
                               <span>{uav.region}</span>
                             </div>
                           )}
-                          
+
                           <div className="flex items-center space-x-1">
                             <Clock className="h-4 w-4" />
                             <span>
@@ -337,7 +339,7 @@ export default function UAVManagementPage() {
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           onClick={() => handleDelete(uav)}
                           className="text-destructive"
                         >

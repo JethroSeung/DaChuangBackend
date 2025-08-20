@@ -16,6 +16,7 @@ import {
   Wifi,
   WifiOff,
   Activity,
+  PanelLeft,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,7 +31,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { MainNav } from './main-nav'
+import { LanguageSwitcher } from './language-switcher'
 import { useDashboardStore } from '@/stores/dashboard-store'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
@@ -39,6 +42,7 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const pathname = usePathname()
+  const { t } = useTranslation(['common', 'navigation'])
   const [searchQuery, setSearchQuery] = useState('')
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -62,24 +66,24 @@ export function Header({ onMenuClick }: HeaderProps) {
 
   const getPageTitle = () => {
     const pathSegments = pathname.split('/').filter(Boolean)
-    if (pathSegments.length === 0) return 'Dashboard'
+    if (pathSegments.length === 0) return t('navigation:dashboard')
 
     const pageMap: Record<string, string> = {
-      dashboard: 'Dashboard',
-      uavs: 'UAV Management',
-      map: 'Map View',
-      'hibernate-pod': 'Hibernate Pod',
-      'docking-stations': 'Docking Stations',
-      battery: 'Battery Monitor',
-      'flight-logs': 'Flight Logs',
-      analytics: 'Analytics',
-      alerts: 'Alerts',
-      regions: 'Regions',
-      users: 'Users',
-      settings: 'Settings',
+      dashboard: t('navigation:dashboard'),
+      uavs: t('navigation:uavmanagement'),
+      map: t('navigation:mapview'),
+      'hibernate-pod': t('navigation:hibernatepod'),
+      'docking-stations': t('navigation:dockingstations'),
+      battery: t('navigation:batterymonitor'),
+      'flightLogs': t('navigation:flightLogs'),
+      analytics: t('navigation:analytics'),
+      alerts: t('navigation:alerts'),
+      regions: t('navigation:regions'),
+      users: t('navigation:users'),
+      settings: t('navigation:settings'),
     }
 
-    return pageMap[pathSegments[0]] || 'UAV Management System'
+    return pageMap[pathSegments[0]] || t('common:appName')
   }
 
   return (
@@ -87,6 +91,20 @@ export function Header({ onMenuClick }: HeaderProps) {
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Left section */}
         <div className="flex items-center space-x-4">
+          {/* Desktop sidebar toggle */}
+          {onMenuClick && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onMenuClick}
+              className="hidden md:flex"
+              aria-label="Toggle sidebar"
+            >
+              <PanelLeft className="h-5 w-5" />
+              <span className="sr-only">Toggle sidebar</span>
+            </Button>
+          )}
+
           {/* Mobile menu trigger */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -97,7 +115,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 onClick={() => setMobileMenuOpen(true)}
               >
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
+                <span className="sr-only">{t('common:menu')}</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-80">
@@ -140,7 +158,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search UAVs, regions, or logs..."
+              placeholder={t('common:searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4"
@@ -155,12 +173,12 @@ export function Header({ onMenuClick }: HeaderProps) {
             {connectionStatus.isConnected ? (
               <div className="flex items-center space-x-1 text-green-600">
                 <Wifi className="h-4 w-4" />
-                <span className="text-xs font-medium">Connected</span>
+                <span className="text-xs font-medium">{t('common:connected')}</span>
               </div>
             ) : (
               <div className="flex items-center space-x-1 text-red-600">
                 <WifiOff className="h-4 w-4" />
-                <span className="text-xs font-medium">Disconnected</span>
+                <span className="text-xs font-medium">{t('common:disconnected')}</span>
               </div>
             )}
           </div>
@@ -171,7 +189,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               "h-5 w-5",
               connectionStatus.isConnected ? "text-green-600" : "text-red-600"
             )} />
-            <span className="sr-only">System status</span>
+            <span className="sr-only">{t('common:systemStatus')}</span>
           </Button>
 
           {/* Notifications */}
@@ -187,11 +205,11 @@ export function Header({ onMenuClick }: HeaderProps) {
                     {unacknowledgedAlerts.length > 9 ? '9+' : unacknowledgedAlerts.length}
                   </Badge>
                 )}
-                <span className="sr-only">Notifications</span>
+                <span className="sr-only">{t('common:notifications')}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('common:notifications')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {unacknowledgedAlerts.length > 0 ? (
                 <>
@@ -212,17 +230,20 @@ export function Header({ onMenuClick }: HeaderProps) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/alerts" className="w-full text-center">
-                      View all alerts
+                      {t('common:viewAllAlerts')}
                     </Link>
                   </DropdownMenuItem>
                 </>
               ) : (
                 <DropdownMenuItem disabled>
-                  No new notifications
+                  {t('common:noNotifications')}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Language switcher */}
+          <LanguageSwitcher />
 
           {/* Dark mode toggle */}
           <Button
@@ -235,7 +256,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             ) : (
               <Moon className="h-5 w-5" />
             )}
-            <span className="sr-only">Toggle dark mode</span>
+            <span className="sr-only">{t('common:toggleDarkMode')}</span>
           </Button>
 
           {/* User menu */}
@@ -247,24 +268,24 @@ export function Header({ onMenuClick }: HeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>{t('common:myAccount')}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <Link href="/profile">
                   <User className="mr-2 h-4 w-4" />
-                  Profile
+                  {t('common:profile')}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/settings">
                   <Settings className="mr-2 h-4 w-4" />
-                  Settings
+                  {t('common:settings')}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 <LogOut className="mr-2 h-4 w-4" />
-                Log out
+                {t('common:logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

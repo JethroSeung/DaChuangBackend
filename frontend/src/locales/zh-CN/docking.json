@@ -1,0 +1,33 @@
+{
+  "title": "对接站",
+  "subtitle": "监控和管理无人机对接站网络",
+  "totalStations": "总站点数",
+  "capacity": "容量",
+  "charging": "充电中",
+  "availability": "可用性",
+  "active": "活跃",
+  "occupied": "已占用",
+  "activeChargingPorts": "活跃充电端口",
+  "availablePorts": "可用端口",
+  "location": "位置",
+  "chargingPorts": "充电端口",
+  "port": "端口",
+  "available": "可用",
+  "occupied": "已占用",
+  "error": "错误",
+  "viewOnMap": "在地图上查看",
+  "managePorts": "管理端口",
+  "maintenanceRequired": "需要维护",
+  "maintenanceAlert": "个对接站需要维护。请检查受影响的站点。",
+  "stationStatus": {
+    "ACTIVE": "活跃",
+    "MAINTENANCE": "维护中",
+    "OFFLINE": "离线"
+  },
+  "portStatus": {
+    "AVAILABLE": "可用",
+    "OCCUPIED": "已占用", 
+    "CHARGING": "充电中",
+    "ERROR": "错误"
+  }
+}

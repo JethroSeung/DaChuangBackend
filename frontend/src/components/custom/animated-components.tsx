@@ -21,7 +21,7 @@ interface AnimatedPageProps extends HTMLMotionProps<'div'> {
 export function AnimatedPage({ children, className, ...props }: AnimatedPageProps) {
   return (
     <motion.div
-      variants={getAnimationVariants('page')}
+      variants={getAnimationVariants(pageVariants)}
       initial="initial"
       animate="animate"
       exit="exit"
@@ -50,7 +50,7 @@ export function AnimatedCard({
 }: AnimatedCardProps) {
   return (
     <motion.div
-      variants={getAnimationVariants('card')}
+      variants={getAnimationVariants(cardVariants)}
       initial="hidden"
       animate="visible"
       whileHover={hover ? "hover" : undefined}
@@ -89,7 +89,7 @@ export function StaggerContainer({
 
   return (
     <motion.div
-      variants={getAnimationVariants('stagger')}
+      variants={getAnimationVariants(staggerContainer)}
       initial="hidden"
       animate="visible"
       className={className}
@@ -130,7 +130,7 @@ export function AnimatedModal({ children, className, isOpen, ...props }: Animate
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          variants={getAnimationVariants('alert')}
+          variants={getAnimationVariants(alertVariants)}
           initial="hidden"
           animate="visible"
           exit="exit"

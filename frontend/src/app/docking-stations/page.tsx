@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -71,6 +72,7 @@ const mockDockingStations: DockingStation[] = [
 ]
 
 export default function DockingStationsPage() {
+  const { t } = useTranslation(['docking', 'common'])
   const { uavs, loading, fetchUAVs } = useUAVStore()
   const [dockingStations] = useState<DockingStation[]>(mockDockingStations)
 
@@ -137,7 +139,7 @@ export default function DockingStationsPage() {
               Monitor and manage UAV docking station network
             </p>
           </div>
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -257,7 +259,7 @@ export default function DockingStationsPage() {
                           </div>
                         ))}
                       </div>
-                      
+
                       {/* Port Status Legend */}
                       <div className="flex flex-wrap gap-2 mt-3 text-xs">
                         <div className="flex items-center space-x-1">
@@ -308,7 +310,7 @@ export default function DockingStationsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-yellow-700">
-                {dockingStations.filter(station => station.status === 'MAINTENANCE').length} docking station(s) 
+                {dockingStations.filter(station => station.status === 'MAINTENANCE').length} docking station(s)
                 require maintenance. Please check the affected stations.
               </p>
             </CardContent>

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -30,6 +31,7 @@ import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
 export default function HibernatePodPage() {
+  const { t } = useTranslation(['hibernate', 'common'])
   const { uavs, loading, fetchUAVs, addToHibernatePod, removeFromHibernatePod } = useUAVStore()
   const [selectedUAV, setSelectedUAV] = useState<UAV | null>(null)
   const [showAddDialog, setShowAddDialog] = useState(false)
@@ -40,7 +42,7 @@ export default function HibernatePodPage() {
 
   const hibernatingUAVs = uavs.filter(uav => uav.inHibernatePod)
   const availableUAVs = uavs.filter(uav => !uav.inHibernatePod && uav.status !== 'ACTIVE')
-  
+
   const podCapacity = 20 // Mock capacity
   const occupancyPercentage = (hibernatingUAVs.length / podCapacity) * 100
 
@@ -77,7 +79,7 @@ export default function HibernatePodPage() {
               Manage UAV hibernation and storage
             </p>
           </div>
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -125,7 +127,7 @@ export default function HibernatePodPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {hibernatingUAVs.length > 0 
+                {hibernatingUAVs.length > 0
                   ? Math.round(hibernatingUAVs.reduce((sum, uav) => sum + uav.batteryLevel, 0) / hibernatingUAVs.length)
                   : 0}%
               </div>
@@ -175,7 +177,7 @@ export default function HibernatePodPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -228,7 +230,7 @@ export default function HibernatePodPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -240,7 +242,7 @@ export default function HibernatePodPage() {
                       </Button>
                     </div>
                   ))}
-                  
+
                   {availableUAVs.length > 10 && (
                     <div className="text-center pt-2">
                       <p className="text-sm text-muted-foreground">
@@ -262,7 +264,7 @@ export default function HibernatePodPage() {
             </CardHeader>
             <CardContent>
               <p className="text-orange-700">
-                The hibernate pod is {occupancyPercentage.toFixed(1)}% full. 
+                The hibernate pod is {occupancyPercentage.toFixed(1)}% full.
                 Consider removing some UAVs or expanding capacity.
               </p>
             </CardContent>

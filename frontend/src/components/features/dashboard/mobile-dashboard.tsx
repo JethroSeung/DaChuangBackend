@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -22,6 +23,7 @@ import Link from 'next/link'
 import toast from 'react-hot-toast'
 
 export function MobileDashboard() {
+  const { t } = useTranslation(['dashboard', 'common'])
   const {
     metrics,
     alerts,
@@ -42,7 +44,7 @@ export function MobileDashboard() {
   const handleRefresh = () => {
     fetchDashboardData()
     fetchStats()
-    toast.success('Dashboard refreshed')
+    toast.success(t('common:dashboardRefreshed'))
   }
 
   const unacknowledgedAlerts = getUnacknowledgedAlerts()
@@ -50,7 +52,7 @@ export function MobileDashboard() {
 
   const quickStats = [
     {
-      title: 'Total UAVs',
+      title: t('dashboard:totalUAVs'),
       value: stats?.total || metrics?.totalUAVs || 0,
       icon: Plane,
       color: 'text-blue-600',
@@ -58,7 +60,7 @@ export function MobileDashboard() {
       href: '/uavs',
     },
     {
-      title: 'Active',
+      title: t('dashboard:activeFlights'),
       value: metrics?.activeFlights || 0,
       icon: Activity,
       color: 'text-green-600',
@@ -66,7 +68,7 @@ export function MobileDashboard() {
       href: '/map',
     },
     {
-      title: 'Low Battery',
+      title: t('dashboard:lowBattery'),
       value: stats?.lowBattery || metrics?.lowBatteryCount || 0,
       icon: Battery,
       color: 'text-orange-600',
@@ -74,7 +76,7 @@ export function MobileDashboard() {
       href: '/battery',
     },
     {
-      title: 'Alerts',
+      title: t('dashboard:alerts'),
       value: unacknowledgedAlerts.length,
       icon: AlertTriangle,
       color: criticalAlerts.length > 0 ? 'text-red-600' : 'text-yellow-600',

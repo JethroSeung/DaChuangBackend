@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar Test</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .test-container {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            background: #f0f0f0;
+            border-right: 1px solid #ccc;
+            transition: width 0.3s ease-in-out;
+            width: 256px;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+        }
+        .sidebar.collapsed {
+            width: 64px;
+        }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .sidebar-title {
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        .sidebar.collapsed .sidebar-title {
+            opacity: 0;
+        }
+        .toggle-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .main-content {
+            flex: 1;
+            padding: 1rem;
+            background: #fff;
+        }
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #ccc;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .desktop-toggle {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-title">UAV Control</span>
+                <button id="sidebarToggle" class="toggle-btn">←</button>
+            </div>
+            <div class="sidebar-content">
+                <p>Navigation items would go here</p>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="header">
+                <button id="desktopToggle" class="desktop-toggle">☰</button>
+                <h1>Sidebar Collapse Test</h1>
+            </div>
+            <div class="status">
+                <h3>Test Status</h3>
+                <p id="statusText">Sidebar is expanded</p>
+                <p><strong>Expected behavior:</strong></p>
+                <ul>
+                    <li>Click the ☰ button in header to toggle sidebar</li>
+                    <li>Click the ← button in sidebar to toggle sidebar</li>
+                    <li>Sidebar should smoothly animate between 256px (expanded) and 64px (collapsed)</li>
+                    <li>Title should fade out when collapsed</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const desktopToggle = document.getElementById('desktopToggle');
+        const statusText = document.getElementById('statusText');
+        
+        let isCollapsed = false;
+        
+        function toggleSidebar() {
+            isCollapsed = !isCollapsed;
+            
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                sidebarToggle.textContent = '→';
+                statusText.textContent = 'Sidebar is collapsed (64px width)';
+            } else {
+                sidebar.classList.remove('collapsed');
+                sidebarToggle.textContent = '←';
+                statusText.textContent = 'Sidebar is expanded (256px width)';
+            }
+            
+            console.log('Sidebar toggled:', isCollapsed ? 'collapsed' : 'expanded');
+        }
+        
+        sidebarToggle.addEventListener('click', toggleSidebar);
+        desktopToggle.addEventListener('click', toggleSidebar);
+        
+        // Test the animation variants that should match our React component
+        console.log('Animation test - Expected variants:');
+        console.log('expanded: { width: 256, transition: { duration: 0.3, ease: "easeInOut" } }');
+        console.log('collapsed: { width: 64, transition: { duration: 0.3, ease: "easeInOut" } }');
+    </script>
+</body>
+</html>

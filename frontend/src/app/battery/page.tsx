@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,7 @@ import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
 export default function BatteryMonitorPage() {
+  const { t } = useTranslation(['battery', 'common'])
   const { uavs, loading, fetchUAVs } = useUAVStore()
   const [sortBy, setSortBy] = useState<'battery' | 'name' | 'status'>('battery')
   const [filterLevel, setFilterLevel] = useState<'all' | 'low' | 'critical' | 'charging'>('all')
@@ -91,7 +93,7 @@ export default function BatteryMonitorPage() {
     charging: uavs.filter(uav => uav.status === 'CHARGING').length,
   }
 
-  const averageBattery = uavs.length > 0 
+  const averageBattery = uavs.length > 0
     ? Math.round(uavs.reduce((sum, uav) => sum + uav.batteryLevel, 0) / uavs.length)
     : 0
 
@@ -102,13 +104,13 @@ export default function BatteryMonitorPage() {
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
             <h1 className="text-3xl font-bold tracking-tight font-orbitron">
-              Battery Monitor
+              {t('battery:title')}
             </h1>
             <p className="text-muted-foreground">
-              Monitor UAV battery levels and charging status
+              {t('battery:subtitle')}
             </p>
           </div>
-          
+
           <Button
             variant="outline"
             size="sm"
@@ -116,7 +118,7 @@ export default function BatteryMonitorPage() {
             disabled={loading}
           >
             <RefreshCw className={cn('h-4 w-4 mr-2', loading && 'animate-spin')} />
-            Refresh
+            {t('common:refresh')}
           </Button>
         </div>
 
@@ -124,65 +126,65 @@ export default function BatteryMonitorPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Healthy</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('battery:healthy')}</CardTitle>
               <Battery className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">{batteryStats.healthy}</div>
               <p className="text-xs text-muted-foreground">
-                Above 60%
+                {t('battery:above60')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Warning</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('battery:warning')}</CardTitle>
               <Battery className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600">{batteryStats.warning}</div>
               <p className="text-xs text-muted-foreground">
-                30-60%
+                {t('battery:range30to60')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Low</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('battery:low')}</CardTitle>
               <BatteryLow className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">{batteryStats.low}</div>
               <p className="text-xs text-muted-foreground">
-                15-30%
+                {t('battery:range15to30')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Critical</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('battery:critical')}</CardTitle>
               <AlertTriangle className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">{batteryStats.critical}</div>
               <p className="text-xs text-muted-foreground">
-                Below 15%
+                {t('battery:below15')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Charging</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('battery:charging')}</CardTitle>
               <Zap className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">{batteryStats.charging}</div>
               <p className="text-xs text-muted-foreground">
-                Currently charging
+                {t('battery:currentlyCharging')}
               </p>
             </CardContent>
           </Card>
@@ -193,7 +195,7 @@ export default function BatteryMonitorPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <TrendingUp className="h-5 w-5 mr-2" />
-              Fleet Battery Average
+              {t('battery:fleetBatteryAverage')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -228,7 +230,7 @@ export default function BatteryMonitorPage() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="flex-1">
                 <label className="text-sm font-medium">Sort by</label>
                 <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
@@ -266,7 +268,7 @@ export default function BatteryMonitorPage() {
               <div className="space-y-3">
                 {filteredAndSortedUAVs.map((uav) => {
                   const BatteryIcon = getBatteryIcon(uav.batteryLevel, uav.status)
-                  
+
                   return (
                     <div
                       key={uav.id}
@@ -276,13 +278,13 @@ export default function BatteryMonitorPage() {
                         <div className="p-2 bg-primary/10 rounded-md">
                           <Plane className="h-5 w-5 text-primary" />
                         </div>
-                        
+
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
                             <h3 className="font-semibold">{uav.rfidTag}</h3>
                             <Badge variant="outline">{uav.status}</Badge>
                           </div>
-                          
+
                           <div className="text-sm text-muted-foreground">
                             Last seen: {new Date(uav.lastSeen).toLocaleDateString()}
                           </div>
@@ -297,15 +299,15 @@ export default function BatteryMonitorPage() {
                               {uav.batteryLevel}%
                             </span>
                           </div>
-                          <Progress 
-                            value={uav.batteryLevel} 
+                          <Progress
+                            value={uav.batteryLevel}
                             className="w-20 mt-1"
                           />
                         </div>
-                        
+
                         <Badge variant={getBatteryVariant(uav.batteryLevel)}>
-                          {uav.batteryLevel > 60 ? 'Good' : 
-                           uav.batteryLevel > 30 ? 'Fair' : 
+                          {uav.batteryLevel > 60 ? 'Good' :
+                           uav.batteryLevel > 30 ? 'Fair' :
                            uav.batteryLevel > 15 ? 'Low' : 'Critical'}
                         </Badge>
                       </div>
@@ -328,7 +330,7 @@ export default function BatteryMonitorPage() {
             </CardHeader>
             <CardContent>
               <p className="text-red-700">
-                {batteryStats.critical} UAV(s) have critically low battery levels (≤15%). 
+                {batteryStats.critical} UAV(s) have critically low battery levels (≤15%).
                 Immediate charging or hibernation is recommended.
               </p>
             </CardContent>

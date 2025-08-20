@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,7 @@ interface UAVDetailsProps {
 }
 
 export function UAVDetails({ uav, onClose }: UAVDetailsProps) {
+  const { t } = useTranslation(['uav', 'common'])
   return (
     <div className="space-y-6 max-h-[80vh] overflow-y-auto">
       {/* Header */}
@@ -192,7 +194,7 @@ export function UAVDetails({ uav, onClose }: UAVDetailsProps) {
                   </Badge>
                 </div>
               </div>
-              
+
               {(uav.batteryStatus.isOverheating || uav.batteryStatus.needsReplacement) && (
                 <div className="space-y-2">
                   <Separator />

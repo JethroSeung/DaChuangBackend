@@ -73,7 +73,7 @@ export function AnimatedAlert({
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          variants={getAnimationVariants('alert')}
+          variants={getAnimationVariants(alertVariants)}
           initial="hidden"
           animate="visible"
           exit="exit"

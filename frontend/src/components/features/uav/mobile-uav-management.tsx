@@ -1,18 +1,19 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Plane, 
-  Battery, 
-  Shield, 
+import {
+  Plus,
+  Search,
+  Filter,
+  Plane,
+  Battery,
+  Shield,
   AlertTriangle,
   MapPin,
   Settings,
@@ -37,12 +38,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 // Mobile-optimized UAV card component
-function MobileUAVCard({ 
-  uav, 
-  onView, 
-  onEdit, 
-  onDelete 
-}: { 
+function MobileUAVCard({
+  uav,
+  onView,
+  onEdit,
+  onDelete
+}: {
   uav: UAV
   onView?: (uav: UAV) => void
   onEdit?: (uav: UAV) => void
@@ -80,12 +81,12 @@ function MobileUAVCard({
               <p className="text-xs text-muted-foreground truncate">{uav.model}</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Badge className={cn('text-xs', getStatusColor(uav.status))}>
               {uav.status.replace('_', ' ')}
             </Badge>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -106,7 +107,7 @@ function MobileUAVCard({
                   </DropdownMenuItem>
                 )}
                 {onDelete && (
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => onDelete(uav)}
                     className="text-destructive"
                   >
@@ -143,7 +144,7 @@ function MobileUAVCard({
               </span>
             </div>
           </div>
-          
+
           <div className="space-y-1">
             {uav.batteryLevel && (
               <div className="flex items-center justify-between">
@@ -287,7 +288,7 @@ export function MobileUAVManagement() {
             Manage your UAV fleet
           </p>
         </div>
-        
+
         <Button className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Add UAV

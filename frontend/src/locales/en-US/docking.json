@@ -1,0 +1,33 @@
+{
+  "title": "Docking Stations",
+  "subtitle": "Monitor and manage UAV docking station network",
+  "totalStations": "Total Stations",
+  "capacity": "Capacity",
+  "charging": "Charging",
+  "availability": "Availability",
+  "active": "active",
+  "occupied": "occupied",
+  "activeChargingPorts": "Active charging ports",
+  "availablePorts": "Available ports",
+  "location": "Location",
+  "chargingPorts": "Charging Ports",
+  "port": "Port",
+  "available": "Available",
+  "occupied": "Occupied",
+  "error": "Error",
+  "viewOnMap": "View on Map",
+  "managePorts": "Manage Ports",
+  "maintenanceRequired": "Maintenance Required",
+  "maintenanceAlert": "docking station(s) require maintenance. Please check the affected stations.",
+  "stationStatus": {
+    "ACTIVE": "Active",
+    "MAINTENANCE": "Maintenance",
+    "OFFLINE": "Offline"
+  },
+  "portStatus": {
+    "AVAILABLE": "Available",
+    "OCCUPIED": "Occupied", 
+    "CHARGING": "Charging",
+    "ERROR": "Error"
+  }
+}

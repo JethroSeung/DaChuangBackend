@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -61,9 +62,10 @@ export function MobileTable({
   onDelete,
   onView,
   loading = false,
-  emptyMessage = 'No data available',
+  emptyMessage,
   className
 }: MobileTableProps) {
+  const { t } = useTranslation('common')
   const [searchTerm, setSearchTerm] = useState('')
   const [sortColumn, setSortColumn] = useState<string | null>(null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -150,7 +152,7 @@ export function MobileTable({
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search..."
+                  placeholder={t('search')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -169,7 +171,7 @@ export function MobileTable({
       <CardContent className="p-0">
         {filteredData.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <p>{emptyMessage}</p>
+            <p>{emptyMessage || t('noDataAvailable')}</p>
           </div>
         ) : (
           <ScrollArea className="h-[400px]">
@@ -223,6 +225,7 @@ function MobileTableRow({
   onDelete?: (row: any) => void
   onView?: (row: any) => void
 }) {
+  const { t } = useTranslation('common')
   const hasActions = onEdit || onDelete || onView
   const visibleColumns = secondaryColumns.filter(col => col.type !== 'actions')
   const showExpandButton = visibleColumns.length > 2
@@ -296,13 +299,13 @@ function MobileTableRow({
                   {onView && (
                     <DropdownMenuItem onClick={() => onView(row)}>
                       <Eye className="h-4 w-4 mr-2" />
-                      View
+                      {t('view')}
                     </DropdownMenuItem>
                   )}
                   {onEdit && (
                     <DropdownMenuItem onClick={() => onEdit(row)}>
                       <Edit className="h-4 w-4 mr-2" />
-                      Edit
+                      {t('edit')}
                     </DropdownMenuItem>
                   )}
                   {onDelete && (
@@ -311,7 +314,7 @@ function MobileTableRow({
                       className="text-destructive"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
+                      {t('delete')}
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
