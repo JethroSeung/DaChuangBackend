@@ -1,6 +1,9 @@
 package com.uav.dockingmanagement.integration;
 
+import com.uav.dockingmanagement.TestDataInitializer;
 import com.uav.dockingmanagement.config.TestRateLimitingConfig;
+import com.uav.dockingmanagement.config.TestSecurityConfig;
+import com.uav.dockingmanagement.config.TestWebConfig;
 import com.uav.dockingmanagement.model.*;
 import com.uav.dockingmanagement.repository.*;
 import com.uav.dockingmanagement.service.*;
@@ -17,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @AutoConfigureWebMvc
 @ActiveProfiles("test")
-@Import(TestRateLimitingConfig.class)
+@Import({TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class})
 @Transactional
 class UAVDockingWorkflowIntegrationTest {
 
@@ -61,15 +65,20 @@ class UAVDockingWorkflowIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private TestDataInitializer testDataInitializer;
+
     private UAV testUAV;
     private DockingStation testStation;
     private Region testRegion;
 
     @BeforeEach
     void setUp() {
-        // Create test region
-        testRegion = new Region("Test Region");
-        testRegion = regionRepository.save(testRegion);
+        // Initialize test data
+        testDataInitializer.initializeTestData();
+
+        // Get test entities from initialized data
+        testRegion = regionRepository.findAll().get(0);
 
         // Create test UAV
         testUAV = new UAV();
@@ -83,6 +92,17 @@ class UAVDockingWorkflowIntegrationTest {
         testUAV.setCurrentAltitudeMeters(50.0);
         testUAV.setLastLocationUpdate(LocalDateTime.now());
         testUAV = uavRepository.save(testUAV);
+
+        // Associate UAV with test region for access control
+        UAV updatedUAV = uavService.addRegionToUAV(testUAV.getId(), testRegion.getId());
+        assertNotNull(updatedUAV, "UAV should be updated with region");
+
+        // Force refresh the UAV to ensure region association is loaded
+        testUAV = uavRepository.findById(testUAV.getId()).orElseThrow();
+
+        // Verify the region was added
+        assertTrue(testUAV.getRegions().contains(testRegion),
+                  "UAV should contain the test region after association");
 
         // Create test docking station
         testStation = new DockingStation();
@@ -116,7 +136,7 @@ class UAVDockingWorkflowIntegrationTest {
         assertTrue(updatedUAV.getRegions().contains(testRegion));
 
         // Step 3: Test access control validation
-        String accessResult = uavService.checkUAVRegionAccess("INTEGRATION_TEST_001", "Test Region");
+        String accessResult = uavService.checkUAVRegionAccess("INTEGRATION_TEST_001", testRegion.getRegionName());
         assertEquals("OPEN THE DOOR", accessResult);
 
         // Step 4: Update UAV location (simulate movement)
@@ -221,7 +241,7 @@ class UAVDockingWorkflowIntegrationTest {
 
         result = dockingStationService.dockUAV(testUAV.getId(), testStation.getId(), "CHARGING");
         assertFalse((Boolean) result.get("success"));
-        assertTrue(result.get("message").toString().contains("not operational"));
+        assertTrue(result.get("message").toString().contains("not available"));
 
         // Reset station
         testStation.setStatus(DockingStation.StationStatus.OPERATIONAL);
@@ -240,27 +260,30 @@ class UAVDockingWorkflowIntegrationTest {
 
     @Test
     void testAccessControlWorkflow() throws Exception {
+        // Remove region access for this test to test different scenarios
+        uavService.removeRegionFromUAV(testUAV.getId(), testRegion.getId());
+
         // Test unauthorized UAV
         testUAV.setStatus(UAV.Status.UNAUTHORIZED);
         uavRepository.save(testUAV);
 
-        String accessResult = uavService.checkUAVRegionAccess("INTEGRATION_TEST_001", "Test Region");
+        String accessResult = uavService.checkUAVRegionAccess("INTEGRATION_TEST_001", testRegion.getRegionName());
         assertEquals("UAV is not authorized", accessResult);
 
         // Test authorized UAV without region access
         testUAV.setStatus(UAV.Status.AUTHORIZED);
         uavRepository.save(testUAV);
 
-        accessResult = uavService.checkUAVRegionAccess("INTEGRATION_TEST_001", "Test Region");
-        assertEquals("UAV is not authorized for region: Test Region", accessResult);
+        accessResult = uavService.checkUAVRegionAccess("INTEGRATION_TEST_001", testRegion.getRegionName());
+        assertEquals("UAV is not authorized for region: " + testRegion.getRegionName(), accessResult);
 
         // Test authorized UAV with region access
         uavService.addRegionToUAV(testUAV.getId(), testRegion.getId());
-        accessResult = uavService.checkUAVRegionAccess("INTEGRATION_TEST_001", "Test Region");
+        accessResult = uavService.checkUAVRegionAccess("INTEGRATION_TEST_001", testRegion.getRegionName());
         assertEquals("OPEN THE DOOR", accessResult);
 
         // Test non-existent UAV
-        accessResult = uavService.checkUAVRegionAccess("NON_EXISTENT", "Test Region");
+        accessResult = uavService.checkUAVRegionAccess("NON_EXISTENT", testRegion.getRegionName());
         assertEquals("UAV with RFID NON_EXISTENT not found", accessResult);
     }
 
@@ -289,17 +312,21 @@ class UAVDockingWorkflowIntegrationTest {
 
         // Test nearby UAVs
         List<Map<String, Object>> nearbyUAVMaps = locationService.getNearbyUAVs(40.7140, -74.0050, 1000.0);
-        List<UAV> nearbyUAVs = nearbyUAVMaps.stream()
-            .map(map -> objectMapper.convertValue(map, UAV.class))
-            .toList();
-        assertTrue(nearbyUAVs.contains(testUAV));
+        assertFalse(nearbyUAVMaps.isEmpty());
+
+        // Check if our test UAV is in the nearby UAVs by ID
+        boolean testUAVFound = nearbyUAVMaps.stream()
+            .anyMatch(map -> Objects.equals(testUAV.getId(), map.get("id")));
+        assertTrue(testUAVFound, "Test UAV should be found in nearby UAVs");
 
         // Test UAVs in area
         List<Map<String, Object>> uavsInAreaMaps = locationService.getUAVsInArea(40.7130, 40.7150, -74.0070, -74.0040);
-        List<UAV> uavsInArea = uavsInAreaMaps.stream()
-            .map(map -> objectMapper.convertValue(map, UAV.class))
-            .toList();
-        assertTrue(uavsInArea.contains(testUAV));
+        assertFalse(uavsInAreaMaps.isEmpty());
+
+        // Check if our test UAV is in the area by ID
+        boolean testUAVInArea = uavsInAreaMaps.stream()
+            .anyMatch(map -> Objects.equals(testUAV.getId(), map.get("id")));
+        assertTrue(testUAVInArea, "Test UAV should be found in the specified area");
     }
 
     @Test

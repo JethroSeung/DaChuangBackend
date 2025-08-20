@@ -168,6 +168,30 @@ class DockingStationTest {
     }
 
     @Test
+    void testNullCapacityHandling() {
+        // Test null max capacity
+        dockingStation.setMaxCapacity(null);
+        dockingStation.setCurrentOccupancy(0);
+        assertFalse(dockingStation.isAvailable()); // Should handle null gracefully
+        assertFalse(dockingStation.isFull()); // Should handle null gracefully
+        assertEquals(0.0, dockingStation.getOccupancyPercentage()); // Should return 0 for null
+
+        // Test null current occupancy
+        dockingStation.setMaxCapacity(5);
+        dockingStation.setCurrentOccupancy(null);
+        assertFalse(dockingStation.isAvailable()); // Should handle null gracefully
+        assertFalse(dockingStation.isFull()); // Should handle null gracefully
+        assertEquals(0.0, dockingStation.getOccupancyPercentage()); // Should return 0 for null
+
+        // Test both null
+        dockingStation.setMaxCapacity(null);
+        dockingStation.setCurrentOccupancy(null);
+        assertFalse(dockingStation.isAvailable()); // Should handle null gracefully
+        assertFalse(dockingStation.isFull()); // Should handle null gracefully
+        assertEquals(0.0, dockingStation.getOccupancyPercentage()); // Should return 0 for null
+    }
+
+    @Test
     void testLocationData() {
         // Test valid coordinates
         dockingStation.setLatitude(90.0);

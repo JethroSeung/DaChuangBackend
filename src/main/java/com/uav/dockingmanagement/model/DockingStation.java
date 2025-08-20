@@ -272,15 +272,23 @@ public class DockingStation {
 
     // Utility methods
     public boolean isAvailable() {
-        return status == StationStatus.OPERATIONAL && currentOccupancy < maxCapacity;
+        return status == StationStatus.OPERATIONAL &&
+               currentOccupancy != null &&
+               currentOccupancy >= 0 &&
+               maxCapacity != null &&
+               maxCapacity > 0 &&
+               currentOccupancy < maxCapacity;
     }
 
     public boolean isFull() {
-        return currentOccupancy >= maxCapacity;
+        return currentOccupancy != null &&
+               maxCapacity != null &&
+               currentOccupancy >= maxCapacity;
     }
 
     public double getOccupancyPercentage() {
-        return maxCapacity > 0 ? (double) currentOccupancy / maxCapacity * 100 : 0;
+        return (maxCapacity != null && maxCapacity > 0 && currentOccupancy != null) ?
+               (double) currentOccupancy / maxCapacity * 100 : 0;
     }
 
     public boolean needsMaintenance() {
@@ -312,7 +320,8 @@ public class DockingStation {
                 ", latitude=" + latitude +
                 ", longitude=" + longitude +
                 ", status=" + status +
-                ", occupancy=" + currentOccupancy + "/" + maxCapacity +
+                ", occupancy=" + (currentOccupancy != null ? currentOccupancy : "null") +
+                "/" + (maxCapacity != null ? maxCapacity : "null") +
                 '}';
     }
 }

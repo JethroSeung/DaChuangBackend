@@ -1,15 +1,13 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import dynamic from 'next/dynamic'
 import { AppLayout } from '@/components/layout/app-layout'
-import { AnimatedPage } from '@/components/ui/animated-components'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -18,40 +16,27 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  Map as MapIcon,
-  Layers,
-  Search,
-  Filter,
-  RefreshCw,
-  Settings,
-  Plane,
   MapPin,
+  Search,
+  RefreshCw,
+  Layers,
+  Zap,
+  Home,
   Shield,
-  Eye,
-  EyeOff,
+  AlertTriangle,
+  Settings,
 } from 'lucide-react'
 import { useUAVStore } from '@/stores/uav-store'
-import { UAV } from '@/types/uav'
+import { UAV } from '@/types'
+import { InteractiveMap } from '@/components/features/map/interactive-map'
+import { useResponsive } from '@/hooks/use-responsive'
 import { cn } from '@/lib/utils'
-
-// Dynamically import the map component to avoid SSR issues
-const InteractiveMap = dynamic(
-  () => import('@/components/features/map/interactive-map'),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center">
-          <MapIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
-          <p className="text-muted-foreground">Loading map...</p>
-        </div>
-      </div>
-    )
-  }
-)
+import toast from 'react-hot-toast'
 
 export default function MapPage() {
-  const { uavs, loading, fetchUAVs } = useUAVStore()
+  const { isMobile } = useResponsive()
+  const { uavs, loading, error, fetchUAVs } = useUAVStore()
+  
   const [selectedUAV, setSelectedUAV] = useState<UAV | null>(null)
   const [mapLayers, setMapLayers] = useState({
     uavs: true,
@@ -69,8 +54,15 @@ export default function MapPage() {
     fetchUAVs()
   }, [fetchUAVs])
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+    }
+  }, [error])
+
   const handleRefresh = () => {
     fetchUAVs()
+    toast.success('Map data refreshed')
   }
 
   const handleLayerToggle = (layer: keyof typeof mapLayers) => {
@@ -82,8 +74,8 @@ export default function MapPage() {
 
   const handleUAVSelect = (uav: UAV) => {
     setSelectedUAV(uav)
-    if (uav.currentLatitude && uav.currentLongitude) {
-      setMapCenter([uav.currentLatitude, uav.currentLongitude])
+    if (uav.location) {
+      setMapCenter([uav.location.latitude, uav.location.longitude])
       setMapZoom(15)
     }
   }
@@ -91,78 +83,127 @@ export default function MapPage() {
   const filteredUAVs = uavs.filter(uav => {
     const matchesSearch = searchQuery === '' || 
       uav.rfidTag.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      uav.ownerName.toLowerCase().includes(searchQuery.toLowerCase())
+      uav.region?.toLowerCase().includes(searchQuery.toLowerCase())
     
-    const matchesFilter = filterStatus === 'all' || uav.status === filterStatus
+    const matchesStatus = filterStatus === 'all' || uav.status === filterStatus
     
-    return matchesSearch && matchesFilter
+    return matchesSearch && matchesStatus
   })
 
-  const uavsWithLocation = filteredUAVs.filter(uav => 
-    uav.currentLatitude && uav.currentLongitude
-  )
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'AUTHORIZED':
+        return 'text-green-600'
+      case 'UNAUTHORIZED':
+        return 'text-red-600'
+      case 'ACTIVE':
+        return 'text-blue-600'
+      case 'HIBERNATING':
+        return 'text-gray-600'
+      case 'CHARGING':
+        return 'text-yellow-600'
+      case 'MAINTENANCE':
+        return 'text-purple-600'
+      case 'EMERGENCY':
+        return 'text-red-600'
+      default:
+        return 'text-gray-600'
+    }
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'AUTHORIZED':
+        return Shield
+      case 'UNAUTHORIZED':
+        return AlertTriangle
+      case 'ACTIVE':
+        return MapPin
+      case 'HIBERNATING':
+        return Home
+      case 'CHARGING':
+        return Zap
+      case 'MAINTENANCE':
+        return Settings
+      case 'EMERGENCY':
+        return AlertTriangle
+      default:
+        return MapPin
+    }
+  }
+
+  const statusCounts = {
+    all: uavs.length,
+    AUTHORIZED: uavs.filter(u => u.status === 'AUTHORIZED').length,
+    UNAUTHORIZED: uavs.filter(u => u.status === 'UNAUTHORIZED').length,
+    ACTIVE: uavs.filter(u => u.status === 'ACTIVE').length,
+    HIBERNATING: uavs.filter(u => u.status === 'HIBERNATING').length,
+    CHARGING: uavs.filter(u => u.status === 'CHARGING').length,
+    MAINTENANCE: uavs.filter(u => u.status === 'MAINTENANCE').length,
+    EMERGENCY: uavs.filter(u => u.status === 'EMERGENCY').length,
+  }
 
   return (
     <AppLayout>
-      <AnimatedPage>
-        <div className="h-[calc(100vh-8rem)] flex flex-col space-y-4">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold font-orbitron text-foreground">
-              UAV Tracking Map
+            <h1 className="text-3xl font-bold tracking-tight font-orbitron">
+              Map View
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Real-time UAV locations and operational zones
+            <p className="text-muted-foreground">
+              Real-time UAV tracking and location monitoring
             </p>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleRefresh}
               disabled={loading}
-              className="flex items-center space-x-2"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              <span>Refresh</span>
+              <RefreshCw className={cn('h-4 w-4 mr-2', loading && 'animate-spin')} />
+              Refresh
             </Button>
           </div>
         </div>
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {/* Map Controls Sidebar */}
-          <div className="lg:col-span-1 space-y-4">
+        <div className="grid gap-6 lg:grid-cols-4">
+          {/* Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
             {/* Search and Filters */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Search className="h-5 w-5" />
-                  <span>Search & Filter</span>
-                </CardTitle>
+                <CardTitle className="text-lg">Search & Filter</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="search">Search UAVs</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
-                    id="search"
-                    placeholder="RFID tag or owner..."
+                    placeholder="Search UAVs..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="filter">Filter by Status</Label>
+                <div>
+                  <Label htmlFor="status-filter">Filter by Status</Label>
                   <Select value={filterStatus} onValueChange={setFilterStatus}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All UAVs</SelectItem>
-                      <SelectItem value="AUTHORIZED">Authorized</SelectItem>
-                      <SelectItem value="UNAUTHORIZED">Unauthorized</SelectItem>
+                      <SelectItem value="all">All ({statusCounts.all})</SelectItem>
+                      <SelectItem value="AUTHORIZED">Authorized ({statusCounts.AUTHORIZED})</SelectItem>
+                      <SelectItem value="UNAUTHORIZED">Unauthorized ({statusCounts.UNAUTHORIZED})</SelectItem>
+                      <SelectItem value="ACTIVE">Active ({statusCounts.ACTIVE})</SelectItem>
+                      <SelectItem value="HIBERNATING">Hibernating ({statusCounts.HIBERNATING})</SelectItem>
+                      <SelectItem value="CHARGING">Charging ({statusCounts.CHARGING})</SelectItem>
+                      <SelectItem value="MAINTENANCE">Maintenance ({statusCounts.MAINTENANCE})</SelectItem>
+                      <SelectItem value="EMERGENCY">Emergency ({statusCounts.EMERGENCY})</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -172,25 +213,19 @@ export default function MapPage() {
             {/* Map Layers */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Layers className="h-5 w-5" />
-                  <span>Map Layers</span>
+                <CardTitle className="text-lg flex items-center">
+                  <Layers className="h-5 w-5 mr-2" />
+                  Map Layers
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 {Object.entries(mapLayers).map(([layer, enabled]) => (
                   <div key={layer} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      {layer === 'uavs' && <Plane className="h-4 w-4" />}
-                      {layer === 'geofences' && <Shield className="h-4 w-4" />}
-                      {layer === 'dockingStations' && <MapPin className="h-4 w-4" />}
-                      {layer === 'flightPaths' && <MapIcon className="h-4 w-4" />}
-                      {layer === 'weather' && <Settings className="h-4 w-4" />}
-                      <Label className="text-sm capitalize">
-                        {layer.replace(/([A-Z])/g, ' $1').trim()}
-                      </Label>
-                    </div>
+                    <Label htmlFor={layer} className="capitalize">
+                      {layer.replace(/([A-Z])/g, ' $1').trim()}
+                    </Label>
                     <Switch
+                      id={layer}
                       checked={enabled}
                       onCheckedChange={() => handleLayerToggle(layer as keyof typeof mapLayers)}
                     />
@@ -202,92 +237,130 @@ export default function MapPage() {
             {/* UAV List */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Plane className="h-5 w-5" />
-                    <span>UAVs on Map</span>
-                  </div>
-                  <Badge variant="outline">
-                    {uavsWithLocation.length}/{filteredUAVs.length}
-                  </Badge>
+                <CardTitle className="text-lg">
+                  UAVs ({filteredUAVs.length})
                 </CardTitle>
-                <CardDescription>
-                  UAVs with location data
-                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {uavsWithLocation.length === 0 ? (
-                    <div className="text-center py-4 text-muted-foreground">
-                      <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No UAVs with location data</p>
-                    </div>
-                  ) : (
-                    uavsWithLocation.map((uav) => (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {filteredUAVs.map((uav) => {
+                    const StatusIcon = getStatusIcon(uav.status)
+                    return (
                       <div
                         key={uav.id}
                         className={cn(
-                          'p-3 rounded-lg border cursor-pointer transition-colors',
-                          selectedUAV?.id === uav.id 
-                            ? 'border-primary bg-primary/5' 
-                            : 'hover:bg-muted/50'
+                          'p-3 border rounded-lg cursor-pointer transition-colors hover:bg-muted/50',
+                          selectedUAV?.id === uav.id && 'bg-primary/10 border-primary'
                         )}
                         onClick={() => handleUAVSelect(uav)}
                       >
                         <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-sm">{uav.rfidTag}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {uav.ownerName}
-                            </p>
+                          <div className="flex items-center space-x-2">
+                            <StatusIcon className={cn('h-4 w-4', getStatusColor(uav.status))} />
+                            <span className="font-medium">{uav.rfidTag}</span>
                           </div>
-                          <div className="flex flex-col items-end space-y-1">
-                            <Badge 
-                              variant={uav.status === 'AUTHORIZED' ? 'success' : 'destructive'}
-                              className="text-xs"
-                            >
-                              {uav.status}
-                            </Badge>
-                            <Badge 
-                              variant="outline" 
-                              className="text-xs"
-                            >
-                              {uav.operationalStatus.replace('_', ' ')}
-                            </Badge>
-                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {uav.batteryLevel}%
+                          </Badge>
                         </div>
-                        {uav.currentLatitude && uav.currentLongitude && (
-                          <div className="mt-2 text-xs text-muted-foreground font-mono">
-                            {uav.currentLatitude.toFixed(4)}, {uav.currentLongitude.toFixed(4)}
-                          </div>
-                        )}
+                        
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {uav.region && <div>Region: {uav.region}</div>}
+                          {uav.location && (
+                            <div>
+                              Lat: {uav.location.latitude.toFixed(4)}, 
+                              Lng: {uav.location.longitude.toFixed(4)}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    ))
+                    )
+                  })}
+                  
+                  {filteredUAVs.length === 0 && (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No UAVs found
+                    </div>
                   )}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Map Container */}
+          {/* Map */}
           <div className="lg:col-span-3">
-            <Card className="h-full">
+            <Card className="h-[600px] lg:h-[800px]">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Interactive Map</span>
+                  <Badge variant="outline">
+                    {filteredUAVs.filter(u => u.location).length} UAVs with location
+                  </Badge>
+                </CardTitle>
+                <CardDescription>
+                  Real-time UAV positions and tracking
+                </CardDescription>
+              </CardHeader>
               <CardContent className="p-0 h-full">
                 <InteractiveMap
-                  uavs={uavsWithLocation}
+                  uavs={filteredUAVs}
                   selectedUAV={selectedUAV}
                   onUAVSelect={handleUAVSelect}
                   center={mapCenter}
                   zoom={mapZoom}
                   layers={mapLayers}
-                  className="h-full rounded-lg"
+                  className="h-full w-full rounded-b-lg"
                 />
               </CardContent>
             </Card>
           </div>
         </div>
-        </div>
-      </AnimatedPage>
+
+        {/* Selected UAV Details */}
+        {selectedUAV && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Selected UAV: {selectedUAV.rfidTag}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <Label className="text-sm font-medium">Status</Label>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Badge variant={selectedUAV.status === 'AUTHORIZED' ? 'default' : 'destructive'}>
+                      {selectedUAV.status}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">Battery Level</Label>
+                  <div className="mt-1">
+                    <span className={cn('font-semibold', 
+                      selectedUAV.batteryLevel > 60 ? 'text-green-600' :
+                      selectedUAV.batteryLevel > 30 ? 'text-yellow-600' : 'text-red-600'
+                    )}>
+                      {selectedUAV.batteryLevel}%
+                    </span>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">Region</Label>
+                  <div className="mt-1">{selectedUAV.region || 'Not assigned'}</div>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">Last Seen</Label>
+                  <div className="mt-1 text-sm">
+                    {new Date(selectedUAV.lastSeen).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </AppLayout>
   )
 }

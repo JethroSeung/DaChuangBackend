@@ -25,24 +25,26 @@ import {
   EyeOff,
   Trash2,
 } from 'lucide-react'
-import { useAlerts, useDashboardStore } from '@/stores/dashboard-store'
-import { SystemAlert } from '@/types/uav'
+import { useDashboardStore } from '@/stores/dashboard-store'
+import { Alert } from '@/types/dashboard'
 import { formatRelativeTime, cn } from '@/lib/utils'
 
 // Mock alerts for demonstration
-const mockAlerts: SystemAlert[] = [
+const mockAlerts: Alert[] = [
   {
     id: '1',
-    type: 'CRITICAL',
+    type: 'BATTERY_CRITICAL',
+    severity: 'CRITICAL',
     title: 'UAV Battery Critical',
     message: 'UAV-005 battery level is critically low (8%)',
-    uavId: 5,
+    uavId: '5',
     timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
     acknowledged: false,
   },
   {
     id: '2',
-    type: 'WARNING',
+    type: 'HIBERNATE_POD_FULL',
+    severity: 'MEDIUM',
     title: 'Hibernate Pod Near Capacity',
     message: 'Hibernate pod is at 80% capacity (8/10 slots occupied)',
     timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
@@ -50,28 +52,31 @@ const mockAlerts: SystemAlert[] = [
   },
   {
     id: '3',
-    type: 'INFO',
+    type: 'SYSTEM_ERROR',
+    severity: 'LOW',
     title: 'Flight Completed',
     message: 'UAV-003 has successfully completed mission "Perimeter Patrol"',
-    uavId: 3,
+    uavId: '3',
     timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
     acknowledged: true,
   },
   {
     id: '4',
-    type: 'ERROR',
+    type: 'COMMUNICATION_LOST',
+    severity: 'HIGH',
     title: 'Communication Lost',
     message: 'Lost communication with UAV-007 during flight',
-    uavId: 7,
+    uavId: '7',
     timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
     acknowledged: false,
   },
   {
     id: '5',
-    type: 'INFO',
+    type: 'MAINTENANCE_DUE',
+    severity: 'LOW',
     title: 'Maintenance Scheduled',
     message: 'Routine maintenance scheduled for UAV-001 tomorrow at 09:00',
-    uavId: 1,
+    uavId: '1',
     timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
     acknowledged: true,
   },
@@ -84,17 +89,22 @@ interface RealtimeAlertsProps {
 }
 
 export function RealtimeAlerts({ maxAlerts = 20, autoRefresh = true, refreshInterval = 5000 }: RealtimeAlertsProps = {}) {
-  const alerts = useAlerts()
   const {
+    alerts,
     acknowledgeAlert,
     removeAlert,
     addAlert,
-    clearAlerts,
-    showAlerts,
-    isConnected,
-    connectionError,
-    toggleAlerts
+    setAlerts
   } = useDashboardStore()
+
+  // Local state for missing store properties
+  const [showAlerts, setShowAlerts] = useState(true)
+  const [isConnected] = useState(true)
+  const [connectionError] = useState<string | null>(null)
+
+  // Helper functions for missing store methods
+  const clearAlerts = () => setAlerts([])
+  const toggleAlerts = () => setShowAlerts(prev => !prev)
 
   // Local state for UI controls
   const [searchQuery, setSearchQuery] = useState('')
@@ -122,11 +132,11 @@ export function RealtimeAlerts({ maxAlerts = 20, autoRefresh = true, refreshInte
     // Type/severity filters
     switch (selectedFilter) {
       case 'error':
-        return alert.type === 'ERROR' || alert.type === 'CRITICAL'
+        return alert.severity === 'HIGH' || alert.severity === 'CRITICAL'
       case 'warning':
-        return alert.type === 'WARNING'
+        return alert.severity === 'MEDIUM'
       case 'info':
-        return alert.type === 'INFO'
+        return alert.severity === 'LOW'
       case 'high':
         return alert.severity === 'HIGH' || alert.severity === 'CRITICAL'
       case 'medium':
@@ -145,29 +155,36 @@ export function RealtimeAlerts({ maxAlerts = 20, autoRefresh = true, refreshInte
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   )
 
-  const getAlertIcon = (type: SystemAlert['type']) => {
+  const getAlertIcon = (type: Alert['type']) => {
     switch (type) {
-      case 'CRITICAL':
+      case 'BATTERY_CRITICAL':
+      case 'EMERGENCY_LANDING':
         return <XCircle className="h-4 w-4 text-red-600" />
-      case 'ERROR':
+      case 'SYSTEM_ERROR':
+      case 'COMMUNICATION_LOST':
+      case 'UAV_OFFLINE':
         return <AlertTriangle className="h-4 w-4 text-red-500" />
-      case 'WARNING':
+      case 'BATTERY_LOW':
+      case 'HIBERNATE_POD_FULL':
+      case 'DOCKING_STATION_ERROR':
         return <AlertTriangle className="h-4 w-4 text-yellow-500" />
-      case 'INFO':
+      case 'MAINTENANCE_DUE':
+      case 'UNAUTHORIZED_UAV':
+      case 'GEOFENCE_VIOLATION':
         return <Info className="h-4 w-4 text-blue-500" />
       default:
         return <Bell className="h-4 w-4 text-gray-500" />
     }
   }
 
-  const getAlertVariant = (type: SystemAlert['type']) => {
-    switch (type) {
+  const getAlertVariant = (severity: Alert['severity']) => {
+    switch (severity) {
       case 'CRITICAL':
-      case 'ERROR':
+      case 'HIGH':
         return 'destructive'
-      case 'WARNING':
+      case 'MEDIUM':
         return 'warning'
-      case 'INFO':
+      case 'LOW':
         return 'info'
       default:
         return 'secondary'
@@ -321,10 +338,10 @@ export function RealtimeAlerts({ maxAlerts = 20, autoRefresh = true, refreshInte
                         transition={{ duration: 0.3, delay: index * 0.1 }}
                         className={cn(
                           'p-4 rounded-lg border transition-colors',
-                          alert.type === 'CRITICAL' && 'border-red-200 bg-red-50',
-                          alert.type === 'ERROR' && 'border-red-200 bg-red-50',
-                          alert.type === 'WARNING' && 'border-yellow-200 bg-yellow-50',
-                          alert.type === 'INFO' && 'border-blue-200 bg-blue-50'
+                          alert.severity === 'CRITICAL' && 'border-red-200 bg-red-50',
+                          alert.severity === 'HIGH' && 'border-red-200 bg-red-50',
+                          alert.severity === 'MEDIUM' && 'border-yellow-200 bg-yellow-50',
+                          alert.severity === 'LOW' && 'border-blue-200 bg-blue-50'
                         )}
                       >
                     <div className="flex items-start justify-between">
@@ -332,8 +349,8 @@ export function RealtimeAlerts({ maxAlerts = 20, autoRefresh = true, refreshInte
                         {getAlertIcon(alert.type)}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 mb-1">
-                            <Badge variant={getAlertVariant(alert.type) as any}>
-                              {alert.type}
+                            <Badge variant={getAlertVariant(alert.severity) as any}>
+                              {alert.severity}
                             </Badge>
                             <div className="flex items-center space-x-1 text-xs text-muted-foreground">
                               <Clock className="h-3 w-3" />

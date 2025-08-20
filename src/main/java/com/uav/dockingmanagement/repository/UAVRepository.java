@@ -15,6 +15,9 @@ public interface UAVRepository extends JpaRepository<UAV, Integer> {
 
     Optional<UAV> findByRfidTag(String rfidTag);
 
+    @Query("SELECT DISTINCT u FROM UAV u LEFT JOIN FETCH u.regions WHERE u.rfidTag = :rfidTag")
+    Optional<UAV> findByRfidTagWithRegions(@Param("rfidTag") String rfidTag);
+
     /**
      * Find UAVs by hibernate pod status
      */

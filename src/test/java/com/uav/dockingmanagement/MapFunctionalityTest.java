@@ -1,6 +1,8 @@
 package com.uav.dockingmanagement;
 
 import com.uav.dockingmanagement.config.TestRateLimitingConfig;
+import com.uav.dockingmanagement.config.TestSecurityConfig;
+import com.uav.dockingmanagement.config.TestWebConfig;
 import com.uav.dockingmanagement.model.*;
 import com.uav.dockingmanagement.repository.*;
 import com.uav.dockingmanagement.service.*;
@@ -8,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -31,9 +33,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests API endpoints, services, and data models for location tracking
  */
 @SpringBootTest
-@AutoConfigureWebMvc
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import(TestRateLimitingConfig.class)
+@Import({TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class})
 @Transactional
 public class MapFunctionalityTest {
 

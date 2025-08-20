@@ -42,6 +42,6 @@ public class Region {
 
     @Override
     public String toString() {
-        return regionName;
+        return regionName == null ? "null" : regionName;
     }
 }

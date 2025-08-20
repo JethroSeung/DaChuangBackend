@@ -50,9 +50,9 @@ export interface RegisterRequest {
   username: string
   email: string
   password: string
-  confirmPassword: string
   firstName: string
   lastName: string
+  confirmPassword: string
 }
 
 export interface RegisterResponse {
@@ -60,6 +60,9 @@ export interface RegisterResponse {
   message: string
   data?: {
     user: User
+    token: string
+    refreshToken: string
+    expiresIn: number
   }
 }
 
@@ -152,18 +155,6 @@ export interface PermissionCheck {
   resourceId?: number
 }
 
-// API Security
-export interface APISecurityConfig {
-  enableCSRF: boolean
-  enableRateLimit: boolean
-  maxRequestsPerMinute: number
-  enableIPWhitelist: boolean
-  allowedIPs: string[]
-  sessionTimeout: number
-  tokenExpiration: number
-  refreshTokenExpiration: number
-}
-
 // Two-factor authentication
 export interface TwoFactorSetup {
   secret: string
@@ -194,56 +185,6 @@ export interface OAuthLoginRequest {
   provider: string
   code: string
   state: string
-}
-
-// Audit and compliance
-export interface AuditLog {
-  id: string
-  userId: number
-  username: string
-  action: string
-  resource: string
-  resourceId?: number
-  oldValues?: Record<string, any>
-  newValues?: Record<string, any>
-  ipAddress: string
-  userAgent: string
-  timestamp: string
-  success: boolean
-  errorMessage?: string
-}
-
-// Password policy
-export interface PasswordPolicy {
-  minLength: number
-  requireUppercase: boolean
-  requireLowercase: boolean
-  requireNumbers: boolean
-  requireSpecialChars: boolean
-  preventReuse: number
-  maxAge: number
-  lockoutAttempts: number
-  lockoutDuration: number
-}
-
-// Account lockout and security
-export interface AccountLockout {
-  userId: number
-  reason: 'FAILED_ATTEMPTS' | 'ADMIN_LOCK' | 'SUSPICIOUS_ACTIVITY'
-  lockedAt: string
-  unlockAt?: string
-  attempts: number
-  isLocked: boolean
-}
-
-// Security headers and configuration
-export interface SecurityHeaders {
-  'Content-Security-Policy': string
-  'X-Frame-Options': string
-  'X-Content-Type-Options': string
-  'Referrer-Policy': string
-  'Permissions-Policy': string
-  'Strict-Transport-Security': string
 }
 
 // JWT token payload
@@ -277,3 +218,26 @@ export type AuthErrorCode =
   | 'TWO_FACTOR_REQUIRED'
   | 'PASSWORD_EXPIRED'
   | 'RATE_LIMIT_EXCEEDED'
+
+// Password policy
+export interface PasswordPolicy {
+  minLength: number
+  requireUppercase: boolean
+  requireLowercase: boolean
+  requireNumbers: boolean
+  requireSpecialChars: boolean
+  preventReuse: number
+  maxAge: number
+  lockoutAttempts: number
+  lockoutDuration: number
+}
+
+// Account lockout and security
+export interface AccountLockout {
+  userId: number
+  reason: 'FAILED_ATTEMPTS' | 'ADMIN_LOCK' | 'SUSPICIOUS_ACTIVITY'
+  lockedAt: string
+  unlockAt?: string
+  attempts: number
+  isLocked: boolean
+}

@@ -5,11 +5,11 @@ import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  AnimatedPage, 
-  AnimatedCard, 
-  StaggerContainer, 
-  StaggerItem, 
+import {
+  AnimatedPage,
+  AnimatedCard,
+  StaggerContainer,
+  StaggerItem,
   AnimatedModal,
   AnimatedSpinner,
   ScaleOnHover,
@@ -19,27 +19,27 @@ import {
   Float,
   Glow,
   Magnetic
-} from '@/components/ui/animated-components'
-import { 
-  AnimatedButton, 
-  FloatingActionButton, 
+} from '@/components/custom/animated-components'
+import {
+  AnimatedButton,
+  FloatingActionButton,
   AnimatedIconButton,
-  ProgressButton 
-} from '@/components/ui/animated-button'
-import { 
-  AnimatedAlert, 
-  Toast, 
-  ToastContainer, 
-  RealtimeAlerts 
-} from '@/components/ui/animated-alert'
-import { useToastContext } from '@/components/providers/toast-provider'
-import { 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  Zap, 
-  Heart, 
-  Star, 
+  ProgressButton
+} from '@/components/custom/animated-button'
+import {
+  AnimatedAlert,
+  Toast,
+  ToastContainer,
+  RealtimeAlerts
+} from '@/components/custom/animated-alert'
+import toast from 'react-hot-toast'
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  Zap,
+  Heart,
+  Star,
   Rocket,
   Bell,
   CheckCircle,
@@ -53,7 +53,10 @@ export function AnimationShowcase() {
   const [bounceDemo, setBounceDemo] = useState(false)
   const [shakeDemo, setShakeDemo] = useState(false)
   const [progress, setProgress] = useState(0)
-  const { success, error, warning, info } = useToastContext()
+  const success = (message: string) => toast.success(message)
+  const error = (message: string) => toast.error(message)
+  const warning = (message: string) => toast(message, { icon: '⚠️' })
+  const info = (message: string) => toast(message, { icon: 'ℹ️' })
 
   const mockAlerts = [
     {
@@ -98,7 +101,7 @@ export function AnimationShowcase() {
   return (
     <AnimatedPage className="space-y-8 p-6">
       <div className="text-center space-y-4">
-        <motion.h1 
+        <motion.h1
           className="text-4xl font-bold"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -106,7 +109,7 @@ export function AnimationShowcase() {
         >
           🎬 UAV Control System Animation Showcase
         </motion.h1>
-        <motion.p 
+        <motion.p
           className="text-lg text-muted-foreground"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -167,20 +170,20 @@ export function AnimationShowcase() {
             <AnimatedButton ripple glow>
               Ripple & Glow
             </AnimatedButton>
-            
-            <AnimatedIconButton 
-              icon={<Heart className="h-4 w-4" />} 
+
+            <AnimatedIconButton
+              icon={<Heart className="h-4 w-4" />}
               label="Favorite"
             />
-            
-            <ProgressButton 
-              progress={progress} 
+
+            <ProgressButton
+              progress={progress}
               showProgress={progress > 0}
               onClick={handleProgressDemo}
             >
               Progress Demo
             </ProgressButton>
-            
+
             <Magnetic>
               <Button>Magnetic Effect</Button>
             </Magnetic>
@@ -201,29 +204,29 @@ export function AnimationShowcase() {
             <ScaleOnHover className="p-4 bg-blue-100 rounded-lg text-center">
               <div>Hover to Scale</div>
             </ScaleOnHover>
-            
+
             <Pulse className="p-4 bg-green-100 rounded-lg text-center">
               <div>Pulsing Effect</div>
             </Pulse>
-            
+
             <Float className="p-4 bg-purple-100 rounded-lg text-center">
               <div>Floating Animation</div>
             </Float>
-            
+
             <Glow className="p-4 bg-yellow-100 rounded-lg text-center">
               <div>Glow on Hover</div>
             </Glow>
           </div>
-          
+
           <div className="mt-4 space-x-4">
             <Bounce trigger={bounceDemo}>
               <Button onClick={() => setBounceDemo(!bounceDemo)}>
                 Bounce Demo
               </Button>
             </Bounce>
-            
+
             <Shake trigger={shakeDemo}>
-              <Button 
+              <Button
                 variant="destructive"
                 onClick={() => setShakeDemo(!shakeDemo)}
               >
@@ -246,7 +249,7 @@ export function AnimationShowcase() {
           <Button onClick={() => setShowModal(true)}>
             Open Animated Modal
           </Button>
-          
+
           <AnimatedModal isOpen={showModal}>
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
               <div className="bg-white rounded-lg p-6 max-w-md w-full">
@@ -273,32 +276,32 @@ export function AnimationShowcase() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            <Button 
+            <Button
               onClick={() => success('Operation completed successfully!')}
               className="bg-green-600 hover:bg-green-700"
             >
               Success Toast
             </Button>
-            <Button 
+            <Button
               onClick={() => error('Something went wrong!')}
               variant="destructive"
             >
               Error Toast
             </Button>
-            <Button 
+            <Button
               onClick={() => warning('Please check your settings')}
               className="bg-yellow-600 hover:bg-yellow-700"
             >
               Warning Toast
             </Button>
-            <Button 
+            <Button
               onClick={() => info('New update available')}
               variant="outline"
             >
               Info Toast
             </Button>
           </div>
-          
+
           <div className="mt-6">
             <h4 className="font-semibold mb-3">Real-time Alerts Demo:</h4>
             <RealtimeAlerts alerts={mockAlerts} />

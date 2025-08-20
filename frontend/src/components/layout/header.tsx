@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { MainNav } from './main-nav'
-import { useConnectionStatus, useUnacknowledgedAlerts } from '@/stores/dashboard-store'
+import { useDashboardStore } from '@/stores/dashboard-store'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
@@ -42,9 +42,10 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  
-  const connectionStatus = useConnectionStatus()
-  const unacknowledgedAlerts = useUnacknowledgedAlerts()
+
+  const { getUnacknowledgedAlerts, systemHealth } = useDashboardStore()
+  const unacknowledgedAlerts = getUnacknowledgedAlerts()
+  const connectionStatus = { isConnected: systemHealth?.overall === 'HEALTHY' }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,7 +63,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   const getPageTitle = () => {
     const pathSegments = pathname.split('/').filter(Boolean)
     if (pathSegments.length === 0) return 'Dashboard'
-    
+
     const pageMap: Record<string, string> = {
       dashboard: 'Dashboard',
       uavs: 'UAV Management',
@@ -77,7 +78,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       users: 'Users',
       settings: 'Settings',
     }
-    
+
     return pageMap[pathSegments[0]] || 'UAV Management System'
   }
 

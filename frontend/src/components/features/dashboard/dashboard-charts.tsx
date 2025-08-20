@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { RefreshCw, AlertTriangle } from 'lucide-react'
-import { useChartData } from '@/stores/dashboard-store'
+import { useDashboardStore } from '@/stores/dashboard-store'
 import { chartColors } from '@/lib/utils'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 
@@ -43,7 +43,7 @@ const LazyXAxis = dynamic(() => import('recharts').then(mod => ({ default: mod.X
 const LazyYAxis = dynamic(() => import('recharts').then(mod => ({ default: mod.YAxis })), { ssr: false })
 const LazyCartesianGrid = dynamic(() => import('recharts').then(mod => ({ default: mod.CartesianGrid })), { ssr: false })
 const LazyTooltip = dynamic(() => import('recharts').then(mod => ({ default: mod.Tooltip })), { ssr: false })
-const LazyLegend = dynamic(() => import('recharts').then(mod => ({ default: mod.Legend })), { ssr: false })
+const LazyLegend = dynamic(() => import('recharts').then(mod => ({ default: mod.Legend as any })), { ssr: false })
 
 // Chart skeleton component for loading states
 function ChartSkeleton() {
@@ -108,14 +108,31 @@ const mockStatusDistribution = [
 ]
 
 export function DashboardCharts() {
-  const { data: chartData, isLoading, error, refetch } = useChartData()
+  const { chartData, loading, error, fetchChartData } = useDashboardStore()
 
   // Memoize processed data to prevent unnecessary recalculations
   const processedData = useMemo(() => {
     return {
-      flightTrends: chartData?.flightTrends || mockFlightTrends,
-      batteryLevels: chartData?.batteryLevels || mockBatteryLevels,
-      systemLoad: chartData?.systemLoad || mockSystemLoad,
+      flightTrends: chartData?.uavActivity ?
+        chartData.uavActivity.authorized.map(item => ({
+          time: new Date(item.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          flights: item.value,
+          completed: Math.floor(item.value * 0.8) // Mock completed flights as 80% of total
+        })) : mockFlightTrends,
+      batteryLevels: chartData?.battery ?
+        chartData.battery.healthy.map((item, index) => ({
+          uavId: index + 1,
+          rfidTag: `UAV-${String(index + 1).padStart(3, '0')}`,
+          batteryLevel: item.value,
+          status: item.value > 50 ? 'healthy' : item.value > 20 ? 'warning' : 'critical'
+        })) : mockBatteryLevels,
+      systemLoad: chartData?.systemPerformance ?
+        chartData.systemPerformance.cpuUsage.map((item, index) => ({
+          timestamp: new Date(item.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          cpuUsage: item.value,
+          memoryUsage: chartData.systemPerformance?.memoryUsage[index]?.value || 0,
+          networkUsage: chartData.systemPerformance?.networkLatency[index]?.value || 0
+        })) : mockSystemLoad,
     }
   }, [chartData])
 
@@ -135,7 +152,7 @@ export function DashboardCharts() {
   }, [processedData.batteryLevels, getBatteryColor])
 
   // Handle loading state
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {Array.from({ length: 4 }).map((_, index) => (
@@ -160,8 +177,8 @@ export function DashboardCharts() {
         <Card className="lg:col-span-2">
           <CardContent className="p-6">
             <ChartErrorFallback
-              error={error}
-              retry={() => refetch()}
+              error={new Error(error)}
+              retry={() => fetchChartData('24h')}
             />
           </CardContent>
         </Card>
@@ -181,14 +198,14 @@ export function DashboardCharts() {
         </CardHeader>
         <CardContent>
           <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={flightTrends}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Area
+            <LazyResponsiveContainer width="100%" height="100%">
+              <LazyAreaChart data={processedData.flightTrends}>
+                <LazyCartesianGrid strokeDasharray="3 3" />
+                <LazyXAxis dataKey="time" />
+                <LazyYAxis />
+                <LazyTooltip />
+                <LazyLegend />
+                <LazyArea
                   type="monotone"
                   dataKey="completed"
                   stackId="1"
@@ -197,7 +214,7 @@ export function DashboardCharts() {
                   fillOpacity={0.6}
                   name="Completed Flights"
                 />
-                <Area
+                <LazyArea
                   type="monotone"
                   dataKey="flights"
                   stackId="2"
@@ -206,8 +223,8 @@ export function DashboardCharts() {
                   fillOpacity={0.6}
                   name="Total Flights"
                 />
-              </AreaChart>
-            </ResponsiveContainer>
+              </LazyAreaChart>
+            </LazyResponsiveContainer>
           </div>
         </CardContent>
       </Card>
@@ -222,26 +239,25 @@ export function DashboardCharts() {
         </CardHeader>
         <CardContent>
           <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={batteryLevels} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" domain={[0, 100]} />
-                <YAxis dataKey="rfidTag" type="category" width={80} />
-                <Tooltip
+            <LazyResponsiveContainer width="100%" height="100%">
+              <LazyBarChart data={processedData.batteryLevels} layout="horizontal">
+                <LazyCartesianGrid strokeDasharray="3 3" />
+                <LazyXAxis type="number" domain={[0, 100]} />
+                <LazyYAxis dataKey="rfidTag" type="category" width={80} />
+                <LazyTooltip
                   formatter={(value, name) => [`${value}%`, 'Battery Level']}
                   labelFormatter={(label) => `UAV: ${label}`}
                 />
-                <Bar
+                <LazyBar
                   dataKey="batteryLevel"
-                  fill={(entry) => getBatteryColor(entry.batteryLevel)}
                   name="Battery Level"
                 >
-                  {batteryLevels.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={getBatteryColor(entry.batteryLevel)} />
+                  {processedData.batteryLevels.map((entry, index) => (
+                    <LazyCell key={`cell-${index}`} fill={getBatteryColor(entry.batteryLevel)} />
                   ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+                </LazyBar>
+              </LazyBarChart>
+            </LazyResponsiveContainer>
           </div>
         </CardContent>
       </Card>
@@ -256,25 +272,25 @@ export function DashboardCharts() {
         </CardHeader>
         <CardContent>
           <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
+            <LazyResponsiveContainer width="100%" height="100%">
+              <LazyPieChart>
+                <LazyPie
                   data={mockStatusDistribution}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"
                 >
                   {mockStatusDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <LazyCell key={`cell-${index}`} fill={entry.color} />
                   ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+                </LazyPie>
+                <LazyTooltip />
+              </LazyPieChart>
+            </LazyResponsiveContainer>
           </div>
         </CardContent>
       </Card>
@@ -289,14 +305,14 @@ export function DashboardCharts() {
         </CardHeader>
         <CardContent>
           <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={systemLoad}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timestamp" />
-                <YAxis domain={[0, 100]} />
-                <Tooltip formatter={(value) => [`${value}%`, '']} />
-                <Legend />
-                <Line
+            <LazyResponsiveContainer width="100%" height="100%">
+              <LazyLineChart data={processedData.systemLoad}>
+                <LazyCartesianGrid strokeDasharray="3 3" />
+                <LazyXAxis dataKey="timestamp" />
+                <LazyYAxis domain={[0, 100]} />
+                <LazyTooltip formatter={(value) => [`${value}%`, '']} />
+                <LazyLegend />
+                <LazyLine
                   type="monotone"
                   dataKey="cpuUsage"
                   stroke={chartColors.primary}
@@ -304,7 +320,7 @@ export function DashboardCharts() {
                   name="CPU Usage"
                   dot={{ fill: chartColors.primary }}
                 />
-                <Line
+                <LazyLine
                   type="monotone"
                   dataKey="memoryUsage"
                   stroke={chartColors.warning}
@@ -312,7 +328,7 @@ export function DashboardCharts() {
                   name="Memory Usage"
                   dot={{ fill: chartColors.warning }}
                 />
-                <Line
+                <LazyLine
                   type="monotone"
                   dataKey="networkUsage"
                   stroke={chartColors.info}
@@ -320,8 +336,8 @@ export function DashboardCharts() {
                   name="Network Usage"
                   dot={{ fill: chartColors.info }}
                 />
-              </LineChart>
-            </ResponsiveContainer>
+              </LazyLineChart>
+            </LazyResponsiveContainer>
           </div>
         </CardContent>
       </Card>

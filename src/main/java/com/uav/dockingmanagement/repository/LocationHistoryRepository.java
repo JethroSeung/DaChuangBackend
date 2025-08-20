@@ -143,13 +143,11 @@ public interface LocationHistoryRepository extends JpaRepository<LocationHistory
     /**
      * Find locations near a point
      */
-    @Query(value = "SELECT *, " +
-           "(6371 * acos(cos(radians(:latitude)) * cos(radians(latitude)) * " +
-           "cos(radians(longitude) - radians(:longitude)) + " +
-           "sin(radians(:latitude)) * sin(radians(latitude)))) AS distance " +
-           "FROM location_history " +
+    @Query(value = "SELECT * FROM location_history " +
            "WHERE timestamp > :since " +
-           "HAVING distance <= :radiusKm " +
+           "AND (6371 * acos(cos(radians(:latitude)) * cos(radians(latitude)) * " +
+           "cos(radians(longitude) - radians(:longitude)) + " +
+           "sin(radians(:latitude)) * sin(radians(latitude)))) <= :radiusKm " +
            "ORDER BY timestamp DESC", nativeQuery = true)
     List<LocationHistory> findLocationsNearPoint(@Param("latitude") Double latitude,
                                                 @Param("longitude") Double longitude,

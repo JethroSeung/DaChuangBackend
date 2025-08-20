@@ -1,6 +1,8 @@
 package com.uav.dockingmanagement.controller;
 
 import com.uav.dockingmanagement.config.TestRateLimitingConfig;
+import com.uav.dockingmanagement.config.TestSecurityConfig;
+import com.uav.dockingmanagement.config.TestWebConfig;
 import com.uav.dockingmanagement.model.DockingStation;
 import com.uav.dockingmanagement.repository.DockingStationRepository;
 import com.uav.dockingmanagement.service.DockingStationService;
@@ -27,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(DockingStationController.class)
 @ActiveProfiles("test")
-@Import(TestRateLimitingConfig.class)
+@Import({TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class})
 class DockingStationControllerTest {
 
     @Autowired
@@ -198,7 +200,7 @@ class DockingStationControllerTest {
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "UAV docked successfully");
-        
+
         when(dockingStationService.dockUAV(1, 1L, "CHARGING")).thenReturn(response);
 
         mockMvc.perform(post("/api/docking-stations/1/dock")
@@ -217,7 +219,7 @@ class DockingStationControllerTest {
         Map<String, Object> response = new HashMap<>();
         response.put("success", false);
         response.put("message", "Station is full");
-        
+
         when(dockingStationService.dockUAV(1, 1L, "CHARGING")).thenReturn(response);
 
         mockMvc.perform(post("/api/docking-stations/1/dock")
@@ -236,7 +238,7 @@ class DockingStationControllerTest {
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "UAV undocked successfully");
-        
+
         when(dockingStationService.undockUAV(1)).thenReturn(response);
 
         mockMvc.perform(post("/api/docking-stations/undock")
@@ -344,7 +346,7 @@ class DockingStationControllerTest {
         stats.put("totalStations", 10L);
         stats.put("operationalStations", 8L);
         stats.put("averageOccupancy", 65.5);
-        
+
         when(dockingStationService.getStationStatistics()).thenReturn(stats);
 
         mockMvc.perform(get("/api/docking-stations/statistics"))
@@ -362,10 +364,10 @@ class DockingStationControllerTest {
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "Station status updated successfully");
-        
+
         Map<String, String> statusUpdate = new HashMap<>();
         statusUpdate.put("status", "MAINTENANCE");
-        
+
         when(dockingStationRepository.findById(1L)).thenReturn(Optional.of(testStation));
         when(dockingStationRepository.save(any(DockingStation.class))).thenReturn(testStation);
 

@@ -160,8 +160,8 @@ public class UAVService {
      * @see #getUAVByRfidTag(String)
      */
     public String checkUAVRegionAccess(String rfidTag, String regionName) {
-        // Check if UAV exists
-        Optional<UAV> uavOpt = uavRepository.findByRfidTag(rfidTag);
+        // Check if UAV exists - use eager loading to avoid lazy loading issues
+        Optional<UAV> uavOpt = uavRepository.findByRfidTagWithRegions(rfidTag);
         if (uavOpt.isEmpty()) {
             return "UAV with RFID " + rfidTag + " not found";
         }

@@ -131,20 +131,52 @@ class DockingStationServiceTest {
     void testUpdateStationNotFound() {
         when(dockingStationRepository.findById(999L)).thenReturn(Optional.empty());
 
-        DockingStation result = dockingStationService.updateStation(999L, testStation);
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            dockingStationService.updateStation(999L, testStation);
+        });
 
-        assertNull(result);
+        assertEquals("Failed to update station: Station not found with ID: 999", exception.getMessage());
         verify(dockingStationRepository, times(1)).findById(999L);
         verify(dockingStationRepository, never()).save(any());
     }
 
     @Test
     void testDeleteStation() {
+        testStation.setCurrentOccupancy(0); // Ensure no active dockings
+        when(dockingStationRepository.findById(1L)).thenReturn(Optional.of(testStation));
         doNothing().when(dockingStationRepository).deleteById(1L);
 
         dockingStationService.deleteStation(1L);
 
+        verify(dockingStationRepository, times(1)).findById(1L);
         verify(dockingStationRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void testDeleteStationWithActiveDockings() {
+        testStation.setCurrentOccupancy(2); // Has active dockings
+        when(dockingStationRepository.findById(1L)).thenReturn(Optional.of(testStation));
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            dockingStationService.deleteStation(1L);
+        });
+
+        assertEquals("Failed to delete station: Cannot delete station with active dockings", exception.getMessage());
+        verify(dockingStationRepository, times(1)).findById(1L);
+        verify(dockingStationRepository, never()).deleteById(1L);
+    }
+
+    @Test
+    void testDeleteStationNotFound() {
+        when(dockingStationRepository.findById(999L)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            dockingStationService.deleteStation(999L);
+        });
+
+        assertEquals("Failed to delete station: Station not found with ID: 999", exception.getMessage());
+        verify(dockingStationRepository, times(1)).findById(999L);
+        verify(dockingStationRepository, never()).deleteById(999L);
     }
 
     @Test
@@ -352,9 +384,14 @@ class DockingStationServiceTest {
     void testGetStationStatistics() {
         when(dockingStationRepository.count()).thenReturn(10L);
         when(dockingStationRepository.countByStatus(DockingStation.StationStatus.OPERATIONAL)).thenReturn(8L);
-        when(dockingStationRepository.countByChargingAvailable(true)).thenReturn(6L);
-        when(dockingStationRepository.countByMaintenanceAvailable(true)).thenReturn(3L);
-        when(dockingStationRepository.countByWeatherProtected(true)).thenReturn(5L);
+        when(dockingStationRepository.countByStatus(DockingStation.StationStatus.MAINTENANCE)).thenReturn(1L);
+        when(dockingStationRepository.countByStatus(DockingStation.StationStatus.OFFLINE)).thenReturn(1L);
+        when(dockingStationRepository.getTotalCapacity()).thenReturn(50);
+        when(dockingStationRepository.getCurrentTotalOccupancy()).thenReturn(20);
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.STANDARD)).thenReturn(Collections.emptyList());
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.CHARGING)).thenReturn(Collections.emptyList());
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.MAINTENANCE)).thenReturn(Collections.emptyList());
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.EMERGENCY)).thenReturn(Collections.emptyList());
         when(dockingStationRepository.findStationsNeedingMaintenance()).thenReturn(Collections.emptyList());
 
         Map<String, Object> result = dockingStationService.getStationStatistics();
@@ -362,10 +399,13 @@ class DockingStationServiceTest {
         assertNotNull(result);
         assertEquals(10L, result.get("totalStations"));
         assertEquals(8L, result.get("operationalStations"));
-        assertEquals(0, result.get("stationsNeedingMaintenance"));
-        assertNotNull(result.get("features"));
+        assertEquals(1L, result.get("maintenanceStations"));
+        assertEquals(1L, result.get("offlineStations"));
+        assertEquals(50, result.get("totalCapacity"));
+        assertEquals(20, result.get("currentOccupancy"));
+        assertEquals(30, result.get("availableCapacity"));
         assertNotNull(result.get("timestamp"));
-        
+
         verify(dockingStationRepository, times(1)).count();
         verify(dockingStationRepository, times(1)).countByStatus(DockingStation.StationStatus.OPERATIONAL);
     }

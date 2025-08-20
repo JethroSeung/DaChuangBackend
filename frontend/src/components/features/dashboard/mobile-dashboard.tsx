@@ -1,385 +1,267 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { 
-  Plane, 
-  Battery, 
-  Shield, 
-  AlertTriangle, 
-  Activity, 
-  MapPin, 
-  TrendingUp, 
-  Home, 
+import { Button } from '@/components/ui/button'
+import {
+  Plane,
+  Battery,
+  Shield,
+  AlertTriangle,
+  Activity,
+  MapPin,
   RefreshCw,
-  ChevronRight,
-  MoreVertical,
-  Eye,
-  Settings
+  Home,
+  Zap,
 } from 'lucide-react'
-import { cn, formatNumber, formatPercentage, formatRelativeTime } from '@/lib/utils'
-import { useDashboardMetrics, useConnectionStatus } from '@/stores/enhanced-dashboard-store'
-import { ResponsiveGrid, MobileCard, ResponsiveText } from '@/components/layout/mobile-responsive-layout'
-import { AnimatedCard, StaggerContainer, StaggerItem } from '@/components/ui/animated-components'
+import { cn } from '@/lib/utils'
+import { useDashboardStore } from '@/stores/dashboard-store'
+import { useUAVStore } from '@/stores/uav-store'
+import Link from 'next/link'
+import toast from 'react-hot-toast'
 
-// Mobile-optimized metric card
-function MobileMetricCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon: Icon, 
-  color = 'default',
-  trend,
-  onClick 
-}: {
-  title: string
-  value: string | number
-  subtitle?: string
-  icon: React.ComponentType<{ className?: string }>
-  color?: 'default' | 'success' | 'warning' | 'danger' | 'info'
-  trend?: { value: number; label: string }
-  onClick?: () => void
-}) {
-  const colorClasses = {
-    default: 'text-foreground',
-    success: 'text-green-600',
-    warning: 'text-yellow-600',
-    danger: 'text-red-600',
-    info: 'text-blue-600'
-  }
-
-  const bgColorClasses = {
-    default: 'bg-muted',
-    success: 'bg-green-100',
-    warning: 'bg-yellow-100',
-    danger: 'bg-red-100',
-    info: 'bg-blue-100'
-  }
-
-  return (
-    <MobileCard 
-      className={cn(
-        'cursor-pointer transition-all duration-200 hover:shadow-md active:scale-95',
-        onClick && 'hover:bg-accent/50'
-      )}
-      onClick={onClick}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-3">
-            <div className={cn(
-              'p-2 rounded-lg',
-              bgColorClasses[color]
-            )}>
-              <Icon className={cn('h-4 w-4', colorClasses[color])} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-muted-foreground truncate">
-                {title}
-              </p>
-              <p className={cn('text-lg font-bold', colorClasses[color])}>
-                {formatNumber(value)}
-              </p>
-              {subtitle && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {subtitle}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        {trend && (
-          <div className="text-right">
-            <div className={cn(
-              'text-xs font-medium',
-              trend.value > 0 ? 'text-green-600' : trend.value < 0 ? 'text-red-600' : 'text-muted-foreground'
-            )}>
-              {trend.value > 0 ? '+' : ''}{trend.value}%
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {trend.label}
-            </div>
-          </div>
-        )}
-        
-        {onClick && (
-          <ChevronRight className="h-4 w-4 text-muted-foreground ml-2" />
-        )}
-      </div>
-    </MobileCard>
-  )
-}
-
-// Mobile-optimized status overview
-function MobileStatusOverview({ metrics }: { metrics: any }) {
-  const statusItems = [
-    {
-      label: 'Unauthorized',
-      value: metrics?.unauthorizedUAVs || 0,
-      color: metrics?.unauthorizedUAVs > 0 ? 'danger' : 'default' as const
-    },
-    {
-      label: 'Low Battery',
-      value: metrics?.lowBatteryCount || 0,
-      color: metrics?.lowBatteryCount > 0 ? 'warning' : 'default' as const
-    },
-    {
-      label: 'Charging',
-      value: metrics?.chargingCount || 0,
-      color: 'info' as const
-    },
-    {
-      label: 'Maintenance',
-      value: metrics?.maintenanceCount || 0,
-      color: metrics?.maintenanceCount > 0 ? 'warning' : 'default' as const
-    },
-    {
-      label: 'Emergency',
-      value: metrics?.emergencyCount || 0,
-      color: metrics?.emergencyCount > 0 ? 'danger' : 'success' as const
-    }
-  ]
-
-  return (
-    <MobileCard>
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-sm">System Status</h3>
-          <Button variant="ghost" size="icon" className="h-6 w-6">
-            <MoreVertical className="h-3 w-3" />
-          </Button>
-        </div>
-        
-        <div className="space-y-2">
-          {statusItems.map((item) => (
-            <div key={item.label} className="flex items-center justify-between py-1">
-              <span className="text-xs font-medium text-muted-foreground">
-                {item.label}
-              </span>
-              <Badge 
-                variant={item.color === 'danger' ? 'destructive' : 
-                        item.color === 'warning' ? 'secondary' : 
-                        item.color === 'success' ? 'default' : 'outline'}
-                className="text-xs"
-              >
-                {item.value}
-              </Badge>
-            </div>
-          ))}
-        </div>
-      </div>
-    </MobileCard>
-  )
-}
-
-// Mobile-optimized active flights
-function MobileActiveFlights({ flights }: { flights: any[] }) {
-  return (
-    <MobileCard>
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-sm">Active Flights</h3>
-          <Badge variant="outline" className="text-xs">
-            {flights.length}
-          </Badge>
-        </div>
-        
-        <ScrollArea className="h-32">
-          <div className="space-y-2">
-            {flights.length > 0 ? (
-              flights.map((flight) => (
-                <div key={flight.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{flight.missionName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {flight.uavRfid} • {formatRelativeTime(flight.startTime)}
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {flight.status.replace('_', ' ')}
-                  </Badge>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-4 text-muted-foreground">
-                <Plane className="h-6 w-6 mx-auto mb-2 opacity-50" />
-                <p className="text-xs">No active flights</p>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-      </div>
-    </MobileCard>
-  )
-}
-
-// Mobile-optimized quick actions
-function MobileQuickActions() {
-  const actions = [
-    { icon: Plane, label: 'Add UAV', color: 'bg-blue-100 text-blue-600' },
-    { icon: MapPin, label: 'View Map', color: 'bg-green-100 text-green-600' },
-    { icon: Battery, label: 'Battery', color: 'bg-yellow-100 text-yellow-600' },
-    { icon: AlertTriangle, label: 'Alerts', color: 'bg-red-100 text-red-600' },
-  ]
-
-  return (
-    <MobileCard>
-      <div className="space-y-3">
-        <h3 className="font-semibold text-sm">Quick Actions</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {actions.map((action) => (
-            <Button
-              key={action.label}
-              variant="ghost"
-              className="h-16 flex flex-col space-y-1 p-2"
-            >
-              <div className={cn('p-2 rounded-lg', action.color)}>
-                <action.icon className="h-4 w-4" />
-              </div>
-              <span className="text-xs font-medium">{action.label}</span>
-            </Button>
-          ))}
-        </div>
-      </div>
-    </MobileCard>
-  )
-}
-
-// Main mobile dashboard component
 export function MobileDashboard() {
-  const { data: metrics, isLoading, error, refetch } = useDashboardMetrics()
-  const connectionStatus = useConnectionStatus()
-  const [activeTab, setActiveTab] = useState('overview')
+  const {
+    metrics,
+    alerts,
+    loading,
+    systemHealth,
+    fetchDashboardData,
+    getUnacknowledgedAlerts,
+    getCriticalAlerts,
+  } = useDashboardStore()
 
-  // Mock data for demonstration
-  const mockMetrics = {
-    totalUAVs: 24,
-    authorizedUAVs: 18,
-    unauthorizedUAVs: 6,
-    activeFlights: 3,
-    hibernatingUAVs: 8,
-    lowBatteryCount: 2,
-    chargingCount: 5,
-    maintenanceCount: 1,
-    emergencyCount: 0,
+  const { stats, fetchStats } = useUAVStore()
+
+  useEffect(() => {
+    fetchDashboardData()
+    fetchStats()
+  }, [fetchDashboardData, fetchStats])
+
+  const handleRefresh = () => {
+    fetchDashboardData()
+    fetchStats()
+    toast.success('Dashboard refreshed')
   }
 
-  const mockFlights = [
-    { id: 1, uavRfid: 'UAV-001', missionName: 'Perimeter Patrol', startTime: '2024-01-15T10:30:00Z', status: 'IN_PROGRESS' },
-    { id: 2, uavRfid: 'UAV-003', missionName: 'Cargo Delivery', startTime: '2024-01-15T11:15:00Z', status: 'IN_PROGRESS' },
-    { id: 3, uavRfid: 'UAV-007', missionName: 'Surveillance', startTime: '2024-01-15T12:00:00Z', status: 'IN_PROGRESS' },
+  const unacknowledgedAlerts = getUnacknowledgedAlerts()
+  const criticalAlerts = getCriticalAlerts()
+
+  const quickStats = [
+    {
+      title: 'Total UAVs',
+      value: stats?.total || metrics?.totalUAVs || 0,
+      icon: Plane,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      href: '/uavs',
+    },
+    {
+      title: 'Active',
+      value: metrics?.activeFlights || 0,
+      icon: Activity,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      href: '/map',
+    },
+    {
+      title: 'Low Battery',
+      value: stats?.lowBattery || metrics?.lowBatteryCount || 0,
+      icon: Battery,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      href: '/battery',
+    },
+    {
+      title: 'Alerts',
+      value: unacknowledgedAlerts.length,
+      icon: AlertTriangle,
+      color: criticalAlerts.length > 0 ? 'text-red-600' : 'text-yellow-600',
+      bgColor: criticalAlerts.length > 0 ? 'bg-red-50' : 'bg-yellow-50',
+      href: '/dashboard#alerts',
+    },
   ]
 
-  const displayMetrics = metrics || mockMetrics
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />
-        ))}
-      </div>
-    )
-  }
+  const systemStatus = [
+    {
+      title: 'Authorized',
+      value: stats?.authorized || metrics?.authorizedUAVs || 0,
+      icon: Shield,
+      color: 'text-green-600',
+    },
+    {
+      title: 'Hibernating',
+      value: stats?.hibernating || metrics?.hibernatingUAVs || 0,
+      icon: Home,
+      color: 'text-blue-600',
+    },
+    {
+      title: 'Charging',
+      value: stats?.charging || metrics?.chargingCount || 0,
+      icon: Zap,
+      color: 'text-yellow-600',
+    },
+  ]
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <ResponsiveText variant="h2" className="font-orbitron">
-            Dashboard
-          </ResponsiveText>
-          <p className="text-xs text-muted-foreground">
-            Real-time fleet monitoring
-          </p>
+          <h1 className="text-2xl font-bold font-orbitron">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">UAV Fleet Overview</p>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          {/* Connection Status */}
-          <div className="flex items-center space-x-1">
-            <Activity className={cn(
-              'h-3 w-3',
-              connectionStatus.isConnected ? 'text-green-600' : 'text-red-600'
-            )} />
-            <span className={cn(
-              'text-xs font-medium',
-              connectionStatus.isConnected ? 'text-green-600' : 'text-red-600'
-            )}>
-              {connectionStatus.isConnected ? 'Live' : 'Offline'}
-            </span>
-          </div>
-          
-          {/* Refresh Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => refetch()}
-            className="h-8 w-8"
-          >
-            <RefreshCw className="h-3 w-3" />
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={loading}
+        >
+          <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
+        </Button>
       </div>
 
-      {/* Tabs for mobile organization */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
-          <TabsTrigger value="status" className="text-xs">Status</TabsTrigger>
-          <TabsTrigger value="actions" className="text-xs">Actions</TabsTrigger>
-        </TabsList>
+      {/* Quick Stats Grid */}
+      <div className="grid grid-cols-2 gap-3">
+        {quickStats.map((stat) => {
+          const Icon = stat.icon
+          return (
+            <Link key={stat.title} href={stat.href}>
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {stat.title}
+                      </p>
+                      <p className="text-2xl font-bold">{stat.value}</p>
+                    </div>
+                    <div className={cn('p-2 rounded-md', stat.bgColor)}>
+                      <Icon className={cn('h-5 w-5', stat.color)} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )
+        })}
+      </div>
 
-        <TabsContent value="overview" className="space-y-4 mt-4">
-          {/* Key Metrics */}
-          <ResponsiveGrid cols={{ sm: 2, md: 4 }}>
-            <MobileMetricCard
-              title="Total UAVs"
-              value={displayMetrics.totalUAVs}
-              subtitle="Fleet size"
-              icon={Plane}
-              trend={{ value: 5, label: 'vs last month' }}
-            />
-            <MobileMetricCard
-              title="Authorized"
-              value={displayMetrics.authorizedUAVs}
-              subtitle={`${formatPercentage((displayMetrics.authorizedUAVs / displayMetrics.totalUAVs) * 100)} of fleet`}
-              icon={Shield}
-              color="success"
-            />
-            <MobileMetricCard
-              title="Active Flights"
-              value={displayMetrics.activeFlights}
-              subtitle="Currently in air"
-              icon={TrendingUp}
-              color="info"
-            />
-            <MobileMetricCard
-              title="Hibernating"
-              value={displayMetrics.hibernatingUAVs}
-              subtitle="In hibernate pod"
-              icon={Home}
-              color="default"
-            />
-          </ResponsiveGrid>
+      {/* System Status */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">System Status</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {systemStatus.map((item) => {
+            const Icon = item.icon
+            return (
+              <div key={item.title} className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Icon className={cn('h-5 w-5', item.color)} />
+                  <span className="font-medium">{item.title}</span>
+                </div>
+                <Badge variant="outline">{item.value}</Badge>
+              </div>
+            )
+          })}
+        </CardContent>
+      </Card>
 
-          {/* Active Flights */}
-          <MobileActiveFlights flights={mockFlights} />
-        </TabsContent>
+      {/* Recent Alerts */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center justify-between">
+            <span>Recent Alerts</span>
+            {unacknowledgedAlerts.length > 0 && (
+              <Badge variant="destructive" className="text-xs">
+                {unacknowledgedAlerts.length}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {alerts.length === 0 ? (
+            <div className="text-center py-4">
+              <Shield className="h-8 w-8 mx-auto mb-2 text-green-500 opacity-50" />
+              <p className="text-sm text-muted-foreground">No recent alerts</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {alerts.slice(0, 3).map((alert) => (
+                <div
+                  key={alert.id}
+                  className={cn(
+                    'p-3 rounded-lg border',
+                    alert.severity === 'CRITICAL' ? 'bg-red-50 border-red-200' :
+                    alert.severity === 'HIGH' ? 'bg-orange-50 border-orange-200' :
+                    'bg-yellow-50 border-yellow-200'
+                  )}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{alert.title}</h4>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {alert.message}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(alert.timestamp).toLocaleTimeString()}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      {alert.severity}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
 
-        <TabsContent value="status" className="space-y-4 mt-4">
-          <MobileStatusOverview metrics={displayMetrics} />
-        </TabsContent>
+              {alerts.length > 3 && (
+                <div className="text-center">
+                  <Button variant="link" size="sm">
+                    View all alerts
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        <TabsContent value="actions" className="space-y-4 mt-4">
-          <MobileQuickActions />
-        </TabsContent>
-      </Tabs>
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/uavs">
+                <Plane className="h-4 w-4 mr-2" />
+                UAVs
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/map">
+                <MapPin className="h-4 w-4 mr-2" />
+                Map
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/hibernate-pod">
+                <Home className="h-4 w-4 mr-2" />
+                Hibernate
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/battery">
+                <Battery className="h-4 w-4 mr-2" />
+                Battery
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -17,7 +17,7 @@ import {
   AlertTriangle,
   XCircle,
 } from 'lucide-react'
-import { useConnectionStatus } from '@/stores/dashboard-store'
+import { useDashboardStore } from '@/stores/dashboard-store'
 import { cn } from '@/lib/utils'
 
 interface SystemMetric {
@@ -29,7 +29,8 @@ interface SystemMetric {
 }
 
 export function SystemHealth() {
-  const connectionStatus = useConnectionStatus()
+  const { systemHealth } = useDashboardStore()
+  const connectionStatus = { isConnected: systemHealth?.overall === 'HEALTHY' }
   const [systemMetrics, setSystemMetrics] = useState<SystemMetric[]>([
     {
       name: 'CPU Usage',
@@ -84,8 +85,8 @@ export function SystemHealth() {
 
   // Update WebSocket service status based on connection
   useEffect(() => {
-    setServices(prev => prev.map(service => 
-      service.name === 'WebSocket Service' 
+    setServices(prev => prev.map(service =>
+      service.name === 'WebSocket Service'
         ? { ...service, status: connectionStatus.isConnected ? 'healthy' : 'critical' }
         : service
     ))
@@ -130,9 +131,9 @@ export function SystemHealth() {
     }
   }
 
-  const overallHealth = systemMetrics.every(m => m.status === 'healthy') && 
+  const overallHealth = systemMetrics.every(m => m.status === 'healthy') &&
                        services.every(s => s.status === 'healthy') ? 'healthy' :
-                       systemMetrics.some(m => m.status === 'critical') || 
+                       systemMetrics.some(m => m.status === 'critical') ||
                        services.some(s => s.status === 'critical') ? 'critical' : 'warning'
 
   return (
@@ -166,8 +167,8 @@ export function SystemHealth() {
                     {metric.value.toFixed(0)}{metric.unit}
                   </span>
                 </div>
-                <Progress 
-                  value={metric.value} 
+                <Progress
+                  value={metric.value}
                   className={cn(
                     "h-2",
                     `[&>div]:${getProgressColor(metric.status)}`

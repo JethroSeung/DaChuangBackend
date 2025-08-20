@@ -2,7 +2,6 @@
 
 import React, { useEffect } from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
-import { AnimatedPage, StaggerContainer, StaggerItem, AnimatedCard } from '@/components/ui/animated-components'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -20,352 +19,281 @@ import {
   Home,
   RefreshCw,
 } from 'lucide-react'
-import { useDashboardStore, useDashboardMetrics, useConnectionStatus } from '@/stores/dashboard-store'
+import { useDashboardStore } from '@/stores/dashboard-store'
 import { useUAVStore } from '@/stores/uav-store'
-import { cn, formatNumber, formatPercentage, formatRelativeTime } from '@/lib/utils'
 import { DashboardCharts } from '@/components/features/dashboard/dashboard-charts'
 import { RealtimeAlerts } from '@/components/features/dashboard/realtime-alerts'
 import { SystemHealth } from '@/components/features/dashboard/system-health'
 import { MobileDashboard } from '@/components/features/dashboard/mobile-dashboard'
 import { useResponsive } from '@/hooks/use-responsive'
-
-// Mock data for demonstration
-const mockMetrics = {
-  totalUAVs: 24,
-  authorizedUAVs: 18,
-  unauthorizedUAVs: 6,
-  activeFlights: 3,
-  hibernatingUAVs: 8,
-  lowBatteryCount: 2,
-  chargingCount: 5,
-  maintenanceCount: 1,
-  emergencyCount: 0,
-}
-
-const mockFlightActivity = {
-  activeFlights: 3,
-  todayFlights: 12,
-  completedFlights: 9,
-  flights: [
-    { id: 1, uavRfid: 'UAV-001', missionName: 'Perimeter Patrol', startTime: '2024-01-15T10:30:00Z', status: 'IN_PROGRESS' },
-    { id: 2, uavRfid: 'UAV-003', missionName: 'Cargo Delivery', startTime: '2024-01-15T11:15:00Z', status: 'IN_PROGRESS' },
-    { id: 3, uavRfid: 'UAV-007', missionName: 'Surveillance', startTime: '2024-01-15T12:00:00Z', status: 'IN_PROGRESS' },
-  ],
-}
+import { cn } from '@/lib/utils'
+import Link from 'next/link'
+import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
   const { isMobile } = useResponsive()
-  const metrics = useDashboardMetrics()
-  const connectionStatus = useConnectionStatus()
-  const { updateMetrics, updateFlightActivity, fetchDashboardData } = useDashboardStore()
-  const { fetchSystemStats, fetchHibernatePodStatus } = useUAVStore()
-
-  // Use mock data for demonstration
-  const displayMetrics = metrics || mockMetrics
+  const {
+    metrics,
+    alerts,
+    systemHealth,
+    loading,
+    error,
+    fetchDashboardData,
+    getUnacknowledgedAlerts,
+    getCriticalAlerts,
+  } = useDashboardStore()
+  
+  const { stats, fetchStats } = useUAVStore()
 
   useEffect(() => {
-    // Initialize with mock data for demonstration
-    updateMetrics(mockMetrics)
-    updateFlightActivity(mockFlightActivity)
-    
-    // Fetch real data
+    // Initial data fetch
     fetchDashboardData()
-    fetchSystemStats()
-    fetchHibernatePodStatus()
-  }, [updateMetrics, updateFlightActivity, fetchDashboardData, fetchSystemStats, fetchHibernatePodStatus])
+    fetchStats()
+
+    // Set up auto-refresh
+    const interval = setInterval(() => {
+      fetchDashboardData()
+      fetchStats()
+    }, 30000) // Refresh every 30 seconds
+
+    return () => clearInterval(interval)
+  }, [fetchDashboardData, fetchStats])
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+    }
+  }, [error])
 
   const handleRefresh = () => {
     fetchDashboardData()
-    fetchSystemStats()
-    fetchHibernatePodStatus()
+    fetchStats()
+    toast.success('Dashboard refreshed')
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'connected':
-        return 'text-green-600'
-      case 'disconnected':
-        return 'text-red-600'
-      case 'warning':
-        return 'text-yellow-600'
-      default:
-        return 'text-gray-600'
-    }
-  }
+  const unacknowledgedAlerts = getUnacknowledgedAlerts()
+  const criticalAlerts = getCriticalAlerts()
 
-  // Use mobile dashboard for mobile devices
+  // Quick stats from UAV store and dashboard metrics
+  const quickStats = [
+    {
+      title: 'Total UAVs',
+      value: stats?.total || metrics?.totalUAVs || 0,
+      icon: Plane,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      href: '/uavs',
+    },
+    {
+      title: 'Active Flights',
+      value: metrics?.activeFlights || 0,
+      icon: Activity,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      href: '/map',
+    },
+    {
+      title: 'Low Battery',
+      value: stats?.lowBattery || metrics?.lowBatteryCount || 0,
+      icon: Battery,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      href: '/battery',
+    },
+    {
+      title: 'Alerts',
+      value: unacknowledgedAlerts.length,
+      icon: AlertTriangle,
+      color: criticalAlerts.length > 0 ? 'text-red-600' : 'text-yellow-600',
+      bgColor: criticalAlerts.length > 0 ? 'bg-red-50' : 'bg-yellow-50',
+      href: '/dashboard#alerts',
+    },
+  ]
+
+  const systemOverview = [
+    {
+      title: 'Authorized UAVs',
+      value: stats?.authorized || metrics?.authorizedUAVs || 0,
+      total: stats?.total || metrics?.totalUAVs || 0,
+      icon: Shield,
+      color: 'text-green-600',
+    },
+    {
+      title: 'Hibernating',
+      value: stats?.hibernating || metrics?.hibernatingUAVs || 0,
+      total: stats?.total || metrics?.totalUAVs || 0,
+      icon: Home,
+      color: 'text-blue-600',
+    },
+    {
+      title: 'Charging',
+      value: stats?.charging || metrics?.chargingCount || 0,
+      total: stats?.total || metrics?.totalUAVs || 0,
+      icon: Zap,
+      color: 'text-yellow-600',
+    },
+    {
+      title: 'Maintenance',
+      value: stats?.maintenance || metrics?.maintenanceCount || 0,
+      total: stats?.total || metrics?.totalUAVs || 0,
+      icon: Users,
+      color: 'text-purple-600',
+    },
+  ]
+
   if (isMobile) {
-    return <MobileDashboard />
+    return (
+      <AppLayout>
+        <MobileDashboard />
+      </AppLayout>
+    )
   }
 
   return (
     <AppLayout>
-      <AnimatedPage>
-        <div className="space-y-6">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold font-orbitron text-foreground">
-              UAV Control Dashboard
+            <h1 className="text-3xl font-bold tracking-tight font-orbitron">
+              Dashboard
             </h1>
-            <p className="text-muted-foreground mt-1">
-              Real-time monitoring and fleet management
+            <p className="text-muted-foreground">
+              Real-time UAV fleet monitoring and system overview
             </p>
           </div>
           
-          <div className="flex items-center space-x-4">
-            {/* Connection Status */}
-            <div className="flex items-center space-x-2">
-              <Activity className={cn(
-                'h-4 w-4',
-                connectionStatus.isConnected ? 'text-green-600' : 'text-red-600'
-              )} />
-              <span className={cn(
-                'text-sm font-medium',
-                connectionStatus.isConnected ? 'text-green-600' : 'text-red-600'
-              )}>
-                {connectionStatus.isConnected ? 'Connected' : 'Disconnected'}
-              </span>
-            </div>
-            
-            {/* Refresh Button */}
+          <div className="flex items-center space-x-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              className="flex items-center space-x-2"
+              disabled={loading}
             >
-              <RefreshCw className="h-4 w-4" />
-              <span>Refresh</span>
+              <RefreshCw className={cn('h-4 w-4 mr-2', loading && 'animate-spin')} />
+              Refresh
             </Button>
+            <Badge variant="secondary" className="text-xs">
+              <Clock className="h-3 w-3 mr-1" />
+              Last updated: {metrics?.realtimeData?.lastUpdate ? 
+                new Date(metrics.realtimeData.lastUpdate).toLocaleTimeString() : 
+                'Never'
+              }
+            </Badge>
           </div>
         </div>
 
-        {/* Metrics Grid */}
-        <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Total UAVs */}
-          <StaggerItem>
-            <AnimatedCard hover={true}>
-              <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total UAVs</CardTitle>
-              <Plane className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatNumber(displayMetrics.totalUAVs)}</div>
-              <p className="text-xs text-muted-foreground">
-                Fleet size
-              </p>
-            </CardContent>
-              </Card>
-            </AnimatedCard>
-          </StaggerItem>
-
-          {/* Authorized UAVs */}
-          <StaggerItem>
-            <AnimatedCard hover={true}>
-              <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Authorized</CardTitle>
-              <Shield className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {formatNumber(displayMetrics.authorizedUAVs)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {formatPercentage((displayMetrics.authorizedUAVs / displayMetrics.totalUAVs) * 100)} of fleet
-              </p>
-            </CardContent>
-              </Card>
-            </AnimatedCard>
-          </StaggerItem>
-
-          {/* Active Flights */}
-          <StaggerItem>
-            <AnimatedCard hover={true}>
-              <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Flights</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {formatNumber(displayMetrics.activeFlights)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Currently in air
-              </p>
-            </CardContent>
-              </Card>
-            </AnimatedCard>
-          </StaggerItem>
-
-          {/* Hibernating */}
-          <StaggerItem>
-            <AnimatedCard hover={true}>
-              <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Hibernating</CardTitle>
-              <Home className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">
-                {formatNumber(displayMetrics.hibernatingUAVs)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                In hibernate pod
-              </p>
-            </CardContent>
-              </Card>
-            </AnimatedCard>
-          </StaggerItem>
-        </StaggerContainer>
-
-        {/* Status Overview */}
-        <StaggerContainer className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* System Status */}
-          <StaggerItem>
-            <AnimatedCard hover={true}>
-              <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Activity className="h-5 w-5" />
-                <span>System Status</span>
-              </CardTitle>
-              <CardDescription>
-                Current system health and alerts
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Unauthorized UAVs</span>
-                <Badge variant={displayMetrics.unauthorizedUAVs > 0 ? 'destructive' : 'secondary'}>
-                  {displayMetrics.unauthorizedUAVs}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Low Battery</span>
-                <Badge variant={displayMetrics.lowBatteryCount > 0 ? 'warning' : 'secondary'}>
-                  {displayMetrics.lowBatteryCount}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Charging</span>
-                <Badge variant="info">
-                  {displayMetrics.chargingCount}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Maintenance</span>
-                <Badge variant={displayMetrics.maintenanceCount > 0 ? 'warning' : 'secondary'}>
-                  {displayMetrics.maintenanceCount}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Emergency</span>
-                <Badge variant={displayMetrics.emergencyCount > 0 ? 'destructive' : 'success'}>
-                  {displayMetrics.emergencyCount}
-                </Badge>
-              </div>
-            </CardContent>
-              </Card>
-            </AnimatedCard>
-          </StaggerItem>
-
-          {/* Active Flights */}
-          <StaggerItem>
-            <AnimatedCard hover={true}>
-              <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Plane className="h-5 w-5" />
-                <span>Active Flights</span>
-              </CardTitle>
-              <CardDescription>
-                Currently active flight missions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {mockFlightActivity.flights.length > 0 ? (
-                <div className="space-y-3">
-                  {mockFlightActivity.flights.map((flight) => (
-                    <div key={flight.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium text-sm">{flight.missionName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {flight.uavRfid} • Started {formatRelativeTime(flight.startTime)}
-                        </p>
-                      </div>
-                      <Badge variant="info">
-                        {flight.status.replace('_', ' ')}
-                      </Badge>
+        {/* Quick Stats */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {quickStats.map((stat) => {
+            const Icon = stat.icon
+            return (
+              <Link key={stat.title} href={stat.href}>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      {stat.title}
+                    </CardTitle>
+                    <div className={cn('p-2 rounded-md', stat.bgColor)}>
+                      <Icon className={cn('h-4 w-4', stat.color)} />
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  <Plane className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>No active flights</p>
-                </div>
-              )}
-            </CardContent>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                    <p className="text-xs text-muted-foreground">
+                      <TrendingUp className="h-3 w-3 inline mr-1" />
+                      Real-time data
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            )
+          })}
+        </div>
+
+        {/* System Overview */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {systemOverview.map((item) => {
+            const Icon = item.icon
+            const percentage = item.total > 0 ? Math.round((item.value / item.total) * 100) : 0
+            
+            return (
+              <Card key={item.title}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {item.title}
+                  </CardTitle>
+                  <Icon className={cn('h-4 w-4', item.color)} />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{item.value}</div>
+                  <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                    <span>{percentage}% of fleet</span>
+                    <Badge variant="outline" className="text-xs">
+                      {item.value}/{item.total}
+                    </Badge>
+                  </div>
+                </CardContent>
               </Card>
-            </AnimatedCard>
-          </StaggerItem>
-        </StaggerContainer>
+            )
+          })}
+        </div>
 
-        {/* Charts and Analytics */}
-        <DashboardCharts />
+        {/* Main Content Grid */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Charts Section */}
+          <div className="lg:col-span-2 space-y-6">
+            <DashboardCharts />
+          </div>
 
-        {/* Real-time Alerts and System Health */}
-        <StaggerContainer className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <StaggerItem>
-            <RealtimeAlerts />
-          </StaggerItem>
-          <StaggerItem>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* System Health */}
             <SystemHealth />
-          </StaggerItem>
-        </StaggerContainer>
+            
+            {/* Recent Alerts */}
+            <RealtimeAlerts />
+          </div>
+        </div>
 
         {/* Quick Actions */}
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
             <CardDescription>
-              Frequently used operations and shortcuts
+              Common tasks and navigation shortcuts
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col space-y-2">
-                <Plane className="h-6 w-6" />
-                <span className="text-sm">Add UAV</span>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Button asChild variant="outline" className="justify-start">
+                <Link href="/uavs">
+                  <Plane className="h-4 w-4 mr-2" />
+                  Manage UAVs
+                </Link>
               </Button>
-
-              <Button variant="outline" className="h-20 flex flex-col space-y-2">
-                <MapPin className="h-6 w-6" />
-                <span className="text-sm">View Map</span>
+              <Button asChild variant="outline" className="justify-start">
+                <Link href="/map">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  View Map
+                </Link>
               </Button>
-
-              <Button variant="outline" className="h-20 flex flex-col space-y-2">
-                <Battery className="h-6 w-6" />
-                <span className="text-sm">Battery Status</span>
+              <Button asChild variant="outline" className="justify-start">
+                <Link href="/hibernate-pod">
+                  <Home className="h-4 w-4 mr-2" />
+                  Hibernate Pod
+                </Link>
               </Button>
-
-              <Button variant="outline" className="h-20 flex flex-col space-y-2">
-                <AlertTriangle className="h-6 w-6" />
-                <span className="text-sm">View Alerts</span>
+              <Button asChild variant="outline" className="justify-start">
+                <Link href="/battery">
+                  <Battery className="h-4 w-4 mr-2" />
+                  Battery Monitor
+                </Link>
               </Button>
             </div>
           </CardContent>
         </Card>
-        </div>
-      </AnimatedPage>
+      </div>
     </AppLayout>
   )
 }

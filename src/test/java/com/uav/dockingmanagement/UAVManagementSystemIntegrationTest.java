@@ -1,6 +1,8 @@
 package com.uav.dockingmanagement;
 
 import com.uav.dockingmanagement.config.TestRateLimitingConfig;
+import com.uav.dockingmanagement.config.TestSecurityConfig;
+import com.uav.dockingmanagement.config.TestWebConfig;
 import com.uav.dockingmanagement.model.HibernatePod;
 import com.uav.dockingmanagement.model.Region;
 import com.uav.dockingmanagement.model.UAV;
@@ -26,13 +28,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Comprehensive integration tests for UAV Management System
  */
 @SpringBootTest
 @AutoConfigureWebMvc
 @ActiveProfiles("test")
-@Import(TestRateLimitingConfig.class)
+@Import({TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class})
 @Transactional
 public class UAVManagementSystemIntegrationTest {
 
@@ -54,6 +60,9 @@ public class UAVManagementSystemIntegrationTest {
     @Autowired
     private HibernatePod hibernatePod;
 
+    @Autowired
+    private TestDataInitializer testDataInitializer;
+
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
 
@@ -61,13 +70,9 @@ public class UAVManagementSystemIntegrationTest {
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         objectMapper = new ObjectMapper();
-        
-        // Clean up data before each test
-        uavRepository.deleteAll();
-        regionRepository.deleteAll();
-        
-        // Initialize test regions
-        regionService.initializeSampleRegions();
+
+        // Initialize test data for each test
+        testDataInitializer.initializeTestData();
     }
 
     @Test
@@ -115,7 +120,7 @@ public class UAVManagementSystemIntegrationTest {
             hibernatePod.addUAV(testUAV);
         }
         assertTrue(hibernatePod.isFull());
-        
+
         UAV extraUAV = createTestUAV("EXTRA", "Extra Owner", "Extra Model");
         assertFalse(hibernatePod.addUAV(extraUAV));
     }
@@ -143,7 +148,7 @@ public class UAVManagementSystemIntegrationTest {
         UAV uav = createTestUAV("ACCESS001", "Access Owner", "Access Model");
         uav.setStatus(UAV.Status.AUTHORIZED);
         uav = uavRepository.save(uav);
-        
+
         Region region = regionService.createRegion("Access Region");
         uavService.addRegionToUAV(uav.getId(), region.getId());
 
@@ -170,17 +175,20 @@ public class UAVManagementSystemIntegrationTest {
 
     @Test
     void testRFIDValidation() {
+        // Clear any existing data to ensure clean test
+        uavRepository.deleteAll();
+
         // Create test UAV
-        UAV uav = createTestUAV("RFID001", "RFID Owner", "RFID Model");
+        UAV uav = createTestUAV("RFID_VALIDATION_001", "RFID Owner", "RFID Model");
 
         // Test unique RFID
-        assertTrue(uavService.isRfidTagUnique("UNIQUE001", null));
+        assertTrue(uavService.isRfidTagUnique("UNIQUE_RFID_001", null));
 
         // Test non-unique RFID
-        assertFalse(uavService.isRfidTagUnique("RFID001", null));
+        assertFalse(uavService.isRfidTagUnique("RFID_VALIDATION_001", null));
 
         // Test updating same UAV with same RFID (should be allowed)
-        assertTrue(uavService.isRfidTagUnique("RFID001", uav.getId()));
+        assertTrue(uavService.isRfidTagUnique("RFID_VALIDATION_001", uav.getId()));
     }
 
     @Test
@@ -207,16 +215,24 @@ public class UAVManagementSystemIntegrationTest {
 
     @Test
     void testStatistics() {
+        // Clear existing data to ensure clean test
+        uavRepository.deleteAll();
+        // Clear hibernate pod by removing all UAVs
+        List<UAV> uavsInPod = new ArrayList<>(hibernatePod.getUAVs());
+        for (UAV uav : uavsInPod) {
+            hibernatePod.removeUAV(uav);
+        }
+
         // Create test data
-        UAV authorizedUAV = createTestUAV("AUTH001", "Auth Owner", "Auth Model");
+        UAV authorizedUAV = createTestUAV("STATS_AUTH001", "Auth Owner", "Auth Model");
         authorizedUAV.setStatus(UAV.Status.AUTHORIZED);
         uavRepository.save(authorizedUAV);
 
-        UAV unauthorizedUAV = createTestUAV("UNAUTH001", "Unauth Owner", "Unauth Model");
+        UAV unauthorizedUAV = createTestUAV("STATS_UNAUTH001", "Unauth Owner", "Unauth Model");
         unauthorizedUAV.setStatus(UAV.Status.UNAUTHORIZED);
         uavRepository.save(unauthorizedUAV);
 
-        UAV hibernatingUAV = createTestUAV("HIBER001", "Hiber Owner", "Hiber Model");
+        UAV hibernatingUAV = createTestUAV("STATS_HIBER001", "Hiber Owner", "Hiber Model");
         hibernatingUAV.setInHibernatePod(true);
         uavRepository.save(hibernatingUAV);
         hibernatePod.addUAV(hibernatingUAV);

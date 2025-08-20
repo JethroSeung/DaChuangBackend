@@ -1,313 +1,233 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { toast } from 'react-hot-toast';
+'use client'
 
-// Types
-interface APIError {
-  message: string;
-  status: number;
-  code?: string;
-}
+import { ApiResponse, ApiError, RequestConfig } from '@/types'
 
-interface APIResponse<T = any> {
-  success: boolean;
-  message: string;
-  data?: T;
-}
+class ApiClient {
+  private baseURL: string
+  private defaultHeaders: Record<string, string>
+  private authToken: string | null = null
 
-class APIClient {
-  private client: AxiosInstance;
-  private baseURL: string;
+  constructor(baseURL: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080') {
+    this.baseURL = baseURL.replace(/\/$/, '') // Remove trailing slash
+    this.defaultHeaders = {
+      'Content-Type': 'application/json',
+    }
 
-  constructor() {
-    this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-    
-    this.client = axios.create({
-      baseURL: this.baseURL,
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    this.setupInterceptors();
+    // Load auth token from localStorage if available
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('auth_token')
+      if (stored) {
+        this.authToken = stored
+      }
+    }
   }
 
-  private setupInterceptors() {
-    // Request interceptor
-    this.client.interceptors.request.use(
-      (config) => {
-        // Add auth token if available
-        const token = this.getAuthToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+  setAuthToken(token: string) {
+    this.authToken = token
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', token)
+    }
+  }
 
-        // Add request timestamp for debugging
-        config.metadata = { startTime: new Date() };
-        
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
+  clearAuthToken() {
+    this.authToken = null
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token')
+    }
+  }
+
+  private getHeaders(customHeaders?: Record<string, string>): Record<string, string> {
+    const headers = { ...this.defaultHeaders, ...customHeaders }
+    
+    if (this.authToken) {
+      headers.Authorization = `Bearer ${this.authToken}`
+    }
+
+    return headers
+  }
+
+  private async handleResponse<T>(response: Response): Promise<T> {
+    const contentType = response.headers.get('content-type')
+    const isJson = contentType?.includes('application/json')
+
+    let data: any
+    if (isJson) {
+      data = await response.json()
+    } else {
+      data = await response.text()
+    }
+
+    if (!response.ok) {
+      const error: ApiError = {
+        code: response.status.toString(),
+        message: data?.message || data || `HTTP ${response.status}`,
+        details: data?.details,
+        timestamp: new Date().toISOString(),
       }
-    );
+      throw error
+    }
 
-    // Response interceptor
-    this.client.interceptors.response.use(
-      (response: AxiosResponse) => {
-        // Log response time in development
-        if (process.env.NODE_ENV === 'development') {
-          const endTime = new Date();
-          const startTime = response.config.metadata?.startTime;
-          if (startTime) {
-            const duration = endTime.getTime() - startTime.getTime();
-            console.log(`API ${response.config.method?.toUpperCase()} ${response.config.url}: ${duration}ms`);
+    // If the response is wrapped in an ApiResponse format
+    if (data && typeof data === 'object' && 'success' in data) {
+      if (!data.success) {
+        const error: ApiError = {
+          code: data.code || 'API_ERROR',
+          message: data.message || 'API request failed',
+          details: data.details,
+          timestamp: data.timestamp || new Date().toISOString(),
+        }
+        throw error
+      }
+      return data.data || data
+    }
+
+    return data
+  }
+
+  private async makeRequest<T>(
+    method: string,
+    endpoint: string,
+    data?: any,
+    config?: RequestConfig
+  ): Promise<T> {
+    const url = `${this.baseURL}${endpoint}`
+    const headers = this.getHeaders(config?.headers)
+
+    const requestConfig: RequestInit = {
+      method,
+      headers,
+    }
+
+    if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+      if (data instanceof FormData) {
+        // Remove Content-Type header for FormData (browser will set it with boundary)
+        delete headers['Content-Type']
+        requestConfig.body = data
+      } else {
+        requestConfig.body = JSON.stringify(data)
+      }
+    }
+
+    // Add timeout if specified
+    if (config?.timeout) {
+      const controller = new AbortController()
+      requestConfig.signal = controller.signal
+      setTimeout(() => controller.abort(), config.timeout)
+    }
+
+    let lastError: any
+    const maxRetries = config?.retries || 0
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, requestConfig)
+        return await this.handleResponse<T>(response)
+      } catch (error) {
+        lastError = error
+        
+        // Don't retry on certain errors
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error('Request timeout')
+        }
+        
+        if (error && typeof error === 'object' && 'code' in error) {
+          const apiError = error as ApiError
+          // Don't retry on client errors (4xx)
+          if (apiError.code.startsWith('4')) {
+            throw error
           }
         }
 
-        return response;
-      },
-      (error) => {
-        this.handleError(error);
-        return Promise.reject(error);
-      }
-    );
-  }
-
-  private getAuthToken(): string | null {
-    // Get token from localStorage or cookie
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
-    }
-    return null;
-  }
-
-  private handleError(error: any) {
-    let message = 'An unexpected error occurred';
-    let status = 500;
-
-    if (error.response) {
-      // Server responded with error status
-      status = error.response.status;
-      message = error.response.data?.message || error.response.statusText;
-
-      switch (status) {
-        case 401:
-          message = 'Authentication required. Please log in.';
-          this.handleAuthError();
-          break;
-        case 403:
-          message = 'You do not have permission to perform this action.';
-          break;
-        case 404:
-          message = 'The requested resource was not found.';
-          break;
-        case 422:
-          message = 'Invalid data provided. Please check your input.';
-          break;
-        case 429:
-          message = 'Too many requests. Please try again later.';
-          break;
-        case 500:
-          message = 'Server error. Please try again later.';
-          break;
-        case 503:
-          message = 'Service temporarily unavailable. Please try again later.';
-          break;
-      }
-    } else if (error.request) {
-      // Network error
-      message = 'Network error. Please check your connection.';
-      status = 0;
-    }
-
-    // Show error toast in production, log in development
-    if (process.env.NODE_ENV === 'production') {
-      toast.error(message);
-    } else {
-      console.error('API Error:', error);
-      toast.error(`${message} (${status})`);
-    }
-  }
-
-  private handleAuthError() {
-    // Clear auth token and redirect to login
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-      // Redirect to login page
-      window.location.href = '/login';
-    }
-  }
-
-  // Generic request methods
-  async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.get<T>(url, config);
-    return response.data;
-  }
-
-  async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.post<T>(url, data, config);
-    return response.data;
-  }
-
-  async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.put<T>(url, data, config);
-    return response.data;
-  }
-
-  async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.patch<T>(url, data, config);
-    return response.data;
-  }
-
-  async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.delete<T>(url, config);
-    return response.data;
-  }
-
-  // File upload method
-  async uploadFile<T = any>(
-    url: string,
-    file: File,
-    onProgress?: (progress: number) => void
-  ): Promise<T> {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const config: AxiosRequestConfig = {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      onUploadProgress: (progressEvent) => {
-        if (onProgress && progressEvent.total) {
-          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          onProgress(progress);
+        // Wait before retrying
+        if (attempt < maxRetries && config?.retryDelay) {
+          await new Promise(resolve => setTimeout(resolve, config.retryDelay))
         }
-      },
-    };
-
-    const response = await this.client.post<T>(url, formData, config);
-    return response.data;
-  }
-
-  // Batch request method
-  async batch<T = any>(requests: Array<() => Promise<any>>): Promise<T[]> {
-    try {
-      const results = await Promise.allSettled(requests.map(req => req()));
-      
-      return results.map((result, index) => {
-        if (result.status === 'fulfilled') {
-          return result.value;
-        } else {
-          console.error(`Batch request ${index} failed:`, result.reason);
-          throw result.reason;
-        }
-      });
-    } catch (error) {
-      console.error('Batch request failed:', error);
-      throw error;
+      }
     }
+
+    throw lastError
   }
 
-  // Health check method
-  async healthCheck(): Promise<boolean> {
-    try {
-      await this.get('/actuator/health');
-      return true;
-    } catch (error) {
-      return false;
+  async get<T>(endpoint: string, config?: RequestConfig): Promise<T> {
+    return this.makeRequest<T>('GET', endpoint, undefined, config)
+  }
+
+  async post<T>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
+    return this.makeRequest<T>('POST', endpoint, data, config)
+  }
+
+  async put<T>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
+    return this.makeRequest<T>('PUT', endpoint, data, config)
+  }
+
+  async patch<T>(endpoint: string, data?: any, config?: RequestConfig): Promise<T> {
+    return this.makeRequest<T>('PATCH', endpoint, data, config)
+  }
+
+  async delete<T>(endpoint: string, config?: RequestConfig): Promise<T> {
+    return this.makeRequest<T>('DELETE', endpoint, undefined, config)
+  }
+
+  // Utility methods for common patterns
+  async upload<T>(endpoint: string, file: File, additionalData?: Record<string, any>): Promise<T> {
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    if (additionalData) {
+      Object.entries(additionalData).forEach(([key, value]) => {
+        formData.append(key, value)
+      })
     }
+
+    return this.post<T>(endpoint, formData)
   }
 
-  // Set auth token
-  setAuthToken(token: string) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', token);
+  async downloadFile(endpoint: string): Promise<Blob> {
+    const url = `${this.baseURL}${endpoint}`
+    const headers = this.getHeaders()
+
+    const response = await fetch(url, { headers })
+    
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.statusText}`)
     }
+
+    return response.blob()
   }
 
-  // Clear auth token
-  clearAuthToken() {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
+  // WebSocket connection helper
+  createWebSocket(endpoint: string): WebSocket {
+    const protocol = this.baseURL.startsWith('https') ? 'wss' : 'ws'
+    const wsUrl = `${protocol}://${this.baseURL.replace(/^https?:\/\//, '')}${endpoint}`
+    
+    const ws = new WebSocket(wsUrl)
+    
+    // Add auth token to WebSocket if available
+    if (this.authToken) {
+      ws.addEventListener('open', () => {
+        ws.send(JSON.stringify({
+          type: 'auth',
+          token: this.authToken
+        }))
+      })
     }
+
+    return ws
   }
 
-  // Get base URL
-  getBaseURL(): string {
-    return this.baseURL;
+  // Health check
+  async healthCheck(): Promise<{ status: string; timestamp: string }> {
+    return this.get('/health')
   }
 
-  // Cancel all pending requests
-  cancelAllRequests() {
-    // Implementation would depend on tracking active requests
-    // For now, we'll create a new axios instance
-    this.client = axios.create({
-      baseURL: this.baseURL,
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    this.setupInterceptors();
+  // Get API version
+  async getVersion(): Promise<{ version: string; buildTime: string }> {
+    return this.get('/version')
   }
 }
 
 // Create singleton instance
-const apiClient = new APIClient();
+const apiClient = new ApiClient()
 
-export default apiClient;
-
-// Export types for use in other files
-export type { APIError, APIResponse };
-
-// Utility function for handling API responses
-export const handleAPIResponse = <T>(response: APIResponse<T>): T => {
-  if (!response.success) {
-    throw new Error(response.message || 'API request failed');
-  }
-  return response.data as T;
-};
-
-// Utility function for creating query strings
-export const createQueryString = (params: Record<string, any>): string => {
-  const searchParams = new URLSearchParams();
-  
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      if (Array.isArray(value)) {
-        value.forEach(item => searchParams.append(key, String(item)));
-      } else {
-        searchParams.append(key, String(value));
-      }
-    }
-  });
-  
-  return searchParams.toString();
-};
-
-// Utility function for retrying failed requests
-export const retryRequest = async <T>(
-  requestFn: () => Promise<T>,
-  maxRetries: number = 3,
-  delay: number = 1000
-): Promise<T> => {
-  let lastError: Error;
-  
-  for (let i = 0; i <= maxRetries; i++) {
-    try {
-      return await requestFn();
-    } catch (error) {
-      lastError = error as Error;
-      
-      if (i === maxRetries) {
-        break;
-      }
-      
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
-    }
-  }
-  
-  throw lastError!;
-};
+export default apiClient
+export { ApiClient }

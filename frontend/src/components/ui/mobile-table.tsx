@@ -7,11 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  ChevronDown, 
+import {
+  Search,
+  Filter,
+  MoreVertical,
+  ChevronDown,
   ChevronUp,
   Eye,
   Edit,
@@ -88,7 +88,7 @@ export function MobileTable({
       filtered = [...filtered].sort((a, b) => {
         const aVal = a[sortColumn]
         const bVal = b[sortColumn]
-        
+
         if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1
         if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1
         return 0
@@ -144,7 +144,7 @@ export function MobileTable({
       {(title || searchable) && (
         <CardHeader className="pb-3">
           {title && <CardTitle className="text-lg">{title}</CardTitle>}
-          
+
           {searchable && (
             <div className="flex items-center space-x-2 mt-3">
               <div className="relative flex-1">
@@ -177,7 +177,7 @@ export function MobileTable({
               {filteredData.map((row, index) => {
                 const rowId = row.id || index.toString()
                 const isExpanded = expandedRows.has(rowId)
-                
+
                 return (
                   <MobileTableRow
                     key={rowId}
@@ -230,7 +230,7 @@ function MobileTableRow({
   return (
     <div className="border rounded-lg bg-card">
       {/* Main row content */}
-      <div 
+      <div
         className={cn(
           'p-3 cursor-pointer transition-colors',
           onRowClick && 'hover:bg-accent/50'
@@ -245,7 +245,7 @@ function MobileTableRow({
                 {renderCellValue(row[primaryColumn.key], primaryColumn, row)}
               </div>
             </div>
-            
+
             {/* First 2 secondary columns (always visible on mobile) */}
             <div className="mt-1 space-y-1">
               {visibleColumns.slice(0, 2).map((column) => (
@@ -306,7 +306,7 @@ function MobileTableRow({
                     </DropdownMenuItem>
                   )}
                   {onDelete && (
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => onDelete(row)}
                       className="text-destructive"
                     >
@@ -320,7 +320,6 @@ function MobileTableRow({
           </div>
         </div>
       </div>
-
       {/* Expanded content */}
       {isExpanded && visibleColumns.length > 2 && (
         <div className="border-t bg-muted/30 p-3 space-y-2">
@@ -363,7 +362,7 @@ function renderCellValue(value: any, column: MobileTableColumn, row: any) {
 // Helper function to get badge variant based on value
 function getBadgeVariant(value: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   const lowerValue = String(value).toLowerCase()
-  
+
   if (lowerValue.includes('authorized') || lowerValue.includes('active') || lowerValue.includes('healthy')) {
     return 'default'
   }
@@ -373,7 +372,7 @@ function getBadgeVariant(value: string): 'default' | 'secondary' | 'destructive'
   if (lowerValue.includes('warning') || lowerValue.includes('low')) {
     return 'secondary'
   }
-  
+
   return 'outline'
 }
 
@@ -399,7 +398,7 @@ export function MobileDataList({
 
   const filteredData = React.useMemo(() => {
     if (!searchTerm) return data
-    
+
     return data.filter(item =>
       Object.values(item).some(value =>
         String(value).toLowerCase().includes(searchTerm.toLowerCase())
@@ -431,7 +430,7 @@ export function MobileDataList({
       {(title || searchable) && (
         <CardHeader className="pb-3">
           {title && <CardTitle className="text-lg">{title}</CardTitle>}
-          
+
           {searchable && (
             <div className="relative mt-3">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

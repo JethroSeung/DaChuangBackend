@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { MotionConfig } from 'framer-motion'
-import { prefersReducedMotion, getTransition, transitions } from '@/lib/animations'
 
 interface MotionContextType {
   reducedMotion: boolean
@@ -28,10 +27,10 @@ export function MotionProvider({ children }: MotionProviderProps) {
 
   useEffect(() => {
     // Check initial preference
-    setReducedMotion(prefersReducedMotion())
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setReducedMotion(mediaQuery.matches)
 
     // Listen for changes in motion preference
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
     const handleChange = (e: MediaQueryListEvent) => {
       setReducedMotion(e.matches)
     }
@@ -45,7 +44,7 @@ export function MotionProvider({ children }: MotionProviderProps) {
   }
 
   const motionConfig = {
-    transition: reducedMotion ? { duration: 0.01 } : transitions.default,
+    transition: reducedMotion ? { duration: 0.01 } : { duration: 0.3, ease: 'easeInOut' },
     reducedMotion: reducedMotion ? 'always' : 'never',
   }
 

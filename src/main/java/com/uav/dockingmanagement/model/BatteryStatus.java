@@ -393,11 +393,11 @@ public class BatteryStatus {
     }
 
     public boolean isLowBattery() {
-        return currentChargePercentage < 20;
+        return currentChargePercentage != null && currentChargePercentage < 20;
     }
 
     public boolean isCriticalBattery() {
-        return currentChargePercentage < 10;
+        return currentChargePercentage != null && currentChargePercentage < 10;
     }
 
     public boolean isOverheating() {

@@ -293,16 +293,17 @@ public class DockingStationService {
                 return result;
             }
             
-            // Check station availability
-            if (!station.isAvailable()) {
-                result.put("success", false);
-                result.put("message", "Station is not available for docking");
-                return result;
-            }
-            
+            // Check if station is full first (more specific error)
             if (station.isFull()) {
                 result.put("success", false);
                 result.put("message", "Station is at full capacity");
+                return result;
+            }
+
+            // Check other availability conditions
+            if (!station.isAvailable()) {
+                result.put("success", false);
+                result.put("message", "Station is not available for docking");
                 return result;
             }
             

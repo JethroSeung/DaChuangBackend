@@ -116,20 +116,37 @@ class GeofenceServiceTest {
     void testUpdateGeofenceNotFound() {
         when(geofenceRepository.findById(999L)).thenReturn(Optional.empty());
 
-        Geofence result = geofenceService.updateGeofence(999L, testGeofence);
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            geofenceService.updateGeofence(999L, testGeofence);
+        });
 
-        assertNull(result);
+        assertEquals("Failed to update geofence: Geofence not found with ID: 999", exception.getMessage());
         verify(geofenceRepository, times(1)).findById(999L);
         verify(geofenceRepository, never()).save(any());
     }
 
     @Test
     void testDeleteGeofence() {
+        when(geofenceRepository.findById(1L)).thenReturn(Optional.of(testGeofence));
         doNothing().when(geofenceRepository).deleteById(1L);
 
         geofenceService.deleteGeofence(1L);
 
+        verify(geofenceRepository, times(1)).findById(1L);
         verify(geofenceRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void testDeleteGeofenceNotFound() {
+        when(geofenceRepository.findById(999L)).thenReturn(Optional.empty());
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            geofenceService.deleteGeofence(999L);
+        });
+
+        assertEquals("Failed to delete geofence: Geofence not found with ID: 999", exception.getMessage());
+        verify(geofenceRepository, times(1)).findById(999L);
+        verify(geofenceRepository, never()).deleteById(999L);
     }
 
     @Test

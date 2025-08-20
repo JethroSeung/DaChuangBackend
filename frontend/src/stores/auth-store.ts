@@ -23,17 +23,17 @@ interface AuthStore extends AuthState {
   refreshToken: () => Promise<boolean>  // Alias for refreshAuthToken
   changePassword: (passwords: ChangePasswordRequest) => Promise<boolean>
   updateProfile: (userData: Partial<User>) => Promise<boolean>
-  
+
   // Permission checks
   hasPermission: (check: PermissionCheck) => boolean
   hasRole: (roleName: string) => boolean
   canAccess: (resource: ResourceType, action: ActionType) => boolean
-  
+
   // Session management
   checkSession: () => Promise<boolean>
   clearError: () => void
   setLoading: (loading: boolean) => void
-  
+
   // User management
   fetchUserProfile: () => Promise<void>
   updateLastActivity: () => void
@@ -61,7 +61,7 @@ export const useAuthStore = create<AuthStore>()(
 
             try {
               const response = await authApi.login(credentials)
-              
+
               if (response.success && response.data) {
                 set((state) => {
                   state.user = response.data!.user
@@ -74,20 +74,24 @@ export const useAuthStore = create<AuthStore>()(
 
                 // Set token in API client
                 authApi.setAuthToken(response.data.token)
-                
-                toast.success('Login successful')
+
+                toast.success('Login successful!')
                 return true
               } else {
-                throw new Error(response.message || 'Login failed')
+                set((state) => {
+                  state.error = response.message || 'Login failed'
+                  state.isLoading = false
+                })
+                toast.error(response.message || 'Login failed')
+                return false
               }
             } catch (error) {
-              const message = error instanceof Error ? error.message : 'Login failed'
+              const errorMessage = error instanceof Error ? error.message : 'Login failed'
               set((state) => {
-                state.error = message
+                state.error = errorMessage
                 state.isLoading = false
-                state.isAuthenticated = false
               })
-              toast.error(message)
+              toast.error(errorMessage)
               return false
             }
           },
@@ -109,7 +113,7 @@ export const useAuthStore = create<AuthStore>()(
 
               // Clear token from API client
               authApi.clearAuthToken()
-              
+
               toast.success('Logged out successfully')
             }
           },
@@ -126,29 +130,34 @@ export const useAuthStore = create<AuthStore>()(
 
               if (response.success && response.data) {
                 set((state) => {
-                  state.user = response.data.user
-                  state.token = response.data.token
-                  state.refreshToken = response.data.refreshToken
+                  state.user = response.data!.user
+                  state.token = response.data!.token
+                  state.refreshToken = response.data!.refreshToken
                   state.isAuthenticated = true
                   state.isLoading = false
+                  state.error = null
                 })
 
-                // Store tokens in localStorage
-                localStorage.setItem('token', response.data.token)
-                localStorage.setItem('refreshToken', response.data.refreshToken)
+                // Set token in API client
+                authApi.setAuthToken(response.data.token)
 
-                toast.success('Registration successful. Welcome!')
+                toast.success('Registration successful!')
                 return true
               } else {
-                throw new Error(response.message || 'Registration failed')
+                set((state) => {
+                  state.error = response.message || 'Registration failed'
+                  state.isLoading = false
+                })
+                toast.error(response.message || 'Registration failed')
+                return false
               }
             } catch (error) {
-              const message = error instanceof Error ? error.message : 'Registration failed'
+              const errorMessage = error instanceof Error ? error.message : 'Registration failed'
               set((state) => {
-                state.error = message
+                state.error = errorMessage
                 state.isLoading = false
               })
-              toast.error(message)
+              toast.error(errorMessage)
               return false
             }
           },
@@ -160,7 +169,7 @@ export const useAuthStore = create<AuthStore>()(
 
             try {
               const response = await authApi.refreshToken({ refreshToken })
-              
+
               if (response.success && response.data) {
                 set((state) => {
                   state.token = response.data!.token
@@ -170,7 +179,7 @@ export const useAuthStore = create<AuthStore>()(
 
                 // Update token in API client
                 authApi.setAuthToken(response.data.token)
-                
+
                 return true
               } else {
                 // Refresh failed, logout user
@@ -198,24 +207,29 @@ export const useAuthStore = create<AuthStore>()(
 
             try {
               const response = await authApi.changePassword(passwords)
-              
+
               if (response.success) {
                 set((state) => {
                   state.isLoading = false
+                  state.error = null
                 })
-                
-                toast.success('Password changed successfully')
+                toast.success('Password changed successfully!')
                 return true
               } else {
-                throw new Error(response.message || 'Password change failed')
+                set((state) => {
+                  state.error = response.message || 'Password change failed'
+                  state.isLoading = false
+                })
+                toast.error(response.message || 'Password change failed')
+                return false
               }
             } catch (error) {
-              const message = error instanceof Error ? error.message : 'Password change failed'
+              const errorMessage = error instanceof Error ? error.message : 'Password change failed'
               set((state) => {
-                state.error = message
+                state.error = errorMessage
                 state.isLoading = false
               })
-              toast.error(message)
+              toast.error(errorMessage)
               return false
             }
           },
@@ -229,25 +243,31 @@ export const useAuthStore = create<AuthStore>()(
 
             try {
               const response = await authApi.updateProfile(userData)
-              
+
               if (response.success && response.data) {
                 set((state) => {
                   state.user = response.data!
                   state.isLoading = false
+                  state.error = null
                 })
-                
-                toast.success('Profile updated successfully')
+
+                toast.success('Profile updated successfully!')
                 return true
               } else {
-                throw new Error(response.message || 'Profile update failed')
+                set((state) => {
+                  state.error = response.message || 'Profile update failed'
+                  state.isLoading = false
+                })
+                toast.error(response.message || 'Profile update failed')
+                return false
               }
             } catch (error) {
-              const message = error instanceof Error ? error.message : 'Profile update failed'
+              const errorMessage = error instanceof Error ? error.message : 'Profile update failed'
               set((state) => {
-                state.error = message
+                state.error = errorMessage
                 state.isLoading = false
               })
-              toast.error(message)
+              toast.error(errorMessage)
               return false
             }
           },
@@ -257,8 +277,8 @@ export const useAuthStore = create<AuthStore>()(
             const { user } = get()
             if (!user || !user.permissions) return false
 
-            return user.permissions.some(permission => 
-              permission.resource === check.resource && 
+            return user.permissions.some(permission =>
+              permission.resource === check.resource &&
               permission.action === check.action
             )
           },
@@ -277,7 +297,7 @@ export const useAuthStore = create<AuthStore>()(
           // Session management
           checkSession: async () => {
             const { token, refreshToken } = get()
-            
+
             if (!token) {
               set((state) => {
                 state.isAuthenticated = false
@@ -288,7 +308,7 @@ export const useAuthStore = create<AuthStore>()(
             try {
               // Check if token is still valid
               const isValid = await authApi.validateToken()
-              
+
               if (isValid) {
                 set((state) => {
                   state.isAuthenticated = true
@@ -377,23 +397,3 @@ export const usePermissions = () => useAuthStore((state) => ({
   hasRole: state.hasRole,
   canAccess: state.canAccess,
 }))
-
-// Auto-refresh token before expiration
-let refreshInterval: NodeJS.Timeout | null = null
-
-useAuthStore.subscribe(
-  (state) => state.token,
-  (token) => {
-    if (refreshInterval) {
-      clearInterval(refreshInterval)
-      refreshInterval = null
-    }
-
-    if (token) {
-      // Refresh token every 50 minutes (assuming 60-minute expiration)
-      refreshInterval = setInterval(() => {
-        useAuthStore.getState().refreshAuthToken()
-      }, 50 * 60 * 1000)
-    }
-  }
-)

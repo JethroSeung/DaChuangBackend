@@ -423,7 +423,7 @@ public class LocationService {
             
             for (LocationHistory location : nearbyLocations) {
                 Map<String, Object> uavData = new HashMap<>();
-                uavData.put("uavId", location.getUav().getId());
+                uavData.put("id", location.getUav().getId()); // Use "id" instead of "uavId" for ObjectMapper compatibility
                 uavData.put("rfidTag", location.getUav().getRfidTag());
                 uavData.put("latitude", location.getLatitude());
                 uavData.put("longitude", location.getLongitude());
@@ -431,10 +431,10 @@ public class LocationService {
                 uavData.put("timestamp", location.getTimestamp());
                 uavData.put("speed", location.getSpeedKmh());
                 uavData.put("batteryLevel", location.getBatteryLevel());
-                
+
                 double distance = location.distanceToPoint(latitude, longitude) / 1000.0; // Convert to km
                 uavData.put("distanceKm", distance);
-                
+
                 nearbyUAVs.add(uavData);
             }
             

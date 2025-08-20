@@ -1,6 +1,8 @@
 package com.uav.dockingmanagement.controller;
 
 import com.uav.dockingmanagement.config.TestRateLimitingConfig;
+import com.uav.dockingmanagement.config.TestSecurityConfig;
+import com.uav.dockingmanagement.config.TestWebConfig;
 import com.uav.dockingmanagement.model.HibernatePod;
 import com.uav.dockingmanagement.model.Region;
 import com.uav.dockingmanagement.model.UAV;
@@ -30,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(UAVRestController.class)
 @ActiveProfiles("test")
-@Import(TestRateLimitingConfig.class)
+@Import({TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class})
 class UAVRestControllerTest {
 
     @Autowired

@@ -23,7 +23,7 @@ class BatteryStatusTest {
         testUAV = new UAV();
         testUAV.setId(1);
         testUAV.setRfidTag("TEST001");
-        
+
         batteryStatus = new BatteryStatus();
         batteryStatus.setId(1L);
         batteryStatus.setUav(testUAV);
@@ -55,16 +55,19 @@ class BatteryStatusTest {
     @Test
     void testDefaultValues() {
         BatteryStatus newBatteryStatus = new BatteryStatus();
-        
+
         assertNull(newBatteryStatus.getId());
         assertNull(newBatteryStatus.getUav());
         assertNull(newBatteryStatus.getCurrentChargePercentage());
         assertNull(newBatteryStatus.getVoltage());
         assertNull(newBatteryStatus.getCurrentAmperage());
         assertNull(newBatteryStatus.getTemperatureCelsius());
-        assertNull(newBatteryStatus.getCycleCount());
-        assertNull(newBatteryStatus.getHealthPercentage());
-        assertNull(newBatteryStatus.getIsCharging());
+        // cycleCount has a default value of 0
+        assertEquals(0, newBatteryStatus.getCycleCount());
+        // healthPercentage has a default value of 100
+        assertEquals(100, newBatteryStatus.getHealthPercentage());
+        // isCharging has a default value of false
+        assertEquals(false, newBatteryStatus.getIsCharging());
         assertNull(newBatteryStatus.getLastUpdated());
     }
 
@@ -86,7 +89,7 @@ class BatteryStatusTest {
 
         batteryStatus.setCurrentChargePercentage(110);
         assertEquals(110, batteryStatus.getCurrentChargePercentage());
-        
+
         // Test null
         batteryStatus.setCurrentChargePercentage(null);
         assertNull(batteryStatus.getCurrentChargePercentage());
@@ -106,7 +109,7 @@ class BatteryStatusTest {
 
         batteryStatus.setCurrentChargePercentage(0);
         assertTrue(batteryStatus.isLowBattery());
-        
+
         // Test null charge percentage
         batteryStatus.setCurrentChargePercentage(null);
         assertFalse(batteryStatus.isLowBattery()); // Should handle null gracefully
@@ -123,10 +126,10 @@ class BatteryStatusTest {
 
         batteryStatus.setCurrentChargePercentage(0);
         assertTrue(batteryStatus.isCriticalBattery());
-        
+
         batteryStatus.setCurrentChargePercentage(3); // Changed from 2.5 to 3 (Integer)
         assertTrue(batteryStatus.isCriticalBattery());
-        
+
         // Test null charge percentage
         batteryStatus.setCurrentChargePercentage(null);
         assertFalse(batteryStatus.isCriticalBattery()); // Should handle null gracefully
@@ -137,20 +140,20 @@ class BatteryStatusTest {
         // Test typical voltage values for UAV batteries
         batteryStatus.setVoltage(11.1); // 3S LiPo nominal
         assertEquals(11.1, batteryStatus.getVoltage());
-        
+
         batteryStatus.setVoltage(14.8); // 4S LiPo nominal
         assertEquals(14.8, batteryStatus.getVoltage());
-        
+
         batteryStatus.setVoltage(22.2); // 6S LiPo nominal
         assertEquals(22.2, batteryStatus.getVoltage());
-        
+
         // Test edge cases
         batteryStatus.setVoltage(0.0);
         assertEquals(0.0, batteryStatus.getVoltage());
-        
+
         batteryStatus.setVoltage(-1.0);
         assertEquals(-1.0, batteryStatus.getVoltage());
-        
+
         // Test null
         batteryStatus.setVoltage(null);
         assertNull(batteryStatus.getVoltage());
@@ -180,17 +183,17 @@ class BatteryStatusTest {
         // Test normal operating temperatures
         batteryStatus.setTemperatureCelsius(20.0);
         assertEquals(20.0, batteryStatus.getTemperatureCelsius());
-        
+
         batteryStatus.setTemperatureCelsius(35.0);
         assertEquals(35.0, batteryStatus.getTemperatureCelsius());
-        
+
         // Test extreme temperatures
         batteryStatus.setTemperatureCelsius(-10.0);
         assertEquals(-10.0, batteryStatus.getTemperatureCelsius());
-        
+
         batteryStatus.setTemperatureCelsius(60.0);
         assertEquals(60.0, batteryStatus.getTemperatureCelsius());
-        
+
         // Test null
         batteryStatus.setTemperatureCelsius(null);
         assertNull(batteryStatus.getTemperatureCelsius());
@@ -235,7 +238,7 @@ class BatteryStatusTest {
 
         batteryStatus.setHealthPercentage(110);
         assertEquals(110, batteryStatus.getHealthPercentage());
-        
+
         // Test null
         batteryStatus.setHealthPercentage(null);
         assertNull(batteryStatus.getHealthPercentage());
@@ -246,10 +249,10 @@ class BatteryStatusTest {
         // Test charging states
         batteryStatus.setIsCharging(true);
         assertTrue(batteryStatus.getIsCharging());
-        
+
         batteryStatus.setIsCharging(false);
         assertFalse(batteryStatus.getIsCharging());
-        
+
         // Test null
         batteryStatus.setIsCharging(null);
         assertNull(batteryStatus.getIsCharging());
@@ -260,16 +263,16 @@ class BatteryStatusTest {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime past = LocalDateTime.now().minusHours(1);
         LocalDateTime future = LocalDateTime.now().plusHours(1);
-        
+
         batteryStatus.setLastUpdated(now);
         assertEquals(now, batteryStatus.getLastUpdated());
-        
+
         batteryStatus.setLastUpdated(past);
         assertEquals(past, batteryStatus.getLastUpdated());
-        
+
         batteryStatus.setLastUpdated(future);
         assertEquals(future, batteryStatus.getLastUpdated());
-        
+
         batteryStatus.setLastUpdated(null);
         assertNull(batteryStatus.getLastUpdated());
     }
@@ -280,16 +283,16 @@ class BatteryStatusTest {
         assertNotNull(batteryStatus.getUav());
         assertEquals(testUAV, batteryStatus.getUav());
         assertEquals("TEST001", batteryStatus.getUav().getRfidTag());
-        
+
         // Test changing UAV
         UAV newUAV = new UAV();
         newUAV.setId(2);
         newUAV.setRfidTag("TEST002");
-        
+
         batteryStatus.setUav(newUAV);
         assertEquals(newUAV, batteryStatus.getUav());
         assertEquals("TEST002", batteryStatus.getUav().getRfidTag());
-        
+
         // Test null UAV
         batteryStatus.setUav(null);
         assertNull(batteryStatus.getUav());
@@ -345,11 +348,11 @@ class BatteryStatusTest {
         batteryStatus.setCurrentChargePercentage(80);
         assertEquals(25.0, batteryStatus.getTemperatureCelsius());
         assertEquals(80, batteryStatus.getCurrentChargePercentage());
-        
+
         // Test high temperature (could affect performance)
         batteryStatus.setTemperatureCelsius(45.0);
         assertEquals(45.0, batteryStatus.getTemperatureCelsius());
-        
+
         // Test low temperature (could affect performance)
         batteryStatus.setTemperatureCelsius(0.0);
         assertEquals(0.0, batteryStatus.getTemperatureCelsius());

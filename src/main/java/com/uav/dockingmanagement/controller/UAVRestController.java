@@ -124,8 +124,8 @@ public class UAVRestController {
      *
      * <p><strong>Business Logic:</strong></p>
      * <ul>
-     * <li>AUTHORIZED â†?UNAUTHORIZED: Revokes UAV access to all regions</li>
-     * <li>UNAUTHORIZED â†?AUTHORIZED: Grants UAV access based on assigned regions</li>
+     * <li>AUTHORIZED -> UNAUTHORIZED: Revokes UAV access to all regions</li>
+     * <li>UNAUTHORIZED -> AUTHORIZED: Grants UAV access based on assigned regions</li>
      * </ul>
      *
      * @param id The unique identifier of the UAV to update
@@ -213,27 +213,27 @@ public class UAVRestController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> deleteUAV(@PathVariable int id) {
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
             if (!uavRepository.existsById(id)) {
                 response.put("success", false);
                 response.put("message", "UAV not found");
                 return ResponseEntity.notFound().build();
             }
-            
+
             // Remove from hibernate pod if present
             Optional<UAV> uavOpt = uavRepository.findById(id);
             if (uavOpt.isPresent() && uavOpt.get().isInHibernatePod()) {
                 hibernatePod.removeUAV(uavOpt.get());
             }
-            
+
             uavRepository.deleteById(id);
-            
+
             response.put("success", true);
             response.put("message", "UAV deleted successfully");
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error deleting UAV: " + e.getMessage());
@@ -246,46 +246,26 @@ public class UAVRestController {
      */
     @PostMapping("/{uavId}/regions/{regionId}")
     public ResponseEntity<Map<String, Object>> addRegionToUAV(
-            @PathVariable int uavId, 
+            @PathVariable int uavId,
             @PathVariable int regionId) {
-        
+
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
-            Optional<UAV> uavOpt = uavRepository.findById(uavId);
-            Optional<Region> regionOpt = regionRepository.findById(regionId);
-            
-            if (uavOpt.isEmpty()) {
+            UAV updatedUAV = uavService.addRegionToUAV(uavId, regionId);
+
+            if (updatedUAV == null) {
                 response.put("success", false);
-                response.put("message", "UAV not found");
-                return ResponseEntity.notFound().build();
-            }
-            
-            if (regionOpt.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Region not found");
-                return ResponseEntity.notFound().build();
-            }
-            
-            UAV uav = uavOpt.get();
-            Region region = regionOpt.get();
-            
-            // Check if region is already assigned
-            if (uav.getRegions().contains(region)) {
-                response.put("success", false);
-                response.put("message", "Region is already assigned to this UAV");
+                response.put("message", "Failed to add region to UAV");
                 return ResponseEntity.badRequest().body(response);
             }
-            
-            uav.getRegions().add(region);
-            UAV savedUAV = uavRepository.save(uav);
-            
+
             response.put("success", true);
             response.put("message", "Region added to UAV successfully");
-            response.put("uav", savedUAV);
-            
+            response.put("uav", updatedUAV);
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error adding region to UAV: " + e.getMessage());
@@ -298,45 +278,26 @@ public class UAVRestController {
      */
     @DeleteMapping("/{uavId}/regions/{regionId}")
     public ResponseEntity<Map<String, Object>> removeRegionFromUAV(
-            @PathVariable int uavId, 
+            @PathVariable int uavId,
             @PathVariable int regionId) {
-        
+
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
-            Optional<UAV> uavOpt = uavRepository.findById(uavId);
-            Optional<Region> regionOpt = regionRepository.findById(regionId);
-            
-            if (uavOpt.isEmpty()) {
+            UAV updatedUAV = uavService.removeRegionFromUAV(uavId, regionId);
+
+            if (updatedUAV == null) {
                 response.put("success", false);
-                response.put("message", "UAV not found");
-                return ResponseEntity.notFound().build();
-            }
-            
-            if (regionOpt.isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Region not found");
-                return ResponseEntity.notFound().build();
-            }
-            
-            UAV uav = uavOpt.get();
-            Region region = regionOpt.get();
-            
-            if (!uav.getRegions().contains(region)) {
-                response.put("success", false);
-                response.put("message", "Region is not assigned to this UAV");
+                response.put("message", "Failed to remove region from UAV");
                 return ResponseEntity.badRequest().body(response);
             }
-            
-            uav.getRegions().remove(region);
-            UAV savedUAV = uavRepository.save(uav);
-            
+
             response.put("success", true);
             response.put("message", "Region removed from UAV successfully");
-            response.put("uav", savedUAV);
-            
+            response.put("uav", updatedUAV);
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error removing region from UAV: " + e.getMessage());

@@ -13,11 +13,11 @@ import {
   AnimatedFlightPath,
   AnimatedDockingStation
 } from './animated-map-components'
-import { 
-  Plane, 
-  Battery, 
-  MapPin, 
-  Clock, 
+import {
+  Plane,
+  Battery,
+  MapPin,
+  Clock,
   User,
   Eye,
   Navigation,
@@ -45,7 +45,7 @@ const createUAVIcon = (status: string, operationalStatus: string) => {
   }
 
   const color = getColor()
-  
+
   return L.divIcon({
     html: `
       <div style="
@@ -134,11 +134,11 @@ interface MapControllerProps {
 
 function MapController({ center, zoom }: MapControllerProps) {
   const map = useMap()
-  
+
   useEffect(() => {
     map.setView(center, zoom)
   }, [map, center, zoom])
-  
+
   return null
 }
 
@@ -180,7 +180,7 @@ interface InteractiveMapProps {
   role?: string
 }
 
-export default function InteractiveMap({
+export function InteractiveMap({
   uavs,
   selectedUAV,
   onUAVSelect,
@@ -270,7 +270,7 @@ export default function InteractiveMap({
           onClick={onMapClick}
         >
         <MapController center={center} zoom={zoom} />
-        
+
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -316,7 +316,7 @@ export default function InteractiveMap({
                     <User className="h-3 w-3 text-muted-foreground" />
                     <span>{uav.ownerName}</span>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Plane className="h-3 w-3 text-muted-foreground" />
                     <span>{uav.model}</span>
@@ -405,3 +405,5 @@ export default function InteractiveMap({
     </div>
   )
 }
+
+export default InteractiveMap

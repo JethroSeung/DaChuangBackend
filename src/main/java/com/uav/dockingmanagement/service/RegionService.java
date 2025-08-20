@@ -232,25 +232,27 @@ public class RegionService {
         Map<String, Object> stats = new HashMap<>();
         try {
             long totalRegions = regionRepository.count();
+            long totalUAVs = uavRepository.count();
             stats.put("totalRegions", totalRegions);
-            
+            stats.put("totalUAVs", totalUAVs);
+
             // Get regions with UAV counts
             List<Region> allRegions = regionRepository.findAll();
             List<Map<String, Object>> regionData = new ArrayList<>();
-            
+
             for (Region region : allRegions) {
                 Map<String, Object> regionInfo = new HashMap<>();
                 regionInfo.put("id", region.getId());
                 regionInfo.put("name", region.getRegionName());
-                
+
                 List<UAV> uavsInRegion = getUAVsByRegion(region.getId());
                 regionInfo.put("uavCount", uavsInRegion.size());
                 regionData.add(regionInfo);
             }
-            
+
             stats.put("regions", regionData);
             stats.put("timestamp", java.time.LocalDateTime.now());
-            
+
         } catch (Exception e) {
             logger.error("Error getting region statistics: {}", e.getMessage());
             stats.put("error", "Unable to retrieve statistics");

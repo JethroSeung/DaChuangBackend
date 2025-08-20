@@ -1,348 +1,387 @@
-import { create } from 'zustand';
-import { devtools, subscribeWithSelector } from 'zustand/middleware';
-import { immer } from 'zustand/middleware/immer';
-import { SystemAlert, UAVLocationUpdate, BatteryAlert } from '@/types/uav';
+'use client'
 
-// Dashboard-specific types
-export interface DashboardMetrics {
-  totalUAVs: number;
-  authorizedUAVs: number;
-  unauthorizedUAVs: number;
-  activeFlights: number;
-  hibernatingUAVs: number;
-  lowBatteryCount: number;
-  chargingCount: number;
-  maintenanceCount: number;
-  emergencyCount: number;
-}
-
-export interface FlightActivity {
-  activeFlights: number;
-  todayFlights: number;
-  completedFlights: number;
-  flights: Array<{
-    id: number;
-    uavRfid: string;
-    missionName: string;
-    startTime: string;
-    status: string;
-  }>;
-}
-
-export interface BatteryStatistics {
-  lowBattery: number;
-  criticalBattery: number;
-  overheating: number;
-  charging: number;
-  healthy: number;
-}
-
-export interface HibernatePodMetrics {
-  currentCapacity: number;
-  maxCapacity: number;
-  utilizationPercentage: number;
-  isFull: boolean;
-}
-
-export interface ChartData {
-  flightTrends: Array<{
-    time: string;
-    flights: number;
-    completed: number;
-  }>;
-  batteryLevels: Array<{
-    uavId: number;
-    rfidTag: string;
-    batteryLevel: number;
-    status: string;
-  }>;
-  systemLoad: Array<{
-    timestamp: string;
-    cpuUsage: number;
-    memoryUsage: number;
-    networkUsage: number;
-  }>;
-}
+import { create } from 'zustand'
+import { immer } from 'zustand/middleware/immer'
+import { 
+  DashboardMetrics, 
+  Alert, 
+  SystemHealth, 
+  ChartData, 
+  UAVActivityChart, 
+  BatteryChart, 
+  SystemPerformanceChart,
+  DashboardFilters,
+  TimeRange,
+  WeatherData
+} from '@/types'
 
 interface DashboardState {
-  // Real-time data
-  metrics: DashboardMetrics | null;
-  flightActivity: FlightActivity | null;
-  batteryStats: BatteryStatistics | null;
-  hibernatePodMetrics: HibernatePodMetrics | null;
-  chartData: ChartData | null;
-  alerts: SystemAlert[];
-  recentLocationUpdates: UAVLocationUpdate[];
+  // Data
+  metrics: DashboardMetrics | null
+  alerts: Alert[]
+  systemHealth: SystemHealth | null
+  chartData: {
+    uavActivity: UAVActivityChart | null
+    battery: BatteryChart | null
+    systemPerformance: SystemPerformanceChart | null
+  }
+  weatherData: WeatherData | null
 
-  // Connection status
-  isConnected: boolean;
-  lastUpdate: string | null;
-  connectionError: string | null;
-
-  // UI state
-  selectedTimeRange: '1h' | '6h' | '24h' | '7d';
-  autoRefresh: boolean;
-  refreshInterval: number; // in seconds
-  showAlerts: boolean;
+  // UI State
+  loading: boolean
+  error: string | null
+  filters: DashboardFilters
+  autoRefresh: boolean
+  refreshInterval: number
+  lastUpdated: string | null
 
   // Actions
-  updateMetrics: (metrics: DashboardMetrics) => void;
-  updateFlightActivity: (activity: FlightActivity) => void;
-  updateBatteryStats: (stats: BatteryStatistics) => void;
-  updateHibernatePodMetrics: (metrics: HibernatePodMetrics) => void;
-  updateChartData: (data: Partial<ChartData>) => void;
-  addAlert: (alert: SystemAlert) => void;
-  removeAlert: (alertId: string) => void;
-  acknowledgeAlert: (alertId: string) => void;
-  clearAlerts: () => void;
-  addLocationUpdate: (update: UAVLocationUpdate) => void;
-  
-  // Connection management
-  setConnectionStatus: (connected: boolean, error?: string) => void;
-  updateLastUpdate: () => void;
-  
-  // UI actions
-  setTimeRange: (range: '1h' | '6h' | '24h' | '7d') => void;
-  toggleAutoRefresh: () => void;
-  setAutoRefresh: (enabled: boolean) => void;
-  setRefreshInterval: (interval: number) => void;
-  toggleAlerts: () => void;
-  setShowAlerts: (show: boolean) => void;
-  
-  // Data fetching
-  fetchDashboardData: () => Promise<void>;
-  refreshData: () => Promise<void>;
+  setMetrics: (metrics: DashboardMetrics) => void
+  setAlerts: (alerts: Alert[]) => void
+  addAlert: (alert: Alert) => void
+  acknowledgeAlert: (alertId: string) => void
+  removeAlert: (alertId: string) => void
+  setSystemHealth: (health: SystemHealth) => void
+  setChartData: (type: keyof DashboardState['chartData'], data: any) => void
+  setWeatherData: (weather: WeatherData) => void
+  setLoading: (loading: boolean) => void
+  setError: (error: string | null) => void
+  setFilters: (filters: Partial<DashboardFilters>) => void
+  setAutoRefresh: (enabled: boolean) => void
+  setRefreshInterval: (interval: number) => void
+
+  // API Actions
+  fetchDashboardData: () => Promise<void>
+  fetchMetrics: () => Promise<void>
+  fetchAlerts: () => Promise<void>
+  fetchSystemHealth: () => Promise<void>
+  fetchChartData: (timeRange: TimeRange) => Promise<void>
+  fetchWeatherData: () => Promise<void>
+  acknowledgeAlertById: (alertId: string) => Promise<boolean>
+
+  // Computed
+  getFilteredAlerts: () => Alert[]
+  getUnacknowledgedAlerts: () => Alert[]
+  getCriticalAlerts: () => Alert[]
+  getSystemHealthStatus: () => 'HEALTHY' | 'WARNING' | 'CRITICAL' | 'UNKNOWN'
+}
+
+// Mock API functions
+const mockAPI = {
+  async fetchMetrics(): Promise<DashboardMetrics> {
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    return {
+      totalUAVs: 24,
+      authorizedUAVs: 18,
+      unauthorizedUAVs: 6,
+      activeFlights: 3,
+      hibernatingUAVs: 8,
+      lowBatteryCount: 2,
+      chargingCount: 5,
+      maintenanceCount: 1,
+      emergencyCount: 0,
+      offlineCount: 1,
+      systemHealth: {
+        overall: 'HEALTHY',
+        components: {
+          database: { status: 'HEALTHY', lastCheck: new Date().toISOString(), uptime: 99.9 },
+          webSocket: { status: 'HEALTHY', lastCheck: new Date().toISOString(), uptime: 99.8 },
+          apiServer: { status: 'HEALTHY', lastCheck: new Date().toISOString(), responseTime: 45 },
+          dockingStations: { status: 'WARNING', lastCheck: new Date().toISOString(), message: '1 station offline' },
+          hibernatePods: { status: 'HEALTHY', lastCheck: new Date().toISOString() },
+          batteryMonitoring: { status: 'HEALTHY', lastCheck: new Date().toISOString() },
+        },
+        lastUpdated: new Date().toISOString(),
+      },
+      realtimeData: {
+        activeConnections: 12,
+        messagesPerSecond: 45,
+        dataTransferRate: 1.2,
+        lastUpdate: new Date().toISOString(),
+      },
+    }
+  },
+
+  async fetchAlerts(): Promise<Alert[]> {
+    await new Promise(resolve => setTimeout(resolve, 600))
+    
+    return [
+      {
+        id: '1',
+        type: 'BATTERY_LOW',
+        severity: 'MEDIUM',
+        title: 'Low Battery Warning',
+        message: 'UAV-002 battery level is below 50%',
+        timestamp: new Date(Date.now() - 300000).toISOString(),
+        acknowledged: false,
+        uavId: '2',
+      },
+      {
+        id: '2',
+        type: 'UNAUTHORIZED_UAV',
+        severity: 'HIGH',
+        title: 'Unauthorized UAV Detected',
+        message: 'Unknown UAV detected in restricted area',
+        timestamp: new Date(Date.now() - 600000).toISOString(),
+        acknowledged: false,
+        location: { latitude: 39.9042, longitude: 116.4074 },
+      },
+    ]
+  },
+
+  async fetchChartData(timeRange: TimeRange): Promise<{
+    uavActivity: UAVActivityChart
+    battery: BatteryChart
+    systemPerformance: SystemPerformanceChart
+  }> {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    const now = new Date()
+    const generateTimeSeriesData = (hours: number, baseValue: number, variance: number): ChartData[] => {
+      const data: ChartData[] = []
+      for (let i = hours; i >= 0; i--) {
+        const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000).toISOString()
+        const value = baseValue + (Math.random() - 0.5) * variance
+        data.push({ timestamp, value: Math.max(0, value) })
+      }
+      return data
+    }
+
+    return {
+      uavActivity: {
+        authorized: generateTimeSeriesData(24, 18, 4),
+        unauthorized: generateTimeSeriesData(24, 6, 2),
+        active: generateTimeSeriesData(24, 3, 2),
+        hibernating: generateTimeSeriesData(24, 8, 3),
+      },
+      battery: {
+        healthy: generateTimeSeriesData(24, 15, 3),
+        warning: generateTimeSeriesData(24, 5, 2),
+        critical: generateTimeSeriesData(24, 2, 1),
+        charging: generateTimeSeriesData(24, 5, 2),
+      },
+      systemPerformance: {
+        cpuUsage: generateTimeSeriesData(24, 45, 20),
+        memoryUsage: generateTimeSeriesData(24, 60, 15),
+        networkLatency: generateTimeSeriesData(24, 25, 10),
+        activeConnections: generateTimeSeriesData(24, 12, 5),
+      },
+    }
+  },
+
+  async fetchWeatherData(): Promise<WeatherData> {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    return {
+      temperature: 22,
+      humidity: 65,
+      windSpeed: 8,
+      windDirection: 180,
+      visibility: 10,
+      conditions: 'Partly Cloudy',
+      timestamp: new Date().toISOString(),
+      location: { latitude: 39.9042, longitude: 116.4074 },
+    }
+  },
+
+  async acknowledgeAlert(alertId: string): Promise<boolean> {
+    await new Promise(resolve => setTimeout(resolve, 300))
+    return true
+  },
 }
 
 export const useDashboardStore = create<DashboardState>()(
-  devtools(
-    subscribeWithSelector(
-      immer((set, get) => ({
-        // Initial state
-        metrics: null,
-        flightActivity: null,
-        batteryStats: null,
-        hibernatePodMetrics: null,
-        chartData: null,
-        alerts: [],
-        recentLocationUpdates: [],
-        isConnected: false,
-        lastUpdate: null,
-        connectionError: null,
-        selectedTimeRange: '24h',
-        autoRefresh: true,
-        refreshInterval: 30,
-        showAlerts: true,
+  immer((set, get) => ({
+    // Initial state
+    metrics: null,
+    alerts: [],
+    systemHealth: null,
+    chartData: {
+      uavActivity: null,
+      battery: null,
+      systemPerformance: null,
+    },
+    weatherData: null,
+    loading: false,
+    error: null,
+    filters: {
+      timeRange: '24h',
+      showAcknowledged: false,
+    },
+    autoRefresh: true,
+    refreshInterval: 30, // seconds
+    lastUpdated: null,
 
-        // Update metrics
-        updateMetrics: (metrics: DashboardMetrics) => {
-          set((state) => {
-            state.metrics = metrics;
-            state.lastUpdate = new Date().toISOString();
-          });
-        },
+    // Basic setters
+    setMetrics: (metrics) => set((state) => { 
+      state.metrics = metrics
+      state.lastUpdated = new Date().toISOString()
+    }),
+    setAlerts: (alerts) => set((state) => { state.alerts = alerts }),
+    addAlert: (alert) => set((state) => { 
+      state.alerts.unshift(alert) // Add to beginning for newest first
+    }),
+    acknowledgeAlert: (alertId) => set((state) => {
+      const alert = state.alerts.find(a => a.id === alertId)
+      if (alert) {
+        alert.acknowledged = true
+      }
+    }),
+    removeAlert: (alertId) => set((state) => {
+      state.alerts = state.alerts.filter(a => a.id !== alertId)
+    }),
+    setSystemHealth: (health) => set((state) => { state.systemHealth = health }),
+    setChartData: (type, data) => set((state) => {
+      state.chartData[type] = data
+    }),
+    setWeatherData: (weather) => set((state) => { state.weatherData = weather }),
+    setLoading: (loading) => set((state) => { state.loading = loading }),
+    setError: (error) => set((state) => { state.error = error }),
+    setFilters: (filters) => set((state) => {
+      state.filters = { ...state.filters, ...filters }
+    }),
+    setAutoRefresh: (enabled) => set((state) => { state.autoRefresh = enabled }),
+    setRefreshInterval: (interval) => set((state) => { state.refreshInterval = interval }),
 
-        // Update flight activity
-        updateFlightActivity: (activity: FlightActivity) => {
-          set((state) => {
-            state.flightActivity = activity;
-          });
-        },
+    // API actions
+    fetchDashboardData: async () => {
+      set((state) => { 
+        state.loading = true
+        state.error = null
+      })
 
-        // Update battery statistics
-        updateBatteryStats: (stats: BatteryStatistics) => {
-          set((state) => {
-            state.batteryStats = stats;
-          });
-        },
+      try {
+        const [metrics, alerts, chartData, weatherData] = await Promise.all([
+          mockAPI.fetchMetrics(),
+          mockAPI.fetchAlerts(),
+          mockAPI.fetchChartData(get().filters.timeRange),
+          mockAPI.fetchWeatherData(),
+        ])
 
-        // Update hibernate pod metrics
-        updateHibernatePodMetrics: (metrics: HibernatePodMetrics) => {
-          set((state) => {
-            state.hibernatePodMetrics = metrics;
-          });
-        },
+        set((state) => {
+          state.metrics = metrics
+          state.systemHealth = metrics.systemHealth
+          state.alerts = alerts
+          state.chartData = chartData
+          state.weatherData = weatherData
+          state.loading = false
+          state.lastUpdated = new Date().toISOString()
+        })
+      } catch (error) {
+        set((state) => {
+          state.error = error instanceof Error ? error.message : 'Failed to fetch dashboard data'
+          state.loading = false
+        })
+      }
+    },
 
-        // Update chart data
-        updateChartData: (data: Partial<ChartData>) => {
-          set((state) => {
-            if (state.chartData) {
-              state.chartData = { ...state.chartData, ...data };
-            } else {
-              state.chartData = data as ChartData;
-            }
-          });
-        },
+    fetchMetrics: async () => {
+      try {
+        const metrics = await mockAPI.fetchMetrics()
+        set((state) => { 
+          state.metrics = metrics
+          state.systemHealth = metrics.systemHealth
+        })
+      } catch (error) {
+        set((state) => {
+          state.error = error instanceof Error ? error.message : 'Failed to fetch metrics'
+        })
+      }
+    },
 
-        // Add alert
-        addAlert: (alert: SystemAlert) => {
-          set((state) => {
-            // Avoid duplicates
-            const exists = state.alerts.some(a => a.id === alert.id);
-            if (!exists) {
-              state.alerts.unshift(alert);
-              // Keep only last 50 alerts
-              if (state.alerts.length > 50) {
-                state.alerts = state.alerts.slice(0, 50);
-              }
-            }
-          });
-        },
+    fetchAlerts: async () => {
+      try {
+        const alerts = await mockAPI.fetchAlerts()
+        set((state) => { state.alerts = alerts })
+      } catch (error) {
+        set((state) => {
+          state.error = error instanceof Error ? error.message : 'Failed to fetch alerts'
+        })
+      }
+    },
 
-        // Remove alert
-        removeAlert: (alertId: string) => {
-          set((state) => {
-            state.alerts = state.alerts.filter(a => a.id !== alertId);
-          });
-        },
+    fetchSystemHealth: async () => {
+      try {
+        const metrics = await mockAPI.fetchMetrics()
+        set((state) => { state.systemHealth = metrics.systemHealth })
+      } catch (error) {
+        set((state) => {
+          state.error = error instanceof Error ? error.message : 'Failed to fetch system health'
+        })
+      }
+    },
 
-        // Acknowledge alert
-        acknowledgeAlert: (alertId: string) => {
+    fetchChartData: async (timeRange) => {
+      try {
+        const chartData = await mockAPI.fetchChartData(timeRange)
+        set((state) => { state.chartData = chartData })
+      } catch (error) {
+        set((state) => {
+          state.error = error instanceof Error ? error.message : 'Failed to fetch chart data'
+        })
+      }
+    },
+
+    fetchWeatherData: async () => {
+      try {
+        const weatherData = await mockAPI.fetchWeatherData()
+        set((state) => { state.weatherData = weatherData })
+      } catch (error) {
+        set((state) => {
+          state.error = error instanceof Error ? error.message : 'Failed to fetch weather data'
+        })
+      }
+    },
+
+    acknowledgeAlertById: async (alertId) => {
+      try {
+        const success = await mockAPI.acknowledgeAlert(alertId)
+        if (success) {
           set((state) => {
-            const alert = state.alerts.find(a => a.id === alertId);
+            const alert = state.alerts.find(a => a.id === alertId)
             if (alert) {
-              alert.acknowledged = true;
+              alert.acknowledged = true
             }
-          });
-        },
+          })
+        }
+        return success
+      } catch (error) {
+        set((state) => {
+          state.error = error instanceof Error ? error.message : 'Failed to acknowledge alert'
+        })
+        return false
+      }
+    },
 
-        // Clear all alerts
-        clearAlerts: () => {
-          set((state) => {
-            state.alerts = [];
-          });
-        },
+    // Computed values
+    getFilteredAlerts: () => {
+      const { alerts, filters } = get()
+      let filtered = [...alerts]
 
-        // Add location update
-        addLocationUpdate: (update: UAVLocationUpdate) => {
-          set((state) => {
-            state.recentLocationUpdates.unshift(update);
-            // Keep only last 100 updates
-            if (state.recentLocationUpdates.length > 100) {
-              state.recentLocationUpdates = state.recentLocationUpdates.slice(0, 100);
-            }
-          });
-        },
+      if (!filters.showAcknowledged) {
+        filtered = filtered.filter(alert => !alert.acknowledged)
+      }
 
-        // Set connection status
-        setConnectionStatus: (connected: boolean, error?: string) => {
-          set((state) => {
-            state.isConnected = connected;
-            state.connectionError = error || null;
-            if (connected) {
-              state.lastUpdate = new Date().toISOString();
-            }
-          });
-        },
+      if (filters.alertSeverity && filters.alertSeverity.length > 0) {
+        filtered = filtered.filter(alert => filters.alertSeverity!.includes(alert.severity))
+      }
 
-        // Update last update timestamp
-        updateLastUpdate: () => {
-          set((state) => {
-            state.lastUpdate = new Date().toISOString();
-          });
-        },
+      return filtered.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    },
 
-        // Set time range
-        setTimeRange: (range: '1h' | '6h' | '24h' | '7d') => {
-          set((state) => {
-            state.selectedTimeRange = range;
-          });
-          // Trigger data refresh with new time range
-          get().refreshData();
-        },
+    getUnacknowledgedAlerts: () => {
+      return get().alerts.filter(alert => !alert.acknowledged)
+    },
 
-        // Toggle auto refresh
-        toggleAutoRefresh: () => {
-          set((state) => {
-            state.autoRefresh = !state.autoRefresh;
-          });
-        },
+    getCriticalAlerts: () => {
+      return get().alerts.filter(alert => alert.severity === 'CRITICAL' && !alert.acknowledged)
+    },
 
-        // Set auto refresh
-        setAutoRefresh: (enabled: boolean) => {
-          set((state) => {
-            state.autoRefresh = enabled;
-          });
-        },
-
-        // Set refresh interval
-        setRefreshInterval: (interval: number) => {
-          set((state) => {
-            state.refreshInterval = interval;
-          });
-        },
-
-        // Toggle alerts
-        toggleAlerts: () => {
-          set((state) => {
-            state.showAlerts = !state.showAlerts;
-          });
-        },
-
-        // Set show alerts
-        setShowAlerts: (show: boolean) => {
-          set((state) => {
-            state.showAlerts = show;
-          });
-        },
-
-        // Fetch dashboard data
-        fetchDashboardData: async () => {
-          try {
-            // This would typically call multiple API endpoints
-            // For now, we'll simulate the data structure
-            const response = await fetch('/api/analytics/dashboard');
-            if (response.ok) {
-              const data = await response.json();
-              
-              set((state) => {
-                if (data.metrics) state.metrics = data.metrics;
-                if (data.flightActivity) state.flightActivity = data.flightActivity;
-                if (data.batteryStats) state.batteryStats = data.batteryStats;
-                if (data.hibernatePodMetrics) state.hibernatePodMetrics = data.hibernatePodMetrics;
-                if (data.chartData) state.chartData = data.chartData;
-                state.lastUpdate = new Date().toISOString();
-                state.connectionError = null;
-              });
-            }
-          } catch (error) {
-            set((state) => {
-              state.connectionError = error instanceof Error ? error.message : 'Failed to fetch dashboard data';
-            });
-          }
-        },
-
-        // Refresh data
-        refreshData: async () => {
-          await get().fetchDashboardData();
-        },
-      }))
-    ),
-    {
-      name: 'dashboard-store',
-    }
-  )
-);
-
-// Selectors for computed values
-export const useDashboardMetrics = () => useDashboardStore((state) => state.metrics);
-export const useFlightActivity = () => useDashboardStore((state) => state.flightActivity);
-export const useBatteryStats = () => useDashboardStore((state) => state.batteryStats);
-export const useHibernatePodMetrics = () => useDashboardStore((state) => state.hibernatePodMetrics);
-export const useChartData = () => useDashboardStore((state) => state.chartData);
-export const useAlerts = () => useDashboardStore((state) => state.alerts);
-export const useConnectionStatus = () => useDashboardStore((state) => ({
-  isConnected: state.isConnected,
-  lastUpdate: state.lastUpdate,
-  error: state.connectionError,
-}));
-
-// Computed selectors
-export const useUnacknowledgedAlerts = () => 
-  useDashboardStore((state) => state.alerts.filter(alert => !alert.acknowledged));
-
-export const useCriticalAlerts = () => 
-  useDashboardStore((state) => state.alerts.filter(alert => alert.type === 'CRITICAL' || alert.type === 'ERROR'));
-
-export const useRecentLocationUpdates = () => 
-  useDashboardStore((state) => state.recentLocationUpdates.slice(0, 10));
+    getSystemHealthStatus: () => {
+      const health = get().systemHealth
+      if (!health) return 'UNKNOWN'
+      return health.overall
+    },
+  }))
+)

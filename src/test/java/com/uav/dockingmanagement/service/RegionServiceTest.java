@@ -123,10 +123,12 @@ class RegionServiceTest {
 
     @Test
     void testDeleteRegion() {
+        when(regionRepository.existsById(1)).thenReturn(true);
         doNothing().when(regionRepository).deleteById(1);
 
         regionService.deleteRegion(1);
 
+        verify(regionRepository, times(1)).existsById(1);
         verify(regionRepository, times(1)).deleteById(1);
     }
 

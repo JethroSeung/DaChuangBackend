@@ -135,14 +135,6 @@
     </dependencies>
 
     <build>
-        <!-- Build Extensions for Performance -->
-        <extensions>
-            <extension>
-                <groupId>org.apache.maven.extensions</groupId>
-                <artifactId>maven-build-cache-extension</artifactId>
-                <version>1.2.0</version>
-            </extension>
-        </extensions>
         <finalName>${project.artifactId}-${project.version}</finalName>
 
         <plugins>

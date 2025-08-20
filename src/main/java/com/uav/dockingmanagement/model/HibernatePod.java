@@ -15,7 +15,7 @@ import java.util.Set;
 public class HibernatePod {  //休眠仓类
     private static final Logger logger = LoggerFactory.getLogger(HibernatePod.class);
 
-    private int maxCapacity = 5; // 休眠仓最大容�?
+    private int maxCapacity = 5; // 休眠仓最大容量
     private Set<UAV> uavs = new HashSet<>();
 
     @Autowired

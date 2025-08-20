@@ -1,6 +1,8 @@
 package com.uav.dockingmanagement.controller;
 
 import com.uav.dockingmanagement.config.TestRateLimitingConfig;
+import com.uav.dockingmanagement.config.TestSecurityConfig;
+import com.uav.dockingmanagement.config.TestWebConfig;
 import com.uav.dockingmanagement.service.UAVService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(AccessControlAPI.class)
 @ActiveProfiles("test")
-@Import(TestRateLimitingConfig.class)
+@Import({TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class})
 class AccessControlAPITest {
 
     @Autowired
@@ -36,9 +38,10 @@ class AccessControlAPITest {
 
         mockMvc.perform(post("/api/access/validate")
                 .param("rfidId", "TEST001")
-                .param("regionName", "Test Region"))
+                .param("regionName", "Test Region")
+                .accept(MediaType.TEXT_PLAIN))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.TEXT_PLAIN))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
                 .andExpect(content().string("OPEN THE DOOR"));
 
         verify(uavService, times(1)).checkUAVRegionAccess("TEST001", "Test Region");

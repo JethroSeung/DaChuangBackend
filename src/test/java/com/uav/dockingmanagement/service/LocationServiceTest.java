@@ -75,7 +75,7 @@ class LocationServiceTest {
     void testUpdateUAVLocation() {
         when(uavRepository.save(any(UAV.class))).thenReturn(testUAV);
         when(locationHistoryRepository.save(any(LocationHistory.class))).thenReturn(testLocationHistory);
-        when(geofenceService.checkGeofenceViolations(anyDouble(), anyDouble(), anyDouble())).thenReturn(Collections.emptyList());
+        // No need to stub geofenceService.checkGeofenceViolations as it's called internally
 
         locationService.updateUAVLocation(testUAV, 40.7130, -74.0058, 55.0);
 
@@ -94,8 +94,8 @@ class LocationServiceTest {
         when(uavRepository.save(any(UAV.class))).thenReturn(testUAV);
         when(locationHistoryRepository.save(any(LocationHistory.class))).thenReturn(testLocationHistory);
         when(geofenceRepository.findCurrentlyActiveGeofences(any(LocalDateTime.class))).thenReturn(activeGeofences);
-        when(testGeofence.isPointInside(40.7130, -74.0058)).thenReturn(false);
-        when(testGeofence.getBoundaryType()).thenReturn(Geofence.BoundaryType.INCLUSION);
+        // Set up test geofence properties
+        testGeofence.setBoundaryType(Geofence.BoundaryType.INCLUSION);
 
         locationService.updateUAVLocation(testUAV, 40.7130, -74.0058, 55.0);
 
@@ -135,10 +135,6 @@ class LocationServiceTest {
     void testGetCurrentLocations() {
         List<UAV> uavs = Arrays.asList(testUAV);
         when(uavRepository.findAll()).thenReturn(uavs);
-        when(testUAV.hasLocationData()).thenReturn(true);
-        when(testUAV.getCurrentLatitude()).thenReturn(40.7128);
-        when(testUAV.getCurrentLongitude()).thenReturn(-74.0060);
-        when(testUAV.getCurrentAltitudeMeters()).thenReturn(50.0);
 
         List<Map<String, Object>> result = locationService.getCurrentLocations();
 
@@ -150,10 +146,6 @@ class LocationServiceTest {
     void testGetUAVsInArea() {
         List<UAV> uavs = Arrays.asList(testUAV);
         when(uavRepository.findAll()).thenReturn(uavs);
-        when(testUAV.hasLocationData()).thenReturn(true);
-        when(testUAV.getCurrentLatitude()).thenReturn(40.7128);
-        when(testUAV.getCurrentLongitude()).thenReturn(-74.0060);
-        when(testUAV.getCurrentAltitudeMeters()).thenReturn(50.0);
 
         List<Map<String, Object>> result = locationService.getUAVsInArea(40.7100, 40.7150, -74.0080, -74.0040);
 
@@ -232,7 +224,7 @@ class LocationServiceTest {
         List<UAV> activeUAVs = Arrays.asList(testUAV);
         when(locationHistoryRepository.findActiveUAVsSince(any(LocalDateTime.class))).thenReturn(activeUAVs);
         when(uavRepository.findAll()).thenReturn(Arrays.asList(testUAV));
-        when(testUAV.hasLocationData()).thenReturn(true);
+        // testUAV already has location data set in setUp()
 
         Map<String, Object> result = locationService.getTrackingDashboardData();
 
@@ -247,8 +239,8 @@ class LocationServiceTest {
     void testCheckGeofenceViolations() {
         List<Geofence> activeGeofences = Arrays.asList(testGeofence);
         when(geofenceRepository.findCurrentlyActiveGeofences(any(LocalDateTime.class))).thenReturn(activeGeofences);
-        when(testGeofence.isPointInside(40.7128, -74.0060)).thenReturn(false);
-        when(testGeofence.getBoundaryType()).thenReturn(Geofence.BoundaryType.INCLUSION);
+        // Set up test geofence properties
+        testGeofence.setBoundaryType(Geofence.BoundaryType.INCLUSION);
 
         locationService.checkGeofenceViolations(testUAV, 40.7128, -74.0060, 50.0);
 
