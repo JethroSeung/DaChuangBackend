@@ -176,7 +176,7 @@ public class UAVManagementSystemIntegrationTest {
     @Test
     void testRFIDValidation() {
         // Clear any existing data to ensure clean test
-        uavRepository.deleteAll();
+        testDataInitializer.clearAllData();
 
         // Create test UAV
         UAV uav = createTestUAV("RFID_VALIDATION_001", "RFID Owner", "RFID Model");
@@ -216,7 +216,7 @@ public class UAVManagementSystemIntegrationTest {
     @Test
     void testStatistics() {
         // Clear existing data to ensure clean test
-        uavRepository.deleteAll();
+        testDataInitializer.clearAllData();
         // Clear hibernate pod by removing all UAVs
         List<UAV> uavsInPod = new ArrayList<>(hibernatePod.getUAVs());
         for (UAV uav : uavsInPod) {

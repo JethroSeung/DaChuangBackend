@@ -69,8 +69,9 @@ public class TestDataInitializer {
 
     @Transactional
     public void clearAllData() {
-        batteryStatusRepository.deleteAll();
+        // Delete in proper order to avoid foreign key constraint violations
         locationHistoryRepository.deleteAll();
+        batteryStatusRepository.deleteAll();
         geofenceRepository.deleteAll();
         uavRepository.deleteAll();
         dockingStationRepository.deleteAll();
