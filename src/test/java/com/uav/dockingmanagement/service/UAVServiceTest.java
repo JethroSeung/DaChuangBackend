@@ -98,43 +98,43 @@ class UAVServiceTest {
     @Test
     void testCheckUAVRegionAccessSuccess() {
         testUAV.getRegions().add(testRegion);
-        when(uavRepository.findByRfidTag("TEST001")).thenReturn(Optional.of(testUAV));
+        when(uavRepository.findByRfidTagWithRegions("TEST001")).thenReturn(Optional.of(testUAV));
 
         String result = uavService.checkUAVRegionAccess("TEST001", "Test Region");
 
         assertEquals("OPEN THE DOOR", result);
-        verify(uavRepository, times(1)).findByRfidTag("TEST001");
+        verify(uavRepository, times(1)).findByRfidTagWithRegions("TEST001");
     }
 
     @Test
     void testCheckUAVRegionAccessUAVNotFound() {
-        when(uavRepository.findByRfidTag("NONEXISTENT")).thenReturn(Optional.empty());
+        when(uavRepository.findByRfidTagWithRegions("NONEXISTENT")).thenReturn(Optional.empty());
 
         String result = uavService.checkUAVRegionAccess("NONEXISTENT", "Test Region");
 
         assertTrue(result.contains("not found"));
-        verify(uavRepository, times(1)).findByRfidTag("NONEXISTENT");
+        verify(uavRepository, times(1)).findByRfidTagWithRegions("NONEXISTENT");
     }
 
     @Test
     void testCheckUAVRegionAccessUnauthorized() {
         testUAV.setStatus(UAV.Status.UNAUTHORIZED);
-        when(uavRepository.findByRfidTag("TEST001")).thenReturn(Optional.of(testUAV));
+        when(uavRepository.findByRfidTagWithRegions("TEST001")).thenReturn(Optional.of(testUAV));
 
         String result = uavService.checkUAVRegionAccess("TEST001", "Test Region");
 
         assertEquals("UAV is not authorized", result);
-        verify(uavRepository, times(1)).findByRfidTag("TEST001");
+        verify(uavRepository, times(1)).findByRfidTagWithRegions("TEST001");
     }
 
     @Test
     void testCheckUAVRegionAccessNoRegionAccess() {
-        when(uavRepository.findByRfidTag("TEST001")).thenReturn(Optional.of(testUAV));
+        when(uavRepository.findByRfidTagWithRegions("TEST001")).thenReturn(Optional.of(testUAV));
 
         String result = uavService.checkUAVRegionAccess("TEST001", "Unauthorized Region");
 
         assertTrue(result.contains("not authorized for region"));
-        verify(uavRepository, times(1)).findByRfidTag("TEST001");
+        verify(uavRepository, times(1)).findByRfidTagWithRegions("TEST001");
     }
 
     @Test

@@ -166,6 +166,11 @@ public class TestDataInitializer {
         battery.setEstimatedFlightTimeMinutes(25);
         battery.setRemainingCapacityMah(4750);
 
-        return batteryStatusRepository.save(battery);
+        // Set both sides of the bidirectional relationship
+        BatteryStatus savedBattery = batteryStatusRepository.save(battery);
+        uav.setBatteryStatus(savedBattery);
+        uavRepository.save(uav); // Update UAV with battery reference
+
+        return savedBattery;
     }
 }

@@ -129,7 +129,7 @@ public class UAV {
      * health status, and charging state. Essential for flight safety
      * and operational planning.</p>
      */
-    @OneToOne(mappedBy = "uav", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "uav", fetch = FetchType.LAZY)
     @JsonManagedReference
     private BatteryStatus batteryStatus;
 

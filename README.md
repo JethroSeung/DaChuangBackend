@@ -7,6 +7,7 @@ A comprehensive Spring Boot application for managing UAV (Unmanned Aerial Vehicl
 ## 🚁 Features
 
 ### Core Functionality
+
 - **Real-time UAV Tracking**: Live location monitoring with GPS coordinates, altitude, speed, and heading
 - **Docking Station Management**: Automated docking operations with capacity management
 - **Geofencing**: Create and monitor geographical boundaries with violation alerts
@@ -15,6 +16,7 @@ A comprehensive Spring Boot application for managing UAV (Unmanned Aerial Vehicl
 - **Security**: Role-based access control (USER, OPERATOR, ADMIN)
 
 ### Advanced Features
+
 - **Interactive Mapping**: Web-based map interface for UAV and station visualization
 - **Bulk Operations**: Batch location updates and station management
 - **Analytics**: Flight statistics, utilization reports, and performance metrics
@@ -25,6 +27,7 @@ A comprehensive Spring Boot application for managing UAV (Unmanned Aerial Vehicl
 ## 🛠️ Technology Stack
 
 ### Backend (Spring Boot)
+
 - **Java 21** with **Spring Boot 3.4.4**
 - **MySQL 8.0** for primary data storage
 - **Redis** for caching and session management
@@ -35,6 +38,7 @@ A comprehensive Spring Boot application for managing UAV (Unmanned Aerial Vehicl
 - **Maven 3.9.6** for build management
 
 ### Frontend (Next.js)
+
 - **Next.js 14** with App Router and TypeScript
 - **React 18** with modern hooks and patterns
 - **Tailwind CSS** for utility-first styling
@@ -45,6 +49,7 @@ A comprehensive Spring Boot application for managing UAV (Unmanned Aerial Vehicl
 - **Recharts** for data visualization
 
 ### DevOps & Tools
+
 - **Docker** for containerization
 - **Docker Compose** for development environment
 - **Jest & React Testing Library** for frontend testing
@@ -56,17 +61,20 @@ A comprehensive Spring Boot application for managing UAV (Unmanned Aerial Vehicl
 This project includes extensive documentation covering all aspects of the system:
 
 ### Core Documentation
+
 - **[API Documentation](docs/API_DOCUMENTATION.md)** - Complete REST and GraphQL API reference with examples
 - **[Architecture Guide](docs/ARCHITECTURE.md)** - System design, patterns, data flow, and scalability considerations
 - **[Database Schema](docs/DATABASE_SCHEMA.md)** - Detailed database design, relationships, and optimization strategies
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Setup instructions, workflow, testing, and contribution guidelines
 
 ### Component Documentation
+
 - **[Backend Services](src/main/java/com/uav/dockingmanagement/service/README.md)** - Service layer architecture and business logic
 - **[Frontend Components](frontend/src/components/README.md)** - React component library and usage patterns
 - **[API Client Layer](frontend/src/api/README.md)** - Frontend-backend integration and error handling
 
 ### API Reference
+
 - **OpenAPI Specification**: [docs/openapi.yaml](docs/openapi.yaml)
 - **GraphQL Schema**: [docs/GRAPHQL_API.md](docs/GRAPHQL_API.md)
 - **Interactive Documentation**: Available at `/swagger-ui.html` when running
@@ -75,6 +83,7 @@ This project includes extensive documentation covering all aspects of the system
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Java 21 or higher
 - Maven 3.6+
 - Docker & Docker Compose (optional)
@@ -83,25 +92,28 @@ This project includes extensive documentation covering all aspects of the system
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd DaChuangBackend
    ```
 
 2. **Using Docker (Recommended)**
+
    ```bash
    # Start all services (MySQL, Redis, Application)
    docker-compose up -d
-   
+
    # View logs
    docker-compose logs -f app
    ```
 
 3. **Manual Setup**
+
    ```bash
    # Configure database (see Configuration section)
    # Start MySQL and Redis services
-   
+
    # Build and run
    ./mvnw clean install
    ./mvnw spring-boot:run
@@ -117,6 +129,7 @@ This project includes extensive documentation covering all aspects of the system
 ### Database Configuration
 
 **Development (H2)**
+
 ```properties
 spring.profiles.active=local
 spring.datasource.url=jdbc:h2:mem:testdb
@@ -124,6 +137,7 @@ spring.jpa.hibernate.ddl-auto=create-drop
 ```
 
 **Production (MySQL)**
+
 ```properties
 spring.profiles.active=prod
 spring.datasource.url=jdbc:mysql://localhost:3306/uav_management
@@ -132,6 +146,7 @@ spring.datasource.password=your_password
 ```
 
 ### Environment Variables
+
 ```bash
 # Database
 DB_HOST=localhost
@@ -153,18 +168,21 @@ JWT_SECRET=your-secret-key
 ### REST Endpoints
 
 #### Location Tracking
+
 - `POST /api/location/update/{uavId}` - Update UAV location
 - `GET /api/location/current` - Get all current locations
 - `GET /api/location/history/{uavId}` - Location history
 - `GET /api/location/flight-path/{uavId}` - Flight path data
 
 #### Docking Stations
+
 - `POST /api/docking-stations` - Create station
 - `GET /api/docking-stations/nearest` - Find nearest stations
 - `GET /api/docking-stations/available` - Available stations
 - `PUT /api/docking-stations/{id}/status` - Update status
 
 #### Geofencing
+
 - `POST /api/geofences` - Create geofence
 - `GET /api/geofences/active` - Active geofences
 - `GET /api/geofences/check-point` - Check violations
@@ -172,6 +190,7 @@ JWT_SECRET=your-secret-key
 For complete API documentation, see [docs/MAP_API_DOCUMENTATION.md](docs/MAP_API_DOCUMENTATION.md)
 
 ### GraphQL
+
 Access GraphQL playground at `/graphql` for flexible data querying.
 
 ## 🧪 Testing
@@ -193,11 +212,13 @@ Access GraphQL playground at `/graphql` for flexible data querying.
 ## 🐳 Docker Deployment
 
 ### Development
+
 ```bash
 docker-compose up -d
 ```
 
 ### Production
+
 ```bash
 # Build production image
 docker build -t uav-management:latest .
@@ -223,12 +244,15 @@ docker run -d \
 ## 🔒 Security
 
 ### Authentication
+
 The system uses role-based authentication with three levels:
+
 - **USER**: Read-only access
 - **OPERATOR**: Can update locations and manage operations
 - **ADMIN**: Full system access
 
 ### API Security
+
 - JWT token-based authentication
 - HTTPS enforcement in production
 - Input validation and sanitization
@@ -243,6 +267,7 @@ The system uses role-based authentication with three levels:
 5. Open a Pull Request
 
 ### Development Guidelines
+
 - Follow Java coding standards
 - Write unit tests for new features
 - Update documentation
