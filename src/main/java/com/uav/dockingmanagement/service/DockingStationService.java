@@ -300,6 +300,13 @@ public class DockingStationService {
                 return result;
             }
 
+            // Check station operational status first
+            if (station.getStatus() != DockingStation.StationStatus.OPERATIONAL) {
+                result.put("success", false);
+                result.put("message", "Station is not operational");
+                return result;
+            }
+
             // Check other availability conditions
             if (!station.isAvailable()) {
                 result.put("success", false);
