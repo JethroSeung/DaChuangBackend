@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+
 import { AppLayout } from '@/components/layout/app-layout'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -38,7 +38,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { useUAVStore } from '@/stores/uav-store'
-import { UAV, UAVFilter } from '@/types'
+import { UAV } from '@/types'
 import { UAVForm } from '@/components/features/uav/uav-form'
 import { UAVDetails } from '@/components/features/uav/uav-details'
 import { MobileUAVManagement } from '@/components/features/uav/mobile-uav-management'
@@ -48,13 +48,11 @@ import toast from 'react-hot-toast'
 
 export default function UAVManagementPage() {
   const { isMobile } = useResponsive()
-  const { t } = useTranslation(['uav', 'common'])
   const {
     uavs,
     loading,
     error,
     searchQuery,
-    filter,
     selectedUAV,
     fetchUAVs,
     setSearchQuery,

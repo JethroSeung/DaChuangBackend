@@ -44,8 +44,8 @@ export function MotionProvider({ children }: MotionProviderProps) {
   }
 
   const motionConfig = {
-    transition: reducedMotion ? { duration: 0.01 } : { duration: 0.3, ease: 'easeInOut' },
-    reducedMotion: reducedMotion ? 'always' : 'never',
+    transition: reducedMotion ? { duration: 0.01 } : { duration: 0.3 },
+    reducedMotion: reducedMotion ? 'always' as const : 'never' as const,
   }
 
   return (

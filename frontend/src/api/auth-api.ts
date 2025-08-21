@@ -10,6 +10,10 @@ import {
   ChangePasswordRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  SessionInfo,
+  SecurityEvent,
+  SecurityIncident,
+  TwoFactorSetup
 } from '@/types/auth'
 
 export class AuthApi {
@@ -36,7 +40,7 @@ export class AuthApi {
     try {
       await apiClient.get(`${this.basePath}/validate`)
       return true
-    } catch (error) {
+    } catch {
       return false
     }
   }
@@ -76,7 +80,7 @@ export class AuthApi {
     return apiClient.get(`${this.basePath}/session`)
   }
 
-  async getSessions(): Promise<any[]> {
+  async getSessions(): Promise<SessionInfo[]> {
     return apiClient.get(`${this.basePath}/sessions`)
   }
 
@@ -89,7 +93,7 @@ export class AuthApi {
   }
 
   // Two-factor authentication
-  async setupTwoFactor(): Promise<any> {
+  async setupTwoFactor(): Promise<TwoFactorSetup> {
     return apiClient.post(`${this.basePath}/2fa/setup`)
   }
 
@@ -107,11 +111,11 @@ export class AuthApi {
   }
 
   // Security
-  async getSecurityEvents(): Promise<any[]> {
+  async getSecurityEvents(): Promise<SecurityEvent[]> {
     return apiClient.get(`${this.basePath}/security/events`)
   }
 
-  async reportSecurityIncident(incident: any): Promise<void> {
+  async reportSecurityIncident(incident: SecurityIncident): Promise<void> {
     return apiClient.post(`${this.basePath}/security/incident`, incident)
   }
 

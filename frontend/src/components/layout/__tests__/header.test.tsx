@@ -51,10 +51,10 @@ describe('Header Component', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    
+
     // Mock pathname
     ;(usePathname as jest.Mock).mockReturnValue('/dashboard')
-    
+
     // Mock dashboard store hooks
     ;(useDashboardStore as jest.Mock).mockReturnValue({
       alerts: [],
@@ -62,7 +62,7 @@ describe('Header Component', () => {
     })
 
     // Mock individual hooks
-    const { useConnectionStatus, useUnacknowledgedAlerts } = require('@/stores/dashboard-store')
+    const { useConnectionStatus, useUnacknowledgedAlerts } = await import('@/stores/dashboard-store')
     ;(useConnectionStatus as jest.Mock).mockReturnValue({
       isConnected: true,
       lastConnected: new Date(),
@@ -179,7 +179,7 @@ describe('Header Component', () => {
 
     const notificationButton = screen.getByRole('button', { name: /notifications/i })
     expect(notificationButton).toBeInTheDocument()
-    
+
     const badge = screen.getByText('2')
     expect(badge).toBeInTheDocument()
   })
@@ -220,7 +220,7 @@ describe('Header Component', () => {
     pathTitleMap.forEach(([path, title]) => {
       ;(usePathname as jest.Mock).mockReturnValue(path)
       const { unmount } = render(<Header />)
-      
+
       expect(screen.getByText(title)).toBeInTheDocument()
       unmount()
     })
@@ -240,11 +240,11 @@ describe('Header Component', () => {
 
     // Check for proper header role
     expect(screen.getByRole('banner')).toBeInTheDocument()
-    
+
     // Check for proper button labels
     expect(screen.getByRole('button', { name: /toggle menu/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument()
-    
+
     // Run accessibility tests
     await runAxeTest(container)
   })
@@ -301,7 +301,7 @@ describe('Header Component', () => {
     render(<Header />)
 
     const searchInput = screen.getByPlaceholderText(/search/i)
-    
+
     fireEvent.change(searchInput, { target: { value: 'test query' } })
     expect(searchInput).toHaveValue('test query')
   })

@@ -4,11 +4,11 @@ import React, { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { 
-  Menu, 
-  X, 
-  ChevronDown, 
-  Home, 
+import {
+  Menu,
+  X,
+  ChevronDown,
+  Home,
   Search,
   Bell,
   User,
@@ -77,7 +77,7 @@ function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle menu</span>
           </Button>
-          
+
           <div className="flex items-center space-x-2">
             <Link href="/dashboard" className="flex items-center space-x-2">
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
@@ -136,12 +136,12 @@ function MobileHeader({ onMenuClick }: { onMenuClick: () => void }) {
 }
 
 // Enhanced mobile navigation drawer
-function MobileNavDrawer({ 
-  open, 
-  onOpenChange 
-}: { 
+function MobileNavDrawer({
+  open,
+  onOpenChange
+}: {
   open: boolean
-  onOpenChange: (open: boolean) => void 
+  onOpenChange: (open: boolean) => void
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -170,8 +170,8 @@ function MobileNavDrawer({
 
           {/* Navigation */}
           <div className="flex-1 overflow-y-auto py-4">
-            <MainNav 
-              className="px-4" 
+            <MainNav
+              className="px-4"
               onNavigate={() => onOpenChange(false)}
               mobile
             />
@@ -214,15 +214,15 @@ function MobileBottomNav() {
         {quickNavItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           const Icon = item.icon
-          
+
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
                 'flex flex-col items-center justify-center space-y-1 text-xs transition-colors',
-                isActive 
-                  ? 'text-primary bg-primary/10' 
+                isActive
+                  ? 'text-primary bg-primary/10'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
@@ -247,9 +247,9 @@ export function MobileResponsiveLayout({ children, className }: MobileResponsive
       <MobileHeader onMenuClick={() => setMobileMenuOpen(true)} />
 
       {/* Mobile Navigation Drawer */}
-      <MobileNavDrawer 
-        open={mobileMenuOpen} 
-        onOpenChange={setMobileMenuOpen} 
+      <MobileNavDrawer
+        open={mobileMenuOpen}
+        onOpenChange={setMobileMenuOpen}
       />
 
       {/* Main Content */}
@@ -270,8 +270,8 @@ export function MobileResponsiveLayout({ children, className }: MobileResponsive
 }
 
 // Responsive grid component for dashboard cards
-export function ResponsiveGrid({ 
-  children, 
+export function ResponsiveGrid({
+  children,
   className,
   cols = { sm: 1, md: 2, lg: 3, xl: 4 }
 }: {
@@ -301,8 +301,8 @@ export function ResponsiveGrid({
 }
 
 // Mobile-optimized card component
-export function MobileCard({ 
-  children, 
+export function MobileCard({
+  children,
   className,
   padding = 'default'
 }: {
@@ -329,10 +329,10 @@ export function MobileCard({
 }
 
 // Responsive text component that adjusts size based on screen
-export function ResponsiveText({ 
-  children, 
+export function ResponsiveText({
+  children,
   variant = 'body',
-  className 
+  className
 }: {
   children: React.ReactNode
   variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'small'
@@ -347,7 +347,7 @@ export function ResponsiveText({
     small: 'text-xs md:text-sm'
   }
 
-  const Component = variant.startsWith('h') ? variant as keyof JSX.IntrinsicElements : 'p'
+  const Component = variant.startsWith('h') ? variant as keyof React.JSX.IntrinsicElements : 'p'
 
   return (
     <Component className={cn(variants[variant], className)}>

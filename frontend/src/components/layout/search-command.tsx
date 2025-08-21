@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -97,11 +97,11 @@ export function SearchCommand({ onClose, className }: SearchCommandProps) {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [results, selectedIndex, onClose])
 
-  const handleSelect = (item: any) => {
+  const handleSelect = useCallback((item: { href: string }) => {
     // Navigate to the selected item
     window.location.href = item.href
     onClose?.()
-  }
+  }, [onClose])
 
   const getItemIcon = (item: any) => {
     if (item.icon) return item.icon
@@ -263,7 +263,7 @@ export function SearchCommand({ onClose, className }: SearchCommandProps) {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No results found for "{query}"</p>
+                  <p className="text-sm">No results found for &quot;{query}&quot;</p>
                   <p className="text-xs mt-1">Try searching for UAVs, pages, or settings</p>
                 </div>
               )}

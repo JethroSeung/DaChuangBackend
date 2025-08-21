@@ -348,9 +348,9 @@ export function I18nTest() {
         <CardContent>
           <div className="space-y-2">
             <p><strong>Current Language:</strong> {i18n.language}</p>
-            <p><strong>Fallback Language:</strong> {i18n.options.fallbackLng}</p>
-            <p><strong>Supported Languages:</strong> {i18n.options.supportedLngs?.join(', ')}</p>
-            <p><strong>Loaded Namespaces:</strong> {i18n.options.ns?.join(', ')}</p>
+            <p><strong>Fallback Language:</strong> {String(i18n.options.fallbackLng)}</p>
+            <p><strong>Supported Languages:</strong> {Array.isArray(i18n.options.supportedLngs) ? i18n.options.supportedLngs.join(', ') : String(i18n.options.supportedLngs)}</p>
+            <p><strong>Loaded Namespaces:</strong> {Array.isArray(i18n.options.ns) ? i18n.options.ns.join(', ') : String(i18n.options.ns)}</p>
           </div>
         </CardContent>
       </Card>

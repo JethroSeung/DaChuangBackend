@@ -6,32 +6,27 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { EnhancedInput } from '@/components/ui/enhanced-input'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
+
 import { Badge } from '@/components/ui/badge'
-import { 
-  Save, 
-  Loader2, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Info,
+import {
+  Save,
+  Loader2,
+  AlertTriangle,
   Plane,
   User,
-  Settings,
-  Battery,
-  Gauge,
-  X
+  Settings
 } from 'lucide-react'
 import { useUAVStore } from '@/stores/uav-store'
-import { UAV, UAVStatus, CreateUAVRequest } from '@/types/uav'
+import { UAV, UAVStatus, UAVFormData } from '@/types/uav'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { toast } from 'react-hot-toast'
-import { cn } from '@/lib/utils'
+
 
 // Enhanced validation schema with better error messages
 const enhancedUAVFormSchema = z.object({
@@ -39,38 +34,17 @@ const enhancedUAVFormSchema = z.object({
     .min(3, 'RFID tag must be at least 3 characters')
     .max(50, 'RFID tag must be less than 50 characters')
     .regex(/^[A-Z0-9-]+$/, 'RFID tag must contain only uppercase letters, numbers, and hyphens'),
-  ownerName: z.string()
-    .min(2, 'Owner name must be at least 2 characters')
-    .max(100, 'Owner name must be less than 100 characters')
-    .regex(/^[a-zA-Z\s]+$/, 'Owner name must contain only letters and spaces'),
-  model: z.string()
-    .min(2, 'Model must be at least 2 characters')
-    .max(100, 'Model must be less than 100 characters'),
-  status: z.enum(['AUTHORIZED', 'UNAUTHORIZED'], {
-    errorMap: () => ({ message: 'Please select a valid status' })
+  status: z.enum(['AUTHORIZED', 'UNAUTHORIZED', 'ACTIVE', 'HIBERNATING', 'CHARGING', 'MAINTENANCE', 'ERROR', 'EMERGENCY', 'OFFLINE'], {
+    message: 'Please select a valid status'
   }),
   inHibernatePod: z.boolean().optional(),
-  serialNumber: z.string().optional(),
-  manufacturer: z.string().optional(),
-  weightKg: z.number()
-    .positive('Weight must be a positive number')
-    .max(1000, 'Weight cannot exceed 1000kg')
+  batteryLevel: z.number()
+    .min(0, 'Battery level cannot be negative')
+    .max(100, 'Battery level cannot exceed 100%')
     .optional(),
-  maxFlightTimeMinutes: z.number()
-    .positive('Flight time must be a positive number')
-    .max(1440, 'Flight time cannot exceed 24 hours')
-    .optional(),
-  maxAltitudeMeters: z.number()
-    .positive('Altitude must be a positive number')
-    .max(10000, 'Altitude cannot exceed 10,000 meters')
-    .optional(),
-  maxSpeedKmh: z.number()
-    .positive('Speed must be a positive number')
-    .max(500, 'Speed cannot exceed 500 km/h')
-    .optional(),
+  region: z.string().optional(),
 })
 
-type UAVFormData = z.infer<typeof enhancedUAVFormSchema>
 
 interface EnhancedUAVFormProps {
   uav?: UAV
@@ -79,7 +53,7 @@ interface EnhancedUAVFormProps {
 }
 
 export function EnhancedUAVForm({ uav, onSuccess, onCancel }: EnhancedUAVFormProps) {
-  const { createUAV, updateUAV, isLoading, error } = useUAVStore()
+  const { createUAV, updateUAVById, loading, error } = useUAVStore()
   const [currentStep, setCurrentStep] = useState(1)
   const [formProgress, setFormProgress] = useState(0)
   const [isDirty, setIsDirty] = useState(false)
@@ -97,16 +71,10 @@ export function EnhancedUAVForm({ uav, onSuccess, onCancel }: EnhancedUAVFormPro
     resolver: zodResolver(enhancedUAVFormSchema),
     defaultValues: {
       rfidTag: uav?.rfidTag || '',
-      ownerName: uav?.ownerName || '',
-      model: uav?.model || '',
       status: uav?.status || 'UNAUTHORIZED',
       inHibernatePod: uav?.inHibernatePod || false,
-      serialNumber: uav?.serialNumber || '',
-      manufacturer: uav?.manufacturer || '',
-      weightKg: uav?.weightKg || undefined,
-      maxFlightTimeMinutes: uav?.maxFlightTimeMinutes || undefined,
-      maxAltitudeMeters: uav?.maxAltitudeMeters || undefined,
-      maxSpeedKmh: uav?.maxSpeedKmh || undefined,
+      batteryLevel: uav?.batteryLevel || 0,
+      region: uav?.region || '',
     },
     mode: 'onChange',
   })
@@ -129,34 +97,28 @@ export function EnhancedUAVForm({ uav, onSuccess, onCancel }: EnhancedUAVFormPro
 
   const onSubmit = useCallback(async (data: UAVFormData) => {
     try {
-      const formData: CreateUAVRequest = {
+      const formData: UAVFormData = {
         rfidTag: data.rfidTag,
-        ownerName: data.ownerName,
-        model: data.model,
         status: data.status as UAVStatus,
-        inHibernatePod: data.inHibernatePod,
-        serialNumber: data.serialNumber || undefined,
-        manufacturer: data.manufacturer || undefined,
-        weightKg: data.weightKg,
-        maxFlightTimeMinutes: data.maxFlightTimeMinutes,
-        maxAltitudeMeters: data.maxAltitudeMeters,
-        maxSpeedKmh: data.maxSpeedKmh,
+        inHibernatePod: data.inHibernatePod || false,
+        batteryLevel: data.batteryLevel || 0,
+        region: data.region || undefined,
       }
 
-      let success = false
+      let result = null
       if (uav) {
-        success = await updateUAV(uav.id, formData)
-        if (success) {
+        result = await updateUAVById(uav.id, formData)
+        if (result) {
           toast.success('UAV updated successfully')
         }
       } else {
-        success = await createUAV(formData)
-        if (success) {
+        result = await createUAV(formData)
+        if (result) {
           toast.success('UAV created successfully')
         }
       }
 
-      if (success) {
+      if (result) {
         reset()
         onSuccess()
       }
@@ -164,7 +126,7 @@ export function EnhancedUAVForm({ uav, onSuccess, onCancel }: EnhancedUAVFormPro
       console.error('Form submission error:', error)
       toast.error('Failed to save UAV. Please try again.')
     }
-  }, [uav, createUAV, updateUAV, reset, onSuccess])
+  }, [uav, createUAV, updateUAVById, reset, onSuccess])
 
   const handleCancel = useCallback(() => {
     if (isDirty) {
@@ -239,60 +201,45 @@ export function EnhancedUAVForm({ uav, onSuccess, onCancel }: EnhancedUAVFormPro
                 Basic Information
               </CardTitle>
               <CardDescription>
-                Essential UAV identification and ownership details
+                Essential UAV identification and status details
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <EnhancedInput
-                label="RFID Tag"
-                placeholder="UAV-001"
-                error={errors.rfidTag?.message}
-                helperText="Unique identifier for the UAV (uppercase letters, numbers, and hyphens only)"
-                required
-                {...register('rfidTag')}
-              />
-
-              <EnhancedInput
-                label="Owner Name"
-                placeholder="John Doe"
-                error={errors.ownerName?.message}
-                helperText="Full name of the UAV owner"
-                required
-                {...register('ownerName')}
-              />
-
-              <EnhancedInput
-                label="Model"
-                placeholder="DJI Phantom 4"
-                error={errors.model?.message}
-                helperText="UAV model and variant"
-                required
-                {...register('model')}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="rfidTag">RFID Tag *</Label>
+                <Input
+                  id="rfidTag"
+                  placeholder="UAV-001"
+                  {...register('rfidTag')}
+                />
+                {errors.rfidTag?.message && (
+                  <p className="text-sm text-destructive">{errors.rfidTag.message}</p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Unique identifier for the UAV (uppercase letters, numbers, and hyphens only)
+                </p>
+              </div>
 
               <div className="space-y-2">
-                <Label htmlFor="status">Authorization Status *</Label>
+                <Label htmlFor="status">Status *</Label>
                 <Controller
                   name="status"
                   control={control}
                   render={({ field }) => (
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <SelectTrigger className={errors.status ? 'border-destructive' : ''}>
-                        <SelectValue placeholder="Select authorization status" />
+                        <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="AUTHORIZED">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
-                            Authorized
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="UNAUTHORIZED">
-                          <div className="flex items-center gap-2">
-                            <X className="h-4 w-4 text-red-600" />
-                            Unauthorized
-                          </div>
-                        </SelectItem>
+                        <SelectItem value="AUTHORIZED">Authorized</SelectItem>
+                        <SelectItem value="UNAUTHORIZED">Unauthorized</SelectItem>
+                        <SelectItem value="ACTIVE">Active</SelectItem>
+                        <SelectItem value="HIBERNATING">Hibernating</SelectItem>
+                        <SelectItem value="CHARGING">Charging</SelectItem>
+                        <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+                        <SelectItem value="ERROR">Error</SelectItem>
+                        <SelectItem value="EMERGENCY">Emergency</SelectItem>
+                        <SelectItem value="OFFLINE">Offline</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -320,81 +267,50 @@ export function EnhancedUAVForm({ uav, onSuccess, onCancel }: EnhancedUAVFormPro
           </Card>
         )}
 
-        {/* Step 2: Technical Details */}
+        {/* Step 2: Additional Details */}
         {currentStep === 2 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Settings className="h-5 w-5" />
-                Technical Details
+                Additional Details
               </CardTitle>
               <CardDescription>
-                Optional technical specifications and performance data
+                Optional battery and location information
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <EnhancedInput
-                  label="Serial Number"
-                  placeholder="SN123456789"
-                  error={errors.serialNumber?.message}
-                  helperText="Manufacturer serial number"
-                  {...register('serialNumber')}
+              <div className="space-y-2">
+                <Label htmlFor="batteryLevel">Battery Level (%)</Label>
+                <Input
+                  id="batteryLevel"
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="85"
+                  {...register('batteryLevel', { valueAsNumber: true })}
                 />
-
-                <EnhancedInput
-                  label="Manufacturer"
-                  placeholder="DJI"
-                  error={errors.manufacturer?.message}
-                  {...register('manufacturer')}
-                />
+                {errors.batteryLevel?.message && (
+                  <p className="text-sm text-destructive">{errors.batteryLevel.message}</p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Current battery charge level (0-100%)
+                </p>
               </div>
 
-              <Separator />
-
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium flex items-center gap-2">
-                  <Gauge className="h-4 w-4" />
-                  Performance Specifications
-                </h4>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <EnhancedInput
-                    type="number"
-                    label="Weight (kg)"
-                    placeholder="2.5"
-                    error={errors.weightKg?.message}
-                    helperText="Total weight including battery"
-                    {...register('weightKg', { valueAsNumber: true })}
-                  />
-
-                  <EnhancedInput
-                    type="number"
-                    label="Max Flight Time (minutes)"
-                    placeholder="30"
-                    error={errors.maxFlightTimeMinutes?.message}
-                    helperText="Maximum flight duration"
-                    {...register('maxFlightTimeMinutes', { valueAsNumber: true })}
-                  />
-
-                  <EnhancedInput
-                    type="number"
-                    label="Max Altitude (meters)"
-                    placeholder="500"
-                    error={errors.maxAltitudeMeters?.message}
-                    helperText="Maximum operating altitude"
-                    {...register('maxAltitudeMeters', { valueAsNumber: true })}
-                  />
-
-                  <EnhancedInput
-                    type="number"
-                    label="Max Speed (km/h)"
-                    placeholder="65"
-                    error={errors.maxSpeedKmh?.message}
-                    helperText="Maximum horizontal speed"
-                    {...register('maxSpeedKmh', { valueAsNumber: true })}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="region">Region</Label>
+                <Input
+                  id="region"
+                  placeholder="North Zone"
+                  {...register('region')}
+                />
+                {errors.region?.message && (
+                  <p className="text-sm text-destructive">{errors.region.message}</p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Assigned operational region
+                </p>
               </div>
             </CardContent>
           </Card>

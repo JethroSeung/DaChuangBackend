@@ -11,7 +11,7 @@ jest.mock('@/stores/dashboard-store', () => ({
   useAlerts: jest.fn(),
 }))
 const mockUseDashboardStore = useDashboardStore as jest.MockedFunction<typeof useDashboardStore>
-const { useAlerts } = require('@/stores/dashboard-store')
+import { useAlerts } from '@/stores/dashboard-store'
 const mockUseAlerts = useAlerts as jest.MockedFunction<typeof useAlerts>
 
 // Mock framer-motion
@@ -138,7 +138,7 @@ describe('RealtimeAlerts Component', () => {
 
   it('displays all alerts', () => {
     render(<RealtimeAlerts />)
-    
+
     expect(screen.getByText('Critical Battery')).toBeInTheDocument()
     expect(screen.getByText('Maintenance Required')).toBeInTheDocument()
     expect(screen.getByText('Flight Completed')).toBeInTheDocument()
@@ -152,11 +152,11 @@ describe('RealtimeAlerts Component', () => {
 
   it('displays different alert types with correct styling', () => {
     render(<RealtimeAlerts />)
-    
+
     const errorAlert = screen.getByText('Critical Battery').closest('[data-testid="stagger-item"]')
     const warningAlert = screen.getByText('Maintenance Required').closest('[data-testid="stagger-item"]')
     const infoAlert = screen.getByText('Flight Completed').closest('[data-testid="stagger-item"]')
-    
+
     expect(errorAlert).toBeInTheDocument()
     expect(warningAlert).toBeInTheDocument()
     expect(infoAlert).toBeInTheDocument()

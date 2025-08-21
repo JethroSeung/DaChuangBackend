@@ -7,7 +7,6 @@ import { Progress } from '@/components/ui/progress'
 import {
   Activity,
   Server,
-  Database,
   Wifi,
   HardDrive,
   Cpu,
@@ -30,7 +29,11 @@ interface SystemMetric {
 
 export function SystemHealth() {
   const { systemHealth } = useDashboardStore()
-  const connectionStatus = { isConnected: systemHealth?.overall === 'HEALTHY' }
+  const connectionStatus = {
+    isConnected: systemHealth?.overall === 'HEALTHY',
+    lastUpdate: systemHealth?.lastUpdated,
+    error: systemHealth?.overall === 'CRITICAL' ? 'System health critical' : undefined
+  }
   const [systemMetrics, setSystemMetrics] = useState<SystemMetric[]>([
     {
       name: 'CPU Usage',
@@ -248,7 +251,7 @@ export function SystemHealth() {
                   </p>
                 </div>
               </div>
-              <Badge variant={connectionStatus.isConnected ? 'success' : 'destructive'}>
+              <Badge variant={connectionStatus.isConnected ? 'default' : 'destructive'}>
                 {connectionStatus.isConnected ? 'ONLINE' : 'OFFLINE'}
               </Badge>
             </div>

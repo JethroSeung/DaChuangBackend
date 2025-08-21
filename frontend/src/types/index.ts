@@ -10,12 +10,12 @@ export interface SelectOption {
   disabled?: boolean
 }
 
-export interface TableColumn<T = any> {
+export interface TableColumn<T = unknown> {
   key: string
   label: string
   sortable?: boolean
   width?: string
-  render?: (value: any, row: T) => React.ReactNode
+  render?: (value: unknown, row: T) => React.ReactNode
 }
 
 export interface FormField {
@@ -74,12 +74,12 @@ export interface SortState {
 }
 
 export interface FilterState {
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export interface SearchState {
   query: string
-  results: any[]
+  results: unknown[]
   loading: boolean
 }
 
@@ -128,7 +128,7 @@ export interface Breakpoints {
 export interface NavigationItem {
   name: string
   href: string
-  icon?: React.ComponentType<any>
+  icon?: React.ComponentType<Record<string, unknown>>
   description?: string
   badge?: string | number
   children?: NavigationItem[]
@@ -156,7 +156,7 @@ export interface FormState<T> {
 // Chart and visualization types
 export interface ChartConfig {
   type: 'line' | 'bar' | 'pie' | 'area' | 'scatter'
-  data: any[]
+  data: unknown[]
   xAxis?: string
   yAxis?: string
   colors?: string[]

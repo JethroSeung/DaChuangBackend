@@ -1,0 +1,22 @@
+{
+  "title": "Hibernate Pod",
+  "subtitle": "Manage UAV hibernation and storage",
+  "podCapacity": "Pod Capacity",
+  "availableUAVs": "Available UAVs",
+  "avgBattery": "Avg. Battery",
+  "readyForHibernation": "Ready for hibernation",
+  "hibernatingUAVs": "Hibernating UAVs",
+  "hibernatingDescription": "UAVs currently in the hibernate pod",
+  "availableDescription": "UAVs that can be added to hibernate pod",
+  "noUAVsInPod": "No UAVs in hibernate pod",
+  "noUAVsAvailable": "No UAVs available for hibernation",
+  "remove": "Remove",
+  "add": "Add",
+  "andMore": "And {{count}} more...",
+  "podNearlyFull": "Pod Nearly Full",
+  "podFullAlert": "The hibernate pod is {{percentage}}% full. Consider removing some UAVs or expanding capacity.",
+  "addedToPod": "{{rfidTag}} added to hibernate pod",
+  "removedFromPod": "{{rfidTag}} removed from hibernate pod",
+  "failedToAdd": "Failed to add {{rfidTag}} to hibernate pod",
+  "failedToRemove": "Failed to remove {{rfidTag}} from hibernate pod"
+}

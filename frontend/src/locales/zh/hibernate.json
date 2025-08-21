@@ -1,0 +1,22 @@
+{
+  "title": "休眠舱",
+  "subtitle": "管理无人机休眠和存储",
+  "podCapacity": "舱体容量",
+  "availableUAVs": "可用无人机",
+  "avgBattery": "平均电量",
+  "readyForHibernation": "准备休眠",
+  "hibernatingUAVs": "休眠无人机",
+  "hibernatingDescription": "当前在休眠舱中的无人机",
+  "availableDescription": "可以添加到休眠舱的无人机",
+  "noUAVsInPod": "休眠舱中没有无人机",
+  "noUAVsAvailable": "没有可用于休眠的无人机",
+  "remove": "移除",
+  "add": "添加",
+  "andMore": "还有 {{count}} 个...",
+  "podNearlyFull": "休眠舱接近满载",
+  "podFullAlert": "休眠舱已 {{percentage}}% 满载。考虑移除一些无人机或扩展容量。",
+  "addedToPod": "{{rfidTag}} 已添加到休眠舱",
+  "removedFromPod": "{{rfidTag}} 已从休眠舱移除",
+  "failedToAdd": "无法将 {{rfidTag}} 添加到休眠舱",
+  "failedToRemove": "无法从休眠舱移除 {{rfidTag}}"
+}

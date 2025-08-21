@@ -20,7 +20,6 @@ interface AuthStore extends AuthState {
   logout: () => Promise<void>
   register: (userData: RegisterRequest) => Promise<boolean>
   refreshAuthToken: () => Promise<boolean>
-  refreshToken: () => Promise<boolean>  // Alias for refreshAuthToken
   changePassword: (passwords: ChangePasswordRequest) => Promise<boolean>
   updateProfile: (userData: Partial<User>) => Promise<boolean>
 
@@ -164,11 +163,11 @@ export const useAuthStore = create<AuthStore>()(
 
           // Refresh token
           refreshAuthToken: async () => {
-            const { refreshToken } = get()
-            if (!refreshToken) return false
+            const state = get()
+            if (!state.refreshToken) return false
 
             try {
-              const response = await authApi.refreshToken({ refreshToken })
+              const response = await authApi.refreshToken({ refreshToken: state.refreshToken })
 
               if (response.success && response.data) {
                 set((state) => {
@@ -191,11 +190,6 @@ export const useAuthStore = create<AuthStore>()(
               get().logout()
               return false
             }
-          },
-
-          // Alias for refreshAuthToken (for compatibility with tests)
-          refreshToken: async () => {
-            return get().refreshAuthToken()
           },
 
           // Change password

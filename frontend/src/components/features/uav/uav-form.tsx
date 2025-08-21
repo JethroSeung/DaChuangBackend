@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,22 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useUAVStore } from '@/stores/uav-store'
-import { UAV, UAVStatus, CreateUAVRequest } from '@/types/uav'
+import { UAV, UAVStatus, UAVFormData } from '@/types/uav'
 import { Loader2 } from 'lucide-react'
 
-type UAVFormData = {
-  rfidTag: string
-  ownerName: string
-  model: string
-  status: 'AUTHORIZED' | 'UNAUTHORIZED'
-  inHibernatePod?: boolean
-  serialNumber?: string
-  manufacturer?: string
-  weightKg?: number
-  maxFlightTimeMinutes?: number
-  maxAltitudeMeters?: number
-  maxSpeedKmh?: number
-}
+
 
 interface UAVFormProps {
   uav?: UAV
@@ -36,22 +24,16 @@ interface UAVFormProps {
 }
 
 export function UAVForm({ uav, onSuccess, onCancel }: UAVFormProps) {
-  const { createUAV, updateUAV, loading, regions, fetchRegions } = useUAVStore()
+  const { createUAV, updateUAVById, loading } = useUAVStore()
   const { t } = useTranslation(['uav', 'forms', 'common'])
 
   // Create validation schema with translations
   const uavFormSchema = z.object({
     rfidTag: z.string().min(3, t('forms:validation.minLength', { min: 3 })).max(50, t('forms:validation.maxLength', { max: 50 })),
-    ownerName: z.string().min(2, t('forms:validation.minLength', { min: 2 })).max(100, t('forms:validation.maxLength', { max: 100 })),
-    model: z.string().min(2, t('forms:validation.minLength', { min: 2 })).max(100, t('forms:validation.maxLength', { max: 100 })),
-    status: z.enum(['AUTHORIZED', 'UNAUTHORIZED']),
+    status: z.enum(['AUTHORIZED', 'UNAUTHORIZED', 'ACTIVE', 'HIBERNATING', 'CHARGING', 'MAINTENANCE', 'ERROR', 'EMERGENCY', 'OFFLINE']),
     inHibernatePod: z.boolean().optional(),
-    serialNumber: z.string().optional(),
-    manufacturer: z.string().optional(),
-    weightKg: z.number().positive(t('forms:validation.positive')).optional(),
-    maxFlightTimeMinutes: z.number().positive(t('forms:validation.positive')).optional(),
-    maxAltitudeMeters: z.number().positive(t('forms:validation.positive')).optional(),
-    maxSpeedKmh: z.number().positive(t('forms:validation.positive')).optional(),
+    batteryLevel: z.number().min(0).max(100).optional(),
+    region: z.string().optional(),
   })
 
   const {
@@ -64,47 +46,31 @@ export function UAVForm({ uav, onSuccess, onCancel }: UAVFormProps) {
     resolver: zodResolver(uavFormSchema),
     defaultValues: {
       rfidTag: uav?.rfidTag || '',
-      ownerName: uav?.ownerName || '',
-      model: uav?.model || '',
       status: uav?.status || 'UNAUTHORIZED',
       inHibernatePod: uav?.inHibernatePod || false,
-      serialNumber: uav?.serialNumber || '',
-      manufacturer: uav?.manufacturer || '',
-      weightKg: uav?.weightKg || undefined,
-      maxFlightTimeMinutes: uav?.maxFlightTimeMinutes || undefined,
-      maxAltitudeMeters: uav?.maxAltitudeMeters || undefined,
-      maxSpeedKmh: uav?.maxSpeedKmh || undefined,
+      batteryLevel: uav?.batteryLevel || 0,
+      region: uav?.region || '',
     },
   })
 
-  useEffect(() => {
-    fetchRegions()
-  }, [fetchRegions])
-
   const onSubmit = async (data: UAVFormData) => {
     try {
-      const formData: CreateUAVRequest = {
+      const formData: UAVFormData = {
         rfidTag: data.rfidTag,
-        ownerName: data.ownerName,
-        model: data.model,
         status: data.status as UAVStatus,
         inHibernatePod: data.inHibernatePod,
-        serialNumber: data.serialNumber || undefined,
-        manufacturer: data.manufacturer || undefined,
-        weightKg: data.weightKg,
-        maxFlightTimeMinutes: data.maxFlightTimeMinutes,
-        maxAltitudeMeters: data.maxAltitudeMeters,
-        maxSpeedKmh: data.maxSpeedKmh,
+        batteryLevel: data.batteryLevel,
+        region: data.region || undefined,
       }
 
-      let success = false
+      let result = null
       if (uav) {
-        success = await updateUAV(uav.id, formData)
+        result = await updateUAVById(uav.id, formData)
       } else {
-        success = await createUAV(formData)
+        result = await createUAV(formData)
       }
 
-      if (success) {
+      if (result) {
         onSuccess()
       }
     } catch (error) {
@@ -138,28 +104,29 @@ export function UAVForm({ uav, onSuccess, onCancel }: UAVFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ownerName">{t('uav:ownerName')} *</Label>
+              <Label htmlFor="batteryLevel">Battery Level (%)</Label>
               <Input
-                id="ownerName"
-                {...register('ownerName')}
-                placeholder="John Doe"
-                className={errors.ownerName ? 'border-red-500' : ''}
+                id="batteryLevel"
+                type="number"
+                min="0"
+                max="100"
+                {...register('batteryLevel', { valueAsNumber: true })}
+                placeholder="85"
               />
-              {errors.ownerName && (
-                <p className="text-sm text-red-500">{errors.ownerName.message}</p>
+              {errors.batteryLevel && (
+                <p className="text-sm text-red-500">{errors.batteryLevel.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="model">Model *</Label>
+              <Label htmlFor="region">Region</Label>
               <Input
-                id="model"
-                {...register('model')}
-                placeholder="DJI Phantom 4"
-                className={errors.model ? 'border-red-500' : ''}
+                id="region"
+                {...register('region')}
+                placeholder="North Zone"
               />
-              {errors.model && (
-                <p className="text-sm text-red-500">{errors.model.message}</p>
+              {errors.region && (
+                <p className="text-sm text-red-500">{errors.region.message}</p>
               )}
             </div>
 
@@ -190,75 +157,7 @@ export function UAVForm({ uav, onSuccess, onCancel }: UAVFormProps) {
           </CardContent>
         </Card>
 
-        {/* Technical Specifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Technical Specifications</CardTitle>
-            <CardDescription>
-              Optional technical details and performance specifications
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="serialNumber">Serial Number</Label>
-              <Input
-                id="serialNumber"
-                {...register('serialNumber')}
-                placeholder="SN123456789"
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="manufacturer">Manufacturer</Label>
-              <Input
-                id="manufacturer"
-                {...register('manufacturer')}
-                placeholder="DJI"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="weightKg">Weight (kg)</Label>
-              <Input
-                id="weightKg"
-                type="number"
-                step="0.1"
-                {...register('weightKg', { valueAsNumber: true })}
-                placeholder="1.5"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="maxFlightTimeMinutes">Max Flight Time (minutes)</Label>
-              <Input
-                id="maxFlightTimeMinutes"
-                type="number"
-                {...register('maxFlightTimeMinutes', { valueAsNumber: true })}
-                placeholder="30"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="maxAltitudeMeters">Max Altitude (meters)</Label>
-              <Input
-                id="maxAltitudeMeters"
-                type="number"
-                {...register('maxAltitudeMeters', { valueAsNumber: true })}
-                placeholder="500"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="maxSpeedKmh">Max Speed (km/h)</Label>
-              <Input
-                id="maxSpeedKmh"
-                type="number"
-                {...register('maxSpeedKmh', { valueAsNumber: true })}
-                placeholder="60"
-              />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Form Actions */}

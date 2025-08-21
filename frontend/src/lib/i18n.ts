@@ -17,8 +17,9 @@ i18n
     lng: 'en-US',
     fallbackLng: 'en-US',
 
-    // Supported languages
-    supportedLngs: ['en-US', 'zh-CN'],
+    // Supported languages - include generic codes to prevent warnings
+    supportedLngs: ['en-US', 'zh-CN', 'en', 'zh'],
+    nonExplicitSupportedLngs: true,
 
     // Namespace configuration
     defaultNS: 'common',

@@ -7,7 +7,7 @@ import { ResourceType, ActionType, PermissionCheck } from '@/types/auth'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Shield, Lock, AlertTriangle, Loader2 } from 'lucide-react'
+import { Lock, AlertTriangle, Loader2 } from 'lucide-react'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -44,7 +44,7 @@ export function ProtectedRoute({
 
       // Check if user is authenticated
       const sessionValid = await checkSession()
-      
+
       if (!sessionValid) {
         router.push(fallbackUrl)
         return
@@ -62,7 +62,7 @@ export function ProtectedRoute({
 
       // Check permission requirements
       if (requiredPermissions.length > 0) {
-        const hasRequiredPermissions = requiredPermissions.every(permission => 
+        const hasRequiredPermissions = requiredPermissions.every(permission =>
           hasPermission(permission)
         )
         if (!hasRequiredPermissions) {
@@ -114,12 +114,12 @@ export function ProtectedRoute({
                   <Lock className="h-8 w-8 text-red-600" />
                 </div>
               </div>
-              
+
               <Alert variant="destructive" className="mb-6">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Access Denied</AlertTitle>
                 <AlertDescription>
-                  You don't have permission to access this resource.
+                  You don&apos;t have permission to access this resource.
                   {requiredRoles.length > 0 && (
                     <div className="mt-2">
                       <strong>Required roles:</strong> {requiredRoles.join(', ')}
@@ -142,7 +142,7 @@ export function ProtectedRoute({
                 >
                   Go Back
                 </Button>
-                
+
                 <Button
                   onClick={() => router.push('/dashboard')}
                   className="w-full"
@@ -202,11 +202,11 @@ export function RequirePermission({
   fallback = null,
 }: RequirePermissionProps) {
   const { hasPermission } = useAuthStore()
-  
+
   if (hasPermission({ resource, action })) {
     return <>{children}</>
   }
-  
+
   return <>{fallback}</>
 }
 
@@ -223,13 +223,13 @@ export function RequireRole({
   fallback = null,
 }: RequireRoleProps) {
   const { hasRole } = useAuthStore()
-  
+
   const roleArray = Array.isArray(roles) ? roles : [roles]
   const hasRequiredRole = roleArray.some(role => hasRole(role))
-  
+
   if (hasRequiredRole) {
     return <>{children}</>
   }
-  
+
   return <>{fallback}</>
 }

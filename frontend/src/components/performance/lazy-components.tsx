@@ -57,7 +57,7 @@ export const LazyInteractiveMap = dynamic(
 )
 
 export const LazyDashboardCharts = dynamic(
-  () => import('@/components/features/dashboard/dashboard-charts'),
+  () => import('@/components/features/dashboard/dashboard-charts').then(mod => ({ default: mod.DashboardCharts })),
   {
     ssr: false,
     loading: () => <ChartLoadingFallback />,
@@ -65,7 +65,7 @@ export const LazyDashboardCharts = dynamic(
 )
 
 export const LazyRealtimeAlerts = dynamic(
-  () => import('@/components/features/dashboard/realtime-alerts'),
+  () => import('@/components/features/dashboard/realtime-alerts').then(mod => ({ default: mod.RealtimeAlerts })),
   {
     ssr: false,
     loading: () => <LoadingFallback message="Loading alerts..." />,
@@ -73,7 +73,7 @@ export const LazyRealtimeAlerts = dynamic(
 )
 
 export const LazySystemHealth = dynamic(
-  () => import('@/components/features/dashboard/system-health'),
+  () => import('@/components/features/dashboard/system-health').then(mod => ({ default: mod.SystemHealth })),
   {
     ssr: false,
     loading: () => <LoadingFallback message="Loading system health..." />,
@@ -81,7 +81,7 @@ export const LazySystemHealth = dynamic(
 )
 
 export const LazyUAVForm = dynamic(
-  () => import('@/components/features/uav/uav-form'),
+  () => import('@/components/features/uav/uav-form').then(mod => ({ default: mod.UAVForm })),
   {
     ssr: false,
     loading: () => <LoadingFallback message="Loading UAV form..." />,
@@ -89,7 +89,7 @@ export const LazyUAVForm = dynamic(
 )
 
 export const LazyUAVDetails = dynamic(
-  () => import('@/components/features/uav/uav-details'),
+  () => import('@/components/features/uav/uav-details').then(mod => ({ default: mod.UAVDetails })),
   {
     ssr: false,
     loading: () => <LoadingFallback message="Loading UAV details..." />,
@@ -238,7 +238,7 @@ export function LazyOnScroll({
   threshold = 0.1 
 }: LazyOnScrollProps) {
   const ref = React.useRef<HTMLDivElement>(null)
-  const isIntersecting = useIntersectionObserver(ref, { rootMargin, threshold })
+  const isIntersecting = useIntersectionObserver(ref as React.RefObject<Element>, { rootMargin, threshold })
   const [hasLoaded, setHasLoaded] = React.useState(false)
 
   React.useEffect(() => {

@@ -39,13 +39,13 @@ const mockUser = {
   status: 'online',
 }
 
-export function UserNav({ className }: UserNavProps) {
+export function UserNav({}: UserNavProps) {
   const { setTheme, theme } = useTheme()
 
-  const handleSignOut = () => {
+  const handleSignOut = React.useCallback(() => {
     // Implement sign out logic
     console.log('Signing out...')
-  }
+  }, [])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -211,7 +211,7 @@ export function CompactUserNav({ className }: UserNavProps) {
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+        <DropdownMenuItem onClick={() => console.log('Signing out...')} className="text-red-600">
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>
         </DropdownMenuItem>

@@ -1,10 +1,9 @@
 'use client'
 
 import React from 'react'
-import { motion, HTMLMotionProps } from 'framer-motion'
-import { Button, ButtonProps, buttonVariants } from '@/components/ui/button'
+import { motion } from 'framer-motion'
+import { Button, ButtonProps } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { getAnimationVariants } from '@/lib/animations'
 
 interface AnimatedButtonProps extends Omit<ButtonProps, 'asChild'> {
   children: React.ReactNode

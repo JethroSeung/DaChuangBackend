@@ -127,23 +127,23 @@ export interface SecurityEvent {
 }
 
 // Role-based access control
-export type ResourceType = 
-  | 'UAV' 
-  | 'REGION' 
-  | 'HIBERNATE_POD' 
-  | 'DOCKING_STATION' 
-  | 'FLIGHT_LOG' 
-  | 'MAINTENANCE_RECORD' 
-  | 'USER' 
+export type ResourceType =
+  | 'UAV'
+  | 'REGION'
+  | 'HIBERNATE_POD'
+  | 'DOCKING_STATION'
+  | 'FLIGHT_LOG'
+  | 'MAINTENANCE_RECORD'
+  | 'USER'
   | 'SYSTEM_SETTINGS'
   | 'ANALYTICS'
   | 'ALERTS'
 
-export type ActionType = 
-  | 'CREATE' 
-  | 'READ' 
-  | 'UPDATE' 
-  | 'DELETE' 
+export type ActionType =
+  | 'CREATE'
+  | 'READ'
+  | 'UPDATE'
+  | 'DELETE'
   | 'EXECUTE'
   | 'APPROVE'
   | 'EXPORT'
@@ -200,14 +200,33 @@ export interface JWTPayload {
   aud: string // audience
 }
 
+// Security incident reporting
+export interface SecurityIncident {
+  id?: string
+  title: string
+  description: string
+  severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
+  eventType: string
+  sourceIp?: string
+  userAgent?: string
+  userId?: number
+  timestamp?: string
+  status?: 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'CLOSED'
+  reportedBy?: string
+  assignedTo?: string
+  evidence?: string[]
+  impact?: string
+  mitigation?: string
+}
+
 // Error types
 export interface AuthError {
   code: string
   message: string
-  details?: Record<string, any>
+  details?: Record<string, unknown>
 }
 
-export type AuthErrorCode = 
+export type AuthErrorCode =
   | 'INVALID_CREDENTIALS'
   | 'ACCOUNT_LOCKED'
   | 'ACCOUNT_DISABLED'

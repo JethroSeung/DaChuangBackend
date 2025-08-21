@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AppLayout } from '@/components/layout/app-layout'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -21,13 +21,10 @@ import {
   AlertTriangle,
   RefreshCw,
   Plane,
-  TrendingDown,
   TrendingUp,
 } from 'lucide-react'
 import { useUAVStore } from '@/stores/uav-store'
-import { UAV } from '@/types'
 import { cn } from '@/lib/utils'
-import toast from 'react-hot-toast'
 
 export default function BatteryMonitorPage() {
   const { t } = useTranslation(['battery', 'common'])

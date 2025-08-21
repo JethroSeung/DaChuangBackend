@@ -171,7 +171,6 @@ interface InteractiveMapProps {
   regions?: any[]
   mapLayer?: string
   onStationSelect?: (station: any) => void
-  onMapClick?: (event: any) => void
   enableClustering?: boolean
   showZoomControl?: boolean
   showScaleControl?: boolean
@@ -196,7 +195,6 @@ export function InteractiveMap({
   regions = [],
   mapLayer = 'default',
   onStationSelect,
-  onMapClick,
   enableClustering = false,
   showZoomControl = false,
   showScaleControl = false,
@@ -206,17 +204,27 @@ export function InteractiveMap({
 }: InteractiveMapProps) {
   const mapRef = useRef<L.Map>(null)
 
-  // Add mock location data to UAVs that don't have it
-  const uavsWithMockLocations = uavs.map((uav, index) => {
-    if (!uav.currentLatitude || !uav.currentLongitude) {
-      return {
-        ...uav,
-        currentLatitude: 39.9042 + (Math.random() - 0.5) * 0.1,
-        currentLongitude: 116.4074 + (Math.random() - 0.5) * 0.1,
-        currentAltitudeMeters: Math.floor(Math.random() * 500) + 50,
-      }
+  // Normalize UAV data for map display, adding mock locations and polyfills for outdated properties.
+  const uavsWithDisplayData = uavs.map((uav) => {
+    const hasLocation = uav.location && uav.location.latitude != null && uav.location.longitude != null
+
+    return {
+      ...uav,
+      currentLatitude: hasLocation
+        ? uav.location!.latitude
+        : 39.9042 + (Math.random() - 0.5) * 0.1,
+      currentLongitude: hasLocation
+        ? uav.location!.longitude
+        : 116.4074 + (Math.random() - 0.5) * 0.1,
+      currentAltitudeMeters:
+        hasLocation && uav.location?.altitude != null
+          ? uav.location.altitude
+          : Math.floor(Math.random() * 500) + 50,
+      operationalStatus: uav.status, // Polyfill for renamed/removed property
+      batteryStatus: { currentChargePercentage: uav.batteryLevel }, // Polyfill for restructured property
+      ownerName: 'N/A', // Placeholder for missing property
+      model: 'N/A', // Placeholder for missing property
     }
-    return uav
   })
 
   // Handle loading state
@@ -267,7 +275,6 @@ export function InteractiveMap({
           zoom={zoom}
           style={{ height: '100%', width: '100%' }}
           className="rounded-lg"
-          onClick={onMapClick}
         >
         <MapController center={center} zoom={zoom} />
 
@@ -277,7 +284,7 @@ export function InteractiveMap({
         />
 
         {/* UAV Markers */}
-        {layers.uavs && uavsWithMockLocations.map((uav) => (
+        {layers.uavs && uavsWithDisplayData.map((uav) => (
           <AnimatedUAVMarker
             key={uav.id}
             uav={uav}
@@ -288,7 +295,7 @@ export function InteractiveMap({
         ))}
 
         {/* Legacy UAV Markers for complex popups */}
-        {layers.uavs && uavsWithMockLocations.filter(uav => selectedUAV?.id === uav.id).map((uav) => (
+        {layers.uavs && uavsWithDisplayData.filter(uav => selectedUAV?.id === uav.id).map((uav) => (
           <Marker
             key={`detailed-${uav.id}`}
             position={[uav.currentLatitude!, uav.currentLongitude!]}

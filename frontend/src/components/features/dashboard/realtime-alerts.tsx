@@ -1,14 +1,14 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
-import { AnimatedAlert, RealtimeAlerts as AnimatedRealtimeAlerts } from '@/components/ui/animated-alert'
+
 import { StaggerContainer, StaggerItem } from '@/components/ui/animated-components'
 import {
   AlertTriangle,

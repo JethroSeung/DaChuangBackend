@@ -1,7 +1,7 @@
 'use client'
 
 import apiClient from '@/lib/api-client'
-import { UAV, UAVFormData, UAVFilter, UAVStats, PaginatedResponse, QueryParams } from '@/types'
+import { UAV, UAVFormData, UAVFilter, UAVStats, PaginatedResponse, QueryParams, LocationHistory, MaintenanceRecord, DiagnosticResult } from '@/types'
 
 export class UAVApi {
   private basePath = '/api/uavs'
@@ -9,20 +9,20 @@ export class UAVApi {
   // UAV CRUD operations
   async getUAVs(params?: QueryParams & { filter?: UAVFilter }): Promise<PaginatedResponse<UAV>> {
     const searchParams = new URLSearchParams()
-    
+
     if (params?.page) searchParams.set('page', params.page.toString())
     if (params?.limit) searchParams.set('limit', params.limit.toString())
     if (params?.sort) searchParams.set('sort', params.sort)
     if (params?.order) searchParams.set('order', params.order)
     if (params?.search) searchParams.set('search', params.search)
-    
+
     if (params?.filter) {
       searchParams.set('filter', JSON.stringify(params.filter))
     }
 
     const query = searchParams.toString()
     const endpoint = query ? `${this.basePath}?${query}` : this.basePath
-    
+
     return apiClient.get<PaginatedResponse<UAV>>(endpoint)
   }
 
@@ -76,7 +76,7 @@ export class UAVApi {
     return apiClient.get(`${this.basePath}/${id}/location`)
   }
 
-  async getUAVHistory(id: string, timeRange?: { start: string; end: string }): Promise<any[]> {
+  async getUAVHistory(id: string, timeRange?: { start: string; end: string }): Promise<LocationHistory[]> {
     const params = timeRange ? `?start=${timeRange.start}&end=${timeRange.end}` : ''
     return apiClient.get(`${this.basePath}/${id}/history${params}`)
   }
@@ -135,11 +135,11 @@ export class UAVApi {
     return apiClient.post<UAV>(`${this.basePath}/${id}/maintenance/complete`, { notes })
   }
 
-  async getMaintenanceSchedule(): Promise<any[]> {
+  async getMaintenanceSchedule(): Promise<MaintenanceRecord[]> {
     return apiClient.get(`${this.basePath}/maintenance/schedule`)
   }
 
-  async runDiagnostics(id: string): Promise<{ status: string; results: any }> {
+  async runDiagnostics(id: string): Promise<DiagnosticResult> {
     return apiClient.post(`${this.basePath}/${id}/diagnostics`)
   }
 

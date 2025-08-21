@@ -216,7 +216,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                   {unacknowledgedAlerts.slice(0, 5).map((alert) => (
                     <DropdownMenuItem key={alert.id} className="flex flex-col items-start p-3">
                       <div className="flex items-center space-x-2 w-full">
-                        <Badge variant={alert.type === 'CRITICAL' ? 'destructive' : 'secondary'}>
+                        <Badge variant={alert.severity === 'CRITICAL' ? 'destructive' : 'secondary'}>
                           {alert.type}
                         </Badge>
                         <span className="text-xs text-muted-foreground">

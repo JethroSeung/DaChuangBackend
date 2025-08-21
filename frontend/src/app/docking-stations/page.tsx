@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,7 +19,6 @@ import {
 import { useUAVStore } from '@/stores/uav-store'
 import { DockingStation } from '@/types'
 import { cn } from '@/lib/utils'
-import toast from 'react-hot-toast'
 
 // Mock docking stations data
 const mockDockingStations: DockingStation[] = [
@@ -72,8 +71,7 @@ const mockDockingStations: DockingStation[] = [
 ]
 
 export default function DockingStationsPage() {
-  const { t } = useTranslation(['docking', 'common'])
-  const { uavs, loading, fetchUAVs } = useUAVStore()
+  const { loading, fetchUAVs } = useUAVStore()
   const [dockingStations] = useState<DockingStation[]>(mockDockingStations)
 
   useEffect(() => {

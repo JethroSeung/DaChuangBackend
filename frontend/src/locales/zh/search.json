@@ -1,0 +1,40 @@
+{
+  "title": "搜索",
+  "placeholder": "搜索无人机、页面或命令...",
+  "noResults": "未找到结果",
+  "noResultsMessage": "请尝试调整搜索词",
+  "recent": "最近",
+  "suggestions": "建议",
+  "uavs": "无人机",
+  "pages": "页面",
+  "commands": "命令",
+  "clearRecent": "清除最近",
+  "viewAll": "查看全部",
+  "searchResults": "搜索结果",
+  "showingResults": "显示 \"{{query}}\" 的 {{count}} 个结果",
+  "categories": {
+    "all": "全部",
+    "uav": "无人机",
+    "page": "页面",
+    "command": "命令",
+    "user": "用户",
+    "log": "日志"
+  },
+  "mockData": {
+    "uavStatus": "无人机状态",
+    "batteryMonitor": "电池监控",
+    "flightLogs": "飞行日志",
+    "dashboard": "仪表板",
+    "uavManagement": "无人机管理",
+    "mapView": "地图视图",
+    "settings": "设置",
+    "users": "用户",
+    "reports": "报告"
+  },
+  "status": {
+    "active": "活跃",
+    "hibernating": "休眠",
+    "charging": "充电",
+    "maintenance": "维护"
+  }
+}

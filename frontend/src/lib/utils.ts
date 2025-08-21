@@ -67,19 +67,19 @@ export function formatDateTime(date: string | Date): string {
 }
 
 // Status utilities
-export function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'success' | 'warning' | 'info' {
-  const statusVariants: Record<string, 'default' | 'secondary' | 'destructive' | 'success' | 'warning' | 'info'> = {
-    AUTHORIZED: 'success',
+export function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  const statusVariants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+    AUTHORIZED: 'default',
     UNAUTHORIZED: 'destructive',
     HIBERNATING: 'secondary',
-    CHARGING: 'warning',
-    MAINTENANCE: 'warning',
+    CHARGING: 'outline',
+    MAINTENANCE: 'outline',
     EMERGENCY: 'destructive',
-    READY: 'info',
-    IN_FLIGHT: 'info',
+    READY: 'default',
+    IN_FLIGHT: 'default',
     OUT_OF_SERVICE: 'secondary',
-    healthy: 'success',
-    warning: 'warning',
+    healthy: 'default',
+    warning: 'outline',
     critical: 'destructive',
   };
 

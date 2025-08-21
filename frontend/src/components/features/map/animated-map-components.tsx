@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import L from 'leaflet'
 import { Marker, Circle, Polyline, Popup } from 'react-leaflet'
 import { UAV } from '@/types/uav'
-import { markerVariants, getAnimationVariants } from '@/lib/animations'
+import { getAnimationVariants } from '@/lib/animations'
 
 // Animated UAV Marker Component
 interface AnimatedUAVMarkerProps {
@@ -22,11 +22,11 @@ export function AnimatedUAVMarker({ uav, isSelected, onSelect, icon }: AnimatedU
     if (markerRef.current) {
       const marker = markerRef.current
       const element = marker.getElement()
-      
+
       if (element) {
         // Add CSS classes for animations
         element.style.transition = 'all 0.3s ease-out'
-        
+
         if (isSelected) {
           element.style.transform = 'scale(1.3)'
           element.style.zIndex = '1000'
@@ -38,10 +38,14 @@ export function AnimatedUAVMarker({ uav, isSelected, onSelect, icon }: AnimatedU
     }
   }, [isSelected])
 
+  if (!uav.location) {
+    return null
+  }
+
   return (
     <Marker
       ref={markerRef}
-      position={[uav.currentLatitude!, uav.currentLongitude!]}
+      position={[uav.location.latitude, uav.location.longitude]}
       icon={icon}
       eventHandlers={{
         click: () => onSelect(uav),
@@ -68,14 +72,10 @@ export function AnimatedUAVMarker({ uav, isSelected, onSelect, icon }: AnimatedU
           className="p-2"
         >
           <h4 className="font-semibold mb-1">{uav.rfidTag}</h4>
-          <p className="text-sm text-muted-foreground">Owner: {uav.ownerName}</p>
-          <p className="text-sm text-muted-foreground">Model: {uav.model}</p>
-          <p className="text-sm text-muted-foreground">
-            Status: {uav.status} | {uav.operationalStatus}
-          </p>
-          {uav.currentAltitudeMeters && (
+          <p className="text-sm text-muted-foreground">Status: {uav.status}</p>
+          {uav.location?.altitude && (
             <p className="text-sm text-muted-foreground">
-              Altitude: {uav.currentAltitudeMeters}m
+              Altitude: {uav.location.altitude}m
             </p>
           )}
         </motion.div>
@@ -94,20 +94,20 @@ interface AnimatedGeofenceProps {
   isVisible: boolean
 }
 
-export function AnimatedGeofence({ 
-  center, 
-  radius, 
-  color, 
-  name, 
-  type, 
-  isVisible 
+export function AnimatedGeofence({
+  center,
+  radius,
+  color,
+  name,
+  type,
+  isVisible
 }: AnimatedGeofenceProps) {
   const circleRef = useRef<L.Circle>(null)
 
   useEffect(() => {
     if (circleRef.current) {
       const circle = circleRef.current
-      
+
       // Animate the circle appearance
       if (isVisible) {
         circle.setStyle({
@@ -183,7 +183,7 @@ export function AnimatedFlightPath({ positions, color, isVisible }: AnimatedFlig
   useEffect(() => {
     if (pathRef.current && isVisible) {
       const path = pathRef.current
-      
+
       // Animate the path drawing
       let currentIndex = 0
       const animateDrawing = () => {
@@ -194,7 +194,7 @@ export function AnimatedFlightPath({ positions, color, isVisible }: AnimatedFlig
           setTimeout(animateDrawing, 100) // Draw each segment with 100ms delay
         }
       }
-      
+
       animateDrawing()
     }
   }, [positions, isVisible])
@@ -227,13 +227,13 @@ interface AnimatedDockingStationProps {
   isVisible: boolean
 }
 
-export function AnimatedDockingStation({ 
-  position, 
-  status, 
-  name, 
-  capacity, 
-  occupied, 
-  isVisible 
+export function AnimatedDockingStation({
+  position,
+  status,
+  name,
+  capacity,
+  occupied,
+  isVisible
 }: AnimatedDockingStationProps) {
   const markerRef = useRef<L.Marker>(null)
 
@@ -266,7 +266,7 @@ export function AnimatedDockingStation({
     if (markerRef.current) {
       const marker = markerRef.current
       const element = marker.getElement()
-      
+
       if (element) {
         element.style.transition = 'all 0.3s ease-out'
       }

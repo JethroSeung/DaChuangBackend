@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useCallback, Suspense } from 'react'
+import React, { useMemo, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { RefreshCw, AlertTriangle } from 'lucide-react'
 import { useDashboardStore } from '@/stores/dashboard-store'
 import { chartColors } from '@/lib/utils'
-import { ErrorBoundary } from '@/components/ui/error-boundary'
+
 
 // Lazy load chart components for better performance
 const LazyLineChart = dynamic(() => import('recharts').then(mod => ({ default: mod.LineChart })), {

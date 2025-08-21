@@ -56,10 +56,10 @@ export interface Alert {
     latitude: number
     longitude: number
   }
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
-export type AlertType = 
+export type AlertType =
   | 'BATTERY_LOW'
   | 'BATTERY_CRITICAL'
   | 'UAV_OFFLINE'
@@ -144,5 +144,42 @@ export interface WeatherData {
   location: {
     latitude: number
     longitude: number
+  }
+}
+
+export interface SystemConfig {
+  general: {
+    systemName: string
+    timezone: string
+    language: string
+    theme: 'light' | 'dark' | 'auto'
+    autoRefresh: boolean
+    refreshInterval: number
+  }
+  notifications: {
+    emailNotifications: boolean
+    pushNotifications: boolean
+    criticalAlerts: boolean
+    maintenanceAlerts: boolean
+    batteryAlerts: boolean
+    communicationAlerts: boolean
+    alertSound: boolean
+  }
+  security: {
+    sessionTimeout: number
+    passwordExpiry: number
+    twoFactorAuth: boolean
+    auditLogging: boolean
+    ipWhitelist: boolean
+    maxLoginAttempts: number
+  }
+  operations: {
+    maxFlightAltitude: number
+    defaultFlightSpeed: number
+    batteryLowThreshold: number
+    batteryCriticalThreshold: number
+    autoReturnBattery: number
+    geofenceEnabled: boolean
+    weatherIntegration: boolean
   }
 }

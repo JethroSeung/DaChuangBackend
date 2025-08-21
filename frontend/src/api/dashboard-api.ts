@@ -1,15 +1,16 @@
 'use client'
 
 import apiClient from '@/lib/api-client'
-import { 
-  DashboardMetrics, 
-  Alert, 
-  SystemHealth, 
-  UAVActivityChart, 
-  BatteryChart, 
+import {
+  DashboardMetrics,
+  Alert,
+  SystemHealth,
+  UAVActivityChart,
+  BatteryChart,
   SystemPerformanceChart,
   WeatherData,
-  TimeRange 
+  TimeRange,
+  SystemConfig
 } from '@/types'
 
 export class DashboardApi {
@@ -29,7 +30,7 @@ export class DashboardApi {
   }
 
   // Alerts management
-  async getAlerts(params?: { 
+  async getAlerts(params?: {
     acknowledged?: boolean
     severity?: string[]
     type?: string[]
@@ -37,7 +38,7 @@ export class DashboardApi {
     offset?: number
   }): Promise<Alert[]> {
     const searchParams = new URLSearchParams()
-    
+
     if (params?.acknowledged !== undefined) {
       searchParams.set('acknowledged', params.acknowledged.toString())
     }
@@ -52,7 +53,7 @@ export class DashboardApi {
 
     const query = searchParams.toString()
     const endpoint = query ? `${this.basePath}/alerts?${query}` : `${this.basePath}/alerts`
-    
+
     return apiClient.get<Alert[]>(endpoint)
   }
 
@@ -86,7 +87,7 @@ export class DashboardApi {
   }
 
   async getCustomChart(
-    metric: string, 
+    metric: string,
     timeRange: TimeRange = '24h',
     aggregation: 'avg' | 'sum' | 'min' | 'max' = 'avg'
   ): Promise<{ timestamp: string; value: number }[]> {
@@ -148,11 +149,11 @@ export class DashboardApi {
   }
 
   // Configuration
-  async getSystemConfig(): Promise<Record<string, any>> {
+  async getSystemConfig(): Promise<SystemConfig> {
     return apiClient.get(`${this.basePath}/config`)
   }
 
-  async updateSystemConfig(config: Record<string, any>): Promise<{ success: boolean; message: string }> {
+  async updateSystemConfig(config: Partial<SystemConfig>): Promise<{ success: boolean; message: string }> {
     return apiClient.put(`${this.basePath}/config`, config)
   }
 
@@ -174,12 +175,12 @@ export class DashboardApi {
       level: string
       component: string
       message: string
-      metadata?: Record<string, any>
+      metadata?: Record<string, unknown>
     }>
     total: number
   }> {
     const searchParams = new URLSearchParams()
-    
+
     if (params?.level) searchParams.set('level', params.level)
     if (params?.component) searchParams.set('component', params.component)
     if (params?.limit) searchParams.set('limit', params.limit.toString())
@@ -189,7 +190,7 @@ export class DashboardApi {
 
     const query = searchParams.toString()
     const endpoint = query ? `${this.basePath}/logs?${query}` : `${this.basePath}/logs`
-    
+
     return apiClient.get(endpoint)
   }
 
@@ -207,14 +208,14 @@ export class DashboardApi {
       userId: string
       action: string
       resource: string
-      details?: Record<string, any>
+      details?: Record<string, unknown>
       ipAddress?: string
       userAgent?: string
     }>
     total: number
   }> {
     const searchParams = new URLSearchParams()
-    
+
     if (params?.userId) searchParams.set('userId', params.userId)
     if (params?.action) searchParams.set('action', params.action)
     if (params?.resource) searchParams.set('resource', params.resource)
@@ -225,7 +226,7 @@ export class DashboardApi {
 
     const query = searchParams.toString()
     const endpoint = query ? `${this.basePath}/audit?${query}` : `${this.basePath}/audit`
-    
+
     return apiClient.get(endpoint)
   }
 

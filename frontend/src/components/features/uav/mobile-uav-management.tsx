@@ -78,7 +78,7 @@ function MobileUAVCard({
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-sm truncate">{uav.rfidTag}</h3>
-              <p className="text-xs text-muted-foreground truncate">{uav.model}</p>
+              <p className="text-xs text-muted-foreground truncate">{uav.region || 'No region assigned'}</p>
             </div>
           </div>
 
@@ -125,7 +125,7 @@ function MobileUAVCard({
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Owner:</span>
-              <span className="font-medium truncate ml-2">{uav.ownerName}</span>
+              <span className="font-medium truncate ml-2">Not specified</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Location:</span>
@@ -223,7 +223,7 @@ function MobileUAVStats({ uavs }: { uavs: UAV[] }) {
 
 // Main mobile UAV management component
 export function MobileUAVManagement() {
-  const { uavs, isLoading, error, deleteUAV } = useUAVStore()
+  const { uavs, loading, error, deleteUAV } = useUAVStore()
   const { isMobile } = useResponsive()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | UAVStatus>('all')
@@ -236,8 +236,7 @@ export function MobileUAVManagement() {
     if (searchTerm) {
       filtered = filtered.filter(uav =>
         uav.rfidTag.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        uav.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        uav.model.toLowerCase().includes(searchTerm.toLowerCase())
+        (uav.region && uav.region.toLowerCase().includes(searchTerm.toLowerCase()))
       )
     }
 
@@ -263,7 +262,7 @@ export function MobileUAVManagement() {
     { key: 'updatedAt', label: 'Updated', type: 'date' as const },
   ]
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="space-y-4">
         <div className="h-8 bg-muted animate-pulse rounded" />

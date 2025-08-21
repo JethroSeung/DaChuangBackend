@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { X, AlertTriangle, CheckCircle, Info, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getAnimationVariants } from '@/lib/animations'
+import { alertVariants, getAnimationVariants } from '@/lib/animations'
 
 export type AlertType = 'info' | 'success' | 'warning' | 'error'
 
@@ -50,7 +50,14 @@ export function AnimatedAlert({
   ...props
 }: AnimatedAlertProps) {
   const [isVisible, setIsVisible] = React.useState(true)
-  const IconComponent = (icon as any) || alertIcons[type]
+  const IconComponent = (typeof icon === 'function' ? icon : alertIcons[type]) as React.ComponentType<{ className?: string }>
+
+  const handleDismiss = React.useCallback(() => {
+    setIsVisible(false)
+    setTimeout(() => {
+      onDismiss?.()
+    }, 300) // Wait for exit animation
+  }, [onDismiss])
 
   React.useEffect(() => {
     if (autoHide && autoHideDelay > 0) {
@@ -60,14 +67,7 @@ export function AnimatedAlert({
 
       return () => clearTimeout(timer)
     }
-  }, [autoHide, autoHideDelay])
-
-  const handleDismiss = () => {
-    setIsVisible(false)
-    setTimeout(() => {
-      onDismiss?.()
-    }, 300) // Wait for exit animation
-  }
+  }, [autoHide, autoHideDelay, handleDismiss])
 
   return (
     <AnimatePresence>

@@ -30,12 +30,11 @@ import {
 import { useUAVStore } from '@/stores/uav-store'
 import { UAV } from '@/types'
 import { InteractiveMap } from '@/components/features/map/interactive-map'
-import { useResponsive } from '@/hooks/use-responsive'
+
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
 export default function MapPage() {
-  const { isMobile } = useResponsive()
   const { t } = useTranslation(['map', 'common'])
   const { uavs, loading, error, fetchUAVs } = useUAVStore()
 

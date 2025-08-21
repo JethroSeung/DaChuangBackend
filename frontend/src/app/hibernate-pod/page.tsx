@@ -1,20 +1,12 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { useEffect } from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+
 import {
   Home,
   Plus,
@@ -31,10 +23,7 @@ import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
 export default function HibernatePodPage() {
-  const { t } = useTranslation(['hibernate', 'common'])
   const { uavs, loading, fetchUAVs, addToHibernatePod, removeFromHibernatePod } = useUAVStore()
-  const [selectedUAV, setSelectedUAV] = useState<UAV | null>(null)
-  const [showAddDialog, setShowAddDialog] = useState(false)
 
   useEffect(() => {
     fetchUAVs()

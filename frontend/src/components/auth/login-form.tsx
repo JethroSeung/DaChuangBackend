@@ -51,7 +51,7 @@ export function LoginForm({ redirectTo = '/dashboard', onSuccess }: LoginFormPro
 
   const onSubmit = async (data: LoginFormData) => {
     clearError()
-    
+
     const loginData: LoginRequest = {
       username: data.username,
       password: data.password,
@@ -59,7 +59,7 @@ export function LoginForm({ redirectTo = '/dashboard', onSuccess }: LoginFormPro
     }
 
     const success = await login(loginData)
-    
+
     if (success) {
       if (onSuccess) {
         onSuccess()
@@ -83,7 +83,7 @@ export function LoginForm({ redirectTo = '/dashboard', onSuccess }: LoginFormPro
             Sign in to access the UAV management dashboard
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {error && (
@@ -152,7 +152,7 @@ export function LoginForm({ redirectTo = '/dashboard', onSuccess }: LoginFormPro
                   Remember me
                 </Label>
               </div>
-              
+
               <Link
                 href="/auth/forgot-password"
                 className="text-sm text-primary hover:underline"
@@ -179,7 +179,7 @@ export function LoginForm({ redirectTo = '/dashboard', onSuccess }: LoginFormPro
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link
                 href="/auth/register"
                 className="text-primary hover:underline font-medium"

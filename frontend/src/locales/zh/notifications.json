@@ -1,0 +1,40 @@
+{
+  "title": "通知",
+  "subtitle": "系统警报和更新",
+  "markAllRead": "全部标记为已读",
+  "clearAll": "清除全部",
+  "noNotifications": "无通知",
+  "noNotificationsMessage": "您已查看所有内容！没有新通知。",
+  "markAsRead": "标记为已读",
+  "markAsUnread": "标记为未读",
+  "delete": "删除",
+  "viewDetails": "查看详情",
+  "categories": {
+    "all": "全部",
+    "system": "系统",
+    "uav": "无人机",
+    "battery": "电池",
+    "security": "安全",
+    "maintenance": "维护"
+  },
+  "types": {
+    "info": "信息",
+    "warning": "警告",
+    "error": "错误",
+    "success": "成功"
+  },
+  "mockNotifications": {
+    "lowBatteryAlert": "低电量警报",
+    "lowBatteryMessage": "UAV-001 电池电量为15%。建议尽快充电。",
+    "unauthorizedAccess": "未授权访问尝试",
+    "unauthorizedMessage": "检测到来自未知IP地址的登录失败尝试。",
+    "maintenanceComplete": "维护完成",
+    "maintenanceMessage": "UAV-003 维护已成功完成。",
+    "systemUpdate": "系统更新可用",
+    "systemUpdateMessage": "有新的系统更新可用。建议更新。",
+    "geofenceViolation": "地理围栏违规",
+    "geofenceMessage": "UAV-002 已离开授权飞行区域。",
+    "dockingComplete": "对接完成",
+    "dockingMessage": "UAV-004 已成功对接到Alpha站。"
+  }
+}

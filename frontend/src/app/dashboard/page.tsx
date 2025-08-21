@@ -36,8 +36,6 @@ export default function DashboardPage() {
   const { t } = useTranslation(['dashboard', 'common'])
   const {
     metrics,
-    alerts,
-    systemHealth,
     loading,
     error,
     fetchDashboardData,
