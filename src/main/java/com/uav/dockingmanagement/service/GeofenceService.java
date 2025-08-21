@@ -260,6 +260,13 @@ public class GeofenceService {
                 }
             }
 
+            // Validate polygonal geofence
+            if (geofence.getFenceType() == Geofence.FenceType.POLYGONAL) {
+                if (geofence.getPolygonCoordinates() == null || geofence.getPolygonCoordinates().trim().isEmpty()) {
+                    return false;
+                }
+            }
+
             // Validate altitude constraints
             if (geofence.getMinAltitudeMeters() != null && geofence.getMaxAltitudeMeters() != null) {
                 if (geofence.getMinAltitudeMeters() > geofence.getMaxAltitudeMeters()) {
@@ -403,20 +410,11 @@ public class GeofenceService {
     }
 
     /**
-     * Check if point is inside polygonal geofence (simplified implementation)
+     * Check if point is inside polygonal geofence
      */
     private boolean isPointInPolygon(Geofence geofence, Double latitude, Double longitude) {
-        // This is a simplified implementation
-        // In production, you would use a proper geometry library like JTS
-        String polygonCoords = geofence.getPolygonCoordinates();
-        if (polygonCoords == null || polygonCoords.trim().isEmpty()) {
-            return false;
-        }
-        
-        // TODO: Implement proper polygon containment check
-        // For now, return false as placeholder
-        logger.warn("Polygon geofence checking not fully implemented for geofence: {}", geofence.getName());
-        return false;
+        // Delegate to the geofence model's implementation
+        return geofence.isPointInside(latitude, longitude);
     }
 
     /**

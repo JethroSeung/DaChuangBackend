@@ -381,9 +381,56 @@ public class Geofence {
     }
 
     private boolean isPointInPolygon(double latitude, double longitude) {
-        // Simplified polygon check - in production, use a proper geometry library
-        // This is a basic implementation for demonstration
-        return false; // TODO: Implement proper polygon containment check
+        if (polygonCoordinates == null || polygonCoordinates.trim().isEmpty()) {
+            return false;
+        }
+
+        try {
+            // Parse polygon coordinates - expected format: [[lat1,lon1],[lat2,lon2],...]
+            String coords = polygonCoordinates.trim();
+            if (!coords.startsWith("[[") || !coords.endsWith("]]")) {
+                return false;
+            }
+
+            // Remove outer brackets and split by coordinate pairs
+            coords = coords.substring(2, coords.length() - 2);
+            String[] pairs = coords.split("\\],\\[");
+
+            if (pairs.length < 3) {
+                return false; // Need at least 3 points for a polygon
+            }
+
+            // Convert to coordinate arrays
+            double[] lats = new double[pairs.length];
+            double[] lons = new double[pairs.length];
+
+            for (int i = 0; i < pairs.length; i++) {
+                String[] coords_pair = pairs[i].split(",");
+                if (coords_pair.length != 2) {
+                    return false;
+                }
+                lats[i] = Double.parseDouble(coords_pair[0]);
+                lons[i] = Double.parseDouble(coords_pair[1]);
+            }
+
+            // Ray casting algorithm for point-in-polygon test
+            boolean inside = false;
+            int j = lats.length - 1;
+
+            for (int i = 0; i < lats.length; i++) {
+                if (((lats[i] > latitude) != (lats[j] > latitude)) &&
+                    (longitude < (lons[j] - lons[i]) * (latitude - lats[i]) / (lats[j] - lats[i]) + lons[i])) {
+                    inside = !inside;
+                }
+                j = i;
+            }
+
+            return inside;
+
+        } catch (Exception e) {
+            // If parsing fails, return false
+            return false;
+        }
     }
 
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
