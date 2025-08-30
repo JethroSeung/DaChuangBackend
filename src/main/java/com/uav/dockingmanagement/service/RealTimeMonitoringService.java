@@ -69,7 +69,7 @@ public class RealTimeMonitoringService {
         try {
             List<UAV> uavs = uavRepository.findAll();
             Map<String, Object> uavStatus = new HashMap<>();
-            
+
             for (UAV uav : uavs) {
                 Map<String, Object> status = new HashMap<>();
                 status.put("id", uav.getId());
@@ -78,7 +78,7 @@ public class RealTimeMonitoringService {
                 status.put("operationalStatus", uav.getOperationalStatus());
                 status.put("inHibernatePod", uav.isInHibernatePod());
                 status.put("lastUpdated", uav.getUpdatedAt());
-                
+
                 // Add battery information if available
                 if (uav.getBatteryStatus() != null) {
                     BatteryStatus battery = uav.getBatteryStatus();
@@ -87,7 +87,7 @@ public class RealTimeMonitoringService {
                     status.put("isCharging", battery.getIsCharging());
                     status.put("batteryCondition", battery.getBatteryCondition());
                 }
-                
+
                 // Add location if available
                 if (uav.getCurrentLocationLatitude() != null && uav.getCurrentLocationLongitude() != null) {
                     Map<String, Double> location = new HashMap<>();
@@ -96,10 +96,10 @@ public class RealTimeMonitoringService {
                     status.put("location", location);
                     status.put("locationUpdated", uav.getLastKnownLocationUpdate());
                 }
-                
+
                 uavStatus.put("uav_" + uav.getId(), status);
             }
-            
+
             messagingTemplate.convertAndSend("/topic/uav-status", uavStatus);
             logger.debug("Broadcasted UAV status for {} UAVs", uavs.size());
         } catch (Exception e) {
@@ -116,23 +116,22 @@ public class RealTimeMonitoringService {
             List<BatteryStatus> lowBatteryUAVs = batteryStatusRepository.findLowBatteryUAVs(20);
             List<BatteryStatus> criticalBatteryUAVs = batteryStatusRepository.findCriticalBatteryUAVs();
             List<BatteryStatus> overheatingBatteries = batteryStatusRepository.findOverheatingBatteries(60.0);
-            
+
             Map<String, Object> batteryAlerts = new HashMap<>();
             batteryAlerts.put("lowBattery", lowBatteryUAVs.size());
             batteryAlerts.put("criticalBattery", criticalBatteryUAVs.size());
             batteryAlerts.put("overheating", overheatingBatteries.size());
             batteryAlerts.put("timestamp", LocalDateTime.now());
-            
+
             if (!lowBatteryUAVs.isEmpty() || !criticalBatteryUAVs.isEmpty() || !overheatingBatteries.isEmpty()) {
                 batteryAlerts.put("details", Map.of(
-                    "lowBatteryUAVs", lowBatteryUAVs.stream().map(b -> b.getUav().getRfidTag()).toList(),
-                    "criticalBatteryUAVs", criticalBatteryUAVs.stream().map(b -> b.getUav().getRfidTag()).toList(),
-                    "overheatingUAVs", overheatingBatteries.stream().map(b -> b.getUav().getRfidTag()).toList()
-                ));
-                
+                        "lowBatteryUAVs", lowBatteryUAVs.stream().map(b -> b.getUav().getRfidTag()).toList(),
+                        "criticalBatteryUAVs", criticalBatteryUAVs.stream().map(b -> b.getUav().getRfidTag()).toList(),
+                        "overheatingUAVs", overheatingBatteries.stream().map(b -> b.getUav().getRfidTag()).toList()));
+
                 messagingTemplate.convertAndSend("/topic/battery-alerts", batteryAlerts);
-                logger.warn("Broadcasted battery alerts: {} low, {} critical, {} overheating", 
-                           lowBatteryUAVs.size(), criticalBatteryUAVs.size(), overheatingBatteries.size());
+                logger.warn("Broadcasted battery alerts: {} low, {} critical, {} overheating",
+                        lowBatteryUAVs.size(), criticalBatteryUAVs.size(), overheatingBatteries.size());
             }
         } catch (Exception e) {
             logger.error("Error broadcasting battery alerts: {}", e.getMessage());
@@ -145,12 +144,13 @@ public class RealTimeMonitoringService {
     @Scheduled(fixedRate = 10000) // 10 seconds
     public void broadcastFlightActivity() {
         try {
-            List<FlightLog> activeFlights = flightLogRepository.findByFlightStatusOrderByCreatedAtDesc(FlightLog.FlightStatus.IN_PROGRESS);
-            
+            List<FlightLog> activeFlights = flightLogRepository
+                    .findByFlightStatusOrderByCreatedAtDesc(FlightLog.FlightStatus.IN_PROGRESS);
+
             Map<String, Object> flightActivity = new HashMap<>();
             flightActivity.put("activeFlights", activeFlights.size());
             flightActivity.put("timestamp", LocalDateTime.now());
-            
+
             if (!activeFlights.isEmpty()) {
                 flightActivity.put("flights", activeFlights.stream().map(flight -> {
                     Map<String, Object> flightInfo = new HashMap<>();
@@ -162,7 +162,7 @@ public class RealTimeMonitoringService {
                     return flightInfo;
                 }).toList());
             }
-            
+
             messagingTemplate.convertAndSend("/topic/flight-activity", flightActivity);
             logger.debug("Broadcasted flight activity: {} active flights", activeFlights.size());
         } catch (Exception e) {
@@ -181,9 +181,10 @@ public class RealTimeMonitoringService {
             podStatus.put("maxCapacity", hibernatePod.getMaxCapacity());
             podStatus.put("availableCapacity", hibernatePod.getAvailableCapacity());
             podStatus.put("isFull", hibernatePod.isFull());
-            podStatus.put("utilizationPercentage", (hibernatePod.getCurrentCapacity() * 100.0) / hibernatePod.getMaxCapacity());
+            podStatus.put("utilizationPercentage",
+                    (hibernatePod.getCurrentCapacity() * 100.0) / hibernatePod.getMaxCapacity());
             podStatus.put("timestamp", LocalDateTime.now());
-            
+
             // Add UAV details in hibernate pod
             podStatus.put("uavs", hibernatePod.getUAVs().stream().map(uav -> {
                 Map<String, Object> uavInfo = new HashMap<>();
@@ -193,10 +194,10 @@ public class RealTimeMonitoringService {
                 uavInfo.put("ownerName", uav.getOwnerName());
                 return uavInfo;
             }).toList());
-            
+
             messagingTemplate.convertAndSend("/topic/hibernate-pod", podStatus);
-            logger.debug("Broadcasted hibernate pod status: {}/{} capacity", 
-                        hibernatePod.getCurrentCapacity(), hibernatePod.getMaxCapacity());
+            logger.debug("Broadcasted hibernate pod status: {}/{} capacity",
+                    hibernatePod.getCurrentCapacity(), hibernatePod.getMaxCapacity());
         } catch (Exception e) {
             logger.error("Error broadcasting hibernate pod status: {}", e.getMessage());
         }
@@ -212,7 +213,7 @@ public class RealTimeMonitoringService {
             notification.put("message", message);
             notification.put("type", type); // success, warning, error, info
             notification.put("timestamp", LocalDateTime.now());
-            
+
             messagingTemplate.convertAndSendToUser(username, "/queue/notifications", notification);
             logger.info("Sent notification to user {}: {}", username, title);
         } catch (Exception e) {
@@ -230,7 +231,7 @@ public class RealTimeMonitoringService {
             notification.put("message", message);
             notification.put("type", type);
             notification.put("timestamp", LocalDateTime.now());
-            
+
             messagingTemplate.convertAndSend("/topic/notifications", notification);
             logger.info("Sent broadcast notification: {}", title);
         } catch (Exception e) {
@@ -241,7 +242,8 @@ public class RealTimeMonitoringService {
     /**
      * Send emergency alert
      */
-    public void sendEmergencyAlert(String uavRfid, String alertType, String description, Double latitude, Double longitude) {
+    public void sendEmergencyAlert(String uavRfid, String alertType, String description, Double latitude,
+            Double longitude) {
         try {
             Map<String, Object> alert = new HashMap<>();
             alert.put("uavRfid", uavRfid);
@@ -249,14 +251,14 @@ public class RealTimeMonitoringService {
             alert.put("description", description);
             alert.put("severity", "CRITICAL");
             alert.put("timestamp", LocalDateTime.now());
-            
+
             if (latitude != null && longitude != null) {
                 Map<String, Double> location = new HashMap<>();
                 location.put("latitude", latitude);
                 location.put("longitude", longitude);
                 alert.put("location", location);
             }
-            
+
             messagingTemplate.convertAndSend("/topic/emergency-alerts", alert);
             logger.error("Sent emergency alert for UAV {}: {}", uavRfid, alertType);
         } catch (Exception e) {
@@ -269,14 +271,16 @@ public class RealTimeMonitoringService {
      */
     private Map<String, Object> generateSystemStatistics() {
         Map<String, Object> stats = new HashMap<>();
-        
+
         // UAV statistics
         List<UAV> allUAVs = uavRepository.findAll();
         long authorizedUAVs = allUAVs.stream().filter(uav -> uav.getStatus() == UAV.Status.AUTHORIZED).count();
         long unauthorizedUAVs = allUAVs.stream().filter(uav -> uav.getStatus() == UAV.Status.UNAUTHORIZED).count();
-        long inFlightUAVs = allUAVs.stream().filter(uav -> uav.getOperationalStatus() == UAV.OperationalStatus.IN_FLIGHT).count();
-        long maintenanceUAVs = allUAVs.stream().filter(uav -> uav.getOperationalStatus() == UAV.OperationalStatus.MAINTENANCE).count();
-        
+        long inFlightUAVs = allUAVs.stream()
+                .filter(uav -> uav.getOperationalStatus() == UAV.OperationalStatus.IN_FLIGHT).count();
+        long maintenanceUAVs = allUAVs.stream()
+                .filter(uav -> uav.getOperationalStatus() == UAV.OperationalStatus.MAINTENANCE).count();
+
         Map<String, Object> uavStats = new HashMap<>();
         uavStats.put("total", allUAVs.size());
         uavStats.put("authorized", authorizedUAVs);
@@ -284,42 +288,43 @@ public class RealTimeMonitoringService {
         uavStats.put("inFlight", inFlightUAVs);
         uavStats.put("maintenance", maintenanceUAVs);
         uavStats.put("hibernating", hibernatePod.getCurrentCapacity());
-        
+
         // Flight statistics
         LocalDateTime today = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
         List<FlightLog> todayFlights = flightLogRepository.findByDateRange(today, LocalDateTime.now());
-        long completedToday = todayFlights.stream().filter(f -> f.getFlightStatus() == FlightLog.FlightStatus.COMPLETED).count();
+        long completedToday = todayFlights.stream().filter(f -> f.getFlightStatus() == FlightLog.FlightStatus.COMPLETED)
+                .count();
         long activeFlights = flightLogRepository.countByFlightStatus(FlightLog.FlightStatus.IN_PROGRESS);
-        
+
         Map<String, Object> flightStats = new HashMap<>();
         flightStats.put("todayTotal", todayFlights.size());
         flightStats.put("todayCompleted", completedToday);
         flightStats.put("active", activeFlights);
-        
+
         // Battery statistics
         List<BatteryStatus> allBatteries = batteryStatusRepository.findAll();
         long lowBatteryCount = batteryStatusRepository.findLowBatteryUAVs(20).size();
         long criticalBatteryCount = batteryStatusRepository.findCriticalBatteryUAVs().size();
         long chargingCount = batteryStatusRepository.findByIsChargingTrueOrderByLastUpdatedDesc().size();
-        
+
         Map<String, Object> batteryStats = new HashMap<>();
         batteryStats.put("total", allBatteries.size());
         batteryStats.put("lowBattery", lowBatteryCount);
         batteryStats.put("critical", criticalBatteryCount);
         batteryStats.put("charging", chargingCount);
-        
+
         // System health
         Map<String, Object> systemHealth = new HashMap<>();
         systemHealth.put("status", "OPERATIONAL");
         systemHealth.put("uptime", System.currentTimeMillis());
         systemHealth.put("lastUpdate", LocalDateTime.now());
-        
+
         stats.put("uav", uavStats);
         stats.put("flights", flightStats);
         stats.put("battery", batteryStats);
         stats.put("system", systemHealth);
         stats.put("timestamp", LocalDateTime.now());
-        
+
         return stats;
     }
 }

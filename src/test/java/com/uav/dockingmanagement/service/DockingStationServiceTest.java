@@ -204,7 +204,7 @@ class DockingStationServiceTest {
         assertTrue((Boolean) result.get("success"));
         assertEquals("UAV docked successfully", result.get("message"));
         assertNotNull(result.get("dockingRecord"));
-        
+
         verify(uavRepository, times(1)).findById(1);
         verify(dockingStationRepository, times(1)).findById(1L);
         verify(dockingRecordRepository, times(1)).save(any(DockingRecord.class));
@@ -220,7 +220,7 @@ class DockingStationServiceTest {
 
         assertFalse((Boolean) result.get("success"));
         assertEquals("UAV not found", result.get("message"));
-        
+
         verify(uavRepository, times(1)).findById(999);
         verify(dockingStationRepository, never()).findById(anyLong());
     }
@@ -234,7 +234,7 @@ class DockingStationServiceTest {
 
         assertFalse((Boolean) result.get("success"));
         assertEquals("Docking station not found", result.get("message"));
-        
+
         verify(uavRepository, times(1)).findById(1);
         verify(dockingStationRepository, times(1)).findById(999L);
     }
@@ -249,7 +249,7 @@ class DockingStationServiceTest {
 
         assertFalse((Boolean) result.get("success"));
         assertTrue(result.get("message").toString().contains("full"));
-        
+
         verify(uavRepository, times(1)).findById(1);
         verify(dockingStationRepository, times(1)).findById(1L);
         verify(dockingRecordRepository, never()).save(any());
@@ -265,7 +265,7 @@ class DockingStationServiceTest {
 
         assertFalse((Boolean) result.get("success"));
         assertTrue(result.get("message").toString().contains("not operational"));
-        
+
         verify(uavRepository, times(1)).findById(1);
         verify(dockingStationRepository, times(1)).findById(1L);
         verify(dockingRecordRepository, never()).save(any());
@@ -274,8 +274,7 @@ class DockingStationServiceTest {
     @Test
     void testUndockUAVSuccess() {
         testDockingRecord.setUndockingTime(null); // Still docked
-        when(uavRepository.findById(1)).thenReturn(Optional.of(testUAV));
-        when(dockingRecordRepository.findActiveByUavId(1)).thenReturn(Optional.of(testDockingRecord));
+        when(dockingRecordRepository.findCurrentDockingByUavId(1)).thenReturn(Optional.of(testDockingRecord));
         when(dockingRecordRepository.save(any(DockingRecord.class))).thenReturn(testDockingRecord);
         when(dockingStationRepository.save(any(DockingStation.class))).thenReturn(testStation);
         when(uavRepository.save(any(UAV.class))).thenReturn(testUAV);
@@ -285,9 +284,8 @@ class DockingStationServiceTest {
         assertTrue((Boolean) result.get("success"));
         assertEquals("UAV undocked successfully", result.get("message"));
         assertNotNull(result.get("dockingRecord"));
-        
-        verify(uavRepository, times(1)).findById(1);
-        verify(dockingRecordRepository, times(1)).findActiveByUavId(1);
+
+        verify(dockingRecordRepository, times(1)).findCurrentDockingByUavId(1);
         verify(dockingRecordRepository, times(1)).save(any(DockingRecord.class));
         verify(dockingStationRepository, times(1)).save(testStation);
         verify(uavRepository, times(1)).save(testUAV);
@@ -295,29 +293,26 @@ class DockingStationServiceTest {
 
     @Test
     void testUndockUAVNotFound() {
-        when(uavRepository.findById(999)).thenReturn(Optional.empty());
+        when(dockingRecordRepository.findCurrentDockingByUavId(999)).thenReturn(Optional.empty());
 
         Map<String, Object> result = dockingStationService.undockUAV(999);
 
         assertFalse((Boolean) result.get("success"));
-        assertEquals("UAV not found", result.get("message"));
-        
-        verify(uavRepository, times(1)).findById(999);
-        verify(dockingRecordRepository, never()).findActiveByUavId(anyInt());
+        assertEquals("UAV is not currently docked", result.get("message"));
+
+        verify(dockingRecordRepository, times(1)).findCurrentDockingByUavId(999);
     }
 
     @Test
     void testUndockUAVNotDocked() {
-        when(uavRepository.findById(1)).thenReturn(Optional.of(testUAV));
-        when(dockingRecordRepository.findActiveByUavId(1)).thenReturn(Optional.empty());
+        when(dockingRecordRepository.findCurrentDockingByUavId(1)).thenReturn(Optional.empty());
 
         Map<String, Object> result = dockingStationService.undockUAV(1);
 
         assertFalse((Boolean) result.get("success"));
         assertTrue(result.get("message").toString().contains("not currently docked"));
-        
-        verify(uavRepository, times(1)).findById(1);
-        verify(dockingRecordRepository, times(1)).findActiveByUavId(1);
+
+        verify(dockingRecordRepository, times(1)).findCurrentDockingByUavId(1);
     }
 
     @Test
@@ -388,10 +383,14 @@ class DockingStationServiceTest {
         when(dockingStationRepository.countByStatus(DockingStation.StationStatus.OFFLINE)).thenReturn(1L);
         when(dockingStationRepository.getTotalCapacity()).thenReturn(50);
         when(dockingStationRepository.getCurrentTotalOccupancy()).thenReturn(20);
-        when(dockingStationRepository.findByStationType(DockingStation.StationType.STANDARD)).thenReturn(Collections.emptyList());
-        when(dockingStationRepository.findByStationType(DockingStation.StationType.CHARGING)).thenReturn(Collections.emptyList());
-        when(dockingStationRepository.findByStationType(DockingStation.StationType.MAINTENANCE)).thenReturn(Collections.emptyList());
-        when(dockingStationRepository.findByStationType(DockingStation.StationType.EMERGENCY)).thenReturn(Collections.emptyList());
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.STANDARD))
+                .thenReturn(Collections.emptyList());
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.CHARGING))
+                .thenReturn(Collections.emptyList());
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.MAINTENANCE))
+                .thenReturn(Collections.emptyList());
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.EMERGENCY))
+                .thenReturn(Collections.emptyList());
         when(dockingStationRepository.findStationsNeedingMaintenance()).thenReturn(Collections.emptyList());
 
         Map<String, Object> result = dockingStationService.getStationStatistics();

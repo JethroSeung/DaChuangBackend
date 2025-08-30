@@ -15,7 +15,8 @@ import java.util.Arrays;
 
 /**
  * Test web configuration that provides CORS settings compatible with tests
- * This fixes the CORS configuration issue where allowCredentials=true conflicts with allowedOrigins="*"
+ * This fixes the CORS configuration issue where allowCredentials=true conflicts
+ * with allowedOrigins="*"
  */
 @TestConfiguration
 @Profile("test")

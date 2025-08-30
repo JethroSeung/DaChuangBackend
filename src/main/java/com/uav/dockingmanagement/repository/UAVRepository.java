@@ -1,4 +1,5 @@
 package com.uav.dockingmanagement.repository;
+
 import com.uav.dockingmanagement.model.UAV;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -49,13 +50,14 @@ public interface UAVRepository extends JpaRepository<UAV, Integer> {
      */
     @Query("SELECT u FROM UAV u WHERE u.currentLatitude BETWEEN :minLat AND :maxLat AND u.currentLongitude BETWEEN :minLon AND :maxLon")
     List<UAV> findUAVsInArea(@Param("minLat") Double minLatitude, @Param("maxLat") Double maxLatitude,
-                            @Param("minLon") Double minLongitude, @Param("maxLon") Double maxLongitude);
+            @Param("minLon") Double minLongitude, @Param("maxLon") Double maxLongitude);
 
     /**
      * Find nearby UAVs within radius (simplified version)
      */
     @Query("SELECT u FROM UAV u WHERE u.currentLatitude IS NOT NULL AND u.currentLongitude IS NOT NULL")
-    List<UAV> findNearbyUAVs(@Param("latitude") Double latitude, @Param("longitude") Double longitude, @Param("radiusKm") Double radiusKm);
+    List<UAV> findNearbyUAVs(@Param("latitude") Double latitude, @Param("longitude") Double longitude,
+            @Param("radiusKm") Double radiusKm);
 
     /**
      * Count UAVs with location data
@@ -63,5 +65,3 @@ public interface UAVRepository extends JpaRepository<UAV, Integer> {
     @Query("SELECT COUNT(u) FROM UAV u WHERE u.currentLatitude IS NOT NULL AND u.currentLongitude IS NOT NULL")
     long countUAVsWithLocation();
 }
-
-

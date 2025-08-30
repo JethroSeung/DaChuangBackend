@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "location_history", indexes = {
-    @Index(name = "idx_location_history_uav", columnList = "uav_id"),
-    @Index(name = "idx_location_history_timestamp", columnList = "timestamp"),
-    @Index(name = "idx_location_history_location", columnList = "latitude, longitude"),
-    @Index(name = "idx_location_history_flight_log", columnList = "flight_log_id")
+        @Index(name = "idx_location_history_uav", columnList = "uav_id"),
+        @Index(name = "idx_location_history_timestamp", columnList = "timestamp"),
+        @Index(name = "idx_location_history_location", columnList = "latitude, longitude"),
+        @Index(name = "idx_location_history_flight_log", columnList = "flight_log_id")
 })
 public class LocationHistory {
 
@@ -72,7 +72,8 @@ public class LocationHistory {
     private String notes;
 
     // Constructors
-    public LocationHistory() {}
+    public LocationHistory() {
+    }
 
     public LocationHistory(UAV uav, Double latitude, Double longitude) {
         this.uav = uav;
@@ -220,14 +221,14 @@ public class LocationHistory {
     public double distanceToPoint(double lat, double lon) {
         // Haversine formula for calculating distance between two points
         final int R = 6371; // Radius of the earth in km
-        
+
         double latDistance = Math.toRadians(lat - this.latitude);
         double lonDistance = Math.toRadians(lon - this.longitude);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(this.latitude)) * Math.cos(Math.toRadians(lat))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+                        * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        
+
         return R * c * 1000; // Distance in meters
     }
 

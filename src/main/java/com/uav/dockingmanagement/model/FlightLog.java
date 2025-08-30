@@ -21,7 +21,7 @@ public class FlightLog {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uav_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("uav-flightLogs")
     private UAV uav;
 
     @Column(name = "mission_name", nullable = false, length = 100)
@@ -99,7 +99,8 @@ public class FlightLog {
     }
 
     // Constructors
-    public FlightLog() {}
+    public FlightLog() {
+    }
 
     public FlightLog(UAV uav, String missionName) {
         this.uav = uav;
@@ -311,8 +312,10 @@ public class FlightLog {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         FlightLog flightLog = (FlightLog) o;
         return Objects.equals(id, flightLog.id);
     }

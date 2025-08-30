@@ -8,9 +8,11 @@ import com.uav.dockingmanagement.repository.UAVRepository;
 import com.uav.dockingmanagement.service.UAVService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,13 +21,21 @@ import java.util.Optional;
 /**
  * REST API Controller for UAV Management
  *
- * <p>This controller provides comprehensive JSON endpoints for UAV (Unmanned Aerial Vehicle)
- * management operations. It handles CRUD operations, region assignments, and status updates
- * for UAVs in the system.</p>
+ * <p>
+ * This controller provides comprehensive JSON endpoints for UAV (Unmanned
+ * Aerial Vehicle)
+ * management operations. It handles CRUD operations, region assignments, and
+ * status updates
+ * for UAVs in the system.
+ * </p>
  *
- * <p>All endpoints return JSON responses and support CORS for frontend integration.
- * Authentication and authorization are handled through Spring Security with role-based
- * access control (USER, OPERATOR, ADMIN).</p>
+ * <p>
+ * All endpoints return JSON responses and support CORS for frontend
+ * integration.
+ * Authentication and authorization are handled through Spring Security with
+ * role-based
+ * access control (USER, OPERATOR, ADMIN).
+ * </p>
  *
  * @author UAV Management System Team
  * @version 1.0
@@ -59,11 +69,16 @@ public class UAVRestController {
     /**
      * Retrieves all UAVs in the system with their associated regions.
      *
-     * <p>This endpoint returns a complete list of all UAVs registered in the system,
-     * including their current status, operational information, and assigned regions.
-     * The response includes lazy-loaded region associations.</p>
+     * <p>
+     * This endpoint returns a complete list of all UAVs registered in the system,
+     * including their current status, operational information, and assigned
+     * regions.
+     * The response includes lazy-loaded region associations.
+     * </p>
      *
-     * <p><strong>Security:</strong> Requires USER, OPERATOR, or ADMIN role</p>
+     * <p>
+     * <strong>Security:</strong> Requires USER, OPERATOR, or ADMIN role
+     * </p>
      *
      * @return ResponseEntity containing:
      *         <ul>
@@ -90,11 +105,15 @@ public class UAVRestController {
     /**
      * Retrieves a specific UAV by its unique identifier.
      *
-     * <p>This endpoint returns detailed information about a single UAV including
+     * <p>
+     * This endpoint returns detailed information about a single UAV including
      * all its properties, relationships, and current status. The UAV is identified
-     * by its database ID.</p>
+     * by its database ID.
+     * </p>
      *
-     * <p><strong>Security:</strong> Requires USER, OPERATOR, or ADMIN role</p>
+     * <p>
+     * <strong>Security:</strong> Requires USER, OPERATOR, or ADMIN role
+     * </p>
      *
      * @param id The unique identifier of the UAV to retrieve
      * @return ResponseEntity containing:
@@ -110,22 +129,71 @@ public class UAVRestController {
     public ResponseEntity<UAV> getUAVById(@PathVariable int id) {
         Optional<UAV> uav = uavRepository.findById(id);
         return uav.map(ResponseEntity::ok)
-                  .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Toggle UAV status endpoint for tests
+     */
+    @PostMapping("/{id}/toggle-status")
+    public ResponseEntity<Map<String, Object>> toggleUAVStatus(@PathVariable int id) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            Optional<UAV> uavOpt = uavRepository.findById(id);
+            if (uavOpt.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "UAV not found");
+                return ResponseEntity.notFound().build();
+            }
+
+            UAV uav = uavOpt.get();
+            UAV.Status oldStatus = uav.getStatus();
+
+            // Toggle status
+            if (uav.getStatus() == UAV.Status.AUTHORIZED) {
+                uav.setStatus(UAV.Status.UNAUTHORIZED);
+            } else {
+                uav.setStatus(UAV.Status.AUTHORIZED);
+            }
+
+            UAV savedUAV = uavRepository.save(uav);
+
+            response.put("success", true);
+            response.put("message", "UAV status updated successfully");
+            response.put("oldStatus", oldStatus.toString());
+            response.put("newStatus", savedUAV.getStatus().toString());
+            response.put("uav", savedUAV);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error updating UAV status: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     /**
      * Updates the authorization status of a UAV.
      *
-     * <p>This endpoint toggles the UAV's authorization status between AUTHORIZED
+     * <p>
+     * This endpoint toggles the UAV's authorization status between AUTHORIZED
      * and UNAUTHORIZED. This is commonly used for access control and operational
-     * management. The operation is atomic and includes audit logging.</p>
+     * management. The operation is atomic and includes audit logging.
+     * </p>
      *
-     * <p><strong>Security:</strong> Requires OPERATOR or ADMIN role</p>
+     * <p>
+     * <strong>Security:</strong> Requires OPERATOR or ADMIN role
+     * </p>
      *
-     * <p><strong>Business Logic:</strong></p>
+     * <p>
+     * <strong>Business Logic:</strong>
+     * </p>
      * <ul>
      * <li>AUTHORIZED -> UNAUTHORIZED: Revokes UAV access to all regions</li>
-     * <li>UNAUTHORIZED -> AUTHORIZED: Grants UAV access based on assigned regions</li>
+     * <li>UNAUTHORIZED -> AUTHORIZED: Grants UAV access based on assigned
+     * regions</li>
      * </ul>
      *
      * @param id The unique identifier of the UAV to update
@@ -183,13 +251,19 @@ public class UAVRestController {
     /**
      * Permanently removes a UAV from the system.
      *
-     * <p>This endpoint performs a hard delete of the UAV record and all associated
+     * <p>
+     * This endpoint performs a hard delete of the UAV record and all associated
      * data including location history, flight logs, and maintenance records.
-     * This operation cannot be undone.</p>
+     * This operation cannot be undone.
+     * </p>
      *
-     * <p><strong>Security:</strong> Requires ADMIN role only</p>
+     * <p>
+     * <strong>Security:</strong> Requires ADMIN role only
+     * </p>
      *
-     * <p><strong>Cascade Operations:</strong></p>
+     * <p>
+     * <strong>Cascade Operations:</strong>
+     * </p>
      * <ul>
      * <li>Removes UAV from hibernate pod if present</li>
      * <li>Deletes all location history records</li>
@@ -202,7 +276,8 @@ public class UAVRestController {
      *         <ul>
      *         <li>200 OK: Success response confirming deletion</li>
      *         <li>404 Not Found: If UAV with given ID doesn't exist</li>
-     *         <li>500 Internal Server Error: If deletion fails due to constraints</li>
+     *         <li>500 Internal Server Error: If deletion fails due to
+     *         constraints</li>
      *         </ul>
      *
      * @warning This operation is irreversible and will delete all associated data
@@ -215,29 +290,31 @@ public class UAVRestController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            if (!uavRepository.existsById(id)) {
+            Optional<UAV> uavOpt = uavRepository.findById(id);
+            if (uavOpt.isEmpty()) {
                 response.put("success", false);
                 response.put("message", "UAV not found");
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(response);
             }
 
-            // Remove from hibernate pod if present
-            Optional<UAV> uavOpt = uavRepository.findById(id);
-            if (uavOpt.isPresent() && uavOpt.get().isInHibernatePod()) {
-                hibernatePod.removeUAV(uavOpt.get());
-            }
-
-            uavRepository.deleteById(id);
+            // Use service layer for deletion (includes hibernate pod removal)
+            uavService.deleteUAV(id);
 
             response.put("success", true);
             response.put("message", "UAV deleted successfully");
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(response);
 
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error deleting UAV: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(response);
         }
     }
 
@@ -335,6 +412,26 @@ public class UAVRestController {
     }
 
     /**
+     * Get regions assigned to a UAV
+     */
+    @GetMapping("/{uavId}/regions")
+    public ResponseEntity<List<Region>> getUAVRegions(@PathVariable int uavId) {
+        try {
+            Optional<UAV> uavOpt = uavRepository.findById(uavId);
+            if (uavOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            UAV uav = uavOpt.get();
+            List<Region> regions = new ArrayList<>(uav.getRegions());
+            return ResponseEntity.ok(regions);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
      * Get UAVs by status
      */
     @GetMapping("/status/{status}")
@@ -382,6 +479,102 @@ public class UAVRestController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Create a new UAV
+     */
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> createUAV(@RequestBody UAV uav) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Validate UAV data
+            if (!uavService.validateUAV(uav)) {
+                response.put("success", false);
+                response.put("message", "Invalid UAV data");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Check for duplicate RFID
+            if (!uavService.isRfidTagUnique(uav.getRfidTag(), null)) {
+                response.put("success", false);
+                response.put("message", "RFID tag already exists");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            }
+
+            UAV savedUAV = uavRepository.save(uav);
+
+            response.put("success", true);
+            response.put("message", "UAV created successfully");
+            response.put("uav", savedUAV);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error creating UAV: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Update an existing UAV
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> updateUAV(@PathVariable int id, @RequestBody UAV uav) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            Optional<UAV> existingUAVOpt = uavRepository.findById(id);
+            if (existingUAVOpt.isEmpty()) {
+                response.put("success", false);
+                response.put("message", "UAV not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(response);
+            }
+
+            // Validate UAV data
+            if (!uavService.validateUAV(uav)) {
+                response.put("success", false);
+                response.put("message", "Invalid UAV data");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Check for duplicate RFID (excluding current UAV)
+            if (!uavService.isRfidTagUnique(uav.getRfidTag(), id)) {
+                response.put("success", false);
+                response.put("message", "RFID tag already exists");
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+            }
+
+            UAV existingUAV = existingUAVOpt.get();
+            // Update fields
+            existingUAV.setRfidTag(uav.getRfidTag());
+            existingUAV.setOwnerName(uav.getOwnerName());
+            existingUAV.setModel(uav.getModel());
+            existingUAV.setStatus(uav.getStatus());
+            if (uav.getManufacturer() != null)
+                existingUAV.setManufacturer(uav.getManufacturer());
+            if (uav.getSerialNumber() != null)
+                existingUAV.setSerialNumber(uav.getSerialNumber());
+            if (uav.getWeightKg() != null)
+                existingUAV.setWeightKg(uav.getWeightKg());
+
+            UAV savedUAV = uavRepository.save(existingUAV);
+
+            response.put("success", true);
+            response.put("message", "UAV updated successfully");
+            response.put("uav", savedUAV);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error updating UAV: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 }

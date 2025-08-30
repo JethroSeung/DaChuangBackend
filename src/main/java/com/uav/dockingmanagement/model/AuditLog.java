@@ -12,10 +12,10 @@ import java.util.Objects;
  */
 @Entity
 @Table(name = "audit_logs", indexes = {
-    @Index(name = "idx_audit_timestamp", columnList = "timestamp"),
-    @Index(name = "idx_audit_user", columnList = "username"),
-    @Index(name = "idx_audit_action", columnList = "action"),
-    @Index(name = "idx_audit_entity", columnList = "entity_type, entity_id")
+        @Index(name = "idx_audit_timestamp", columnList = "timestamp"),
+        @Index(name = "idx_audit_user", columnList = "username"),
+        @Index(name = "idx_audit_action", columnList = "action"),
+        @Index(name = "idx_audit_entity", columnList = "entity_type, entity_id")
 })
 public class AuditLog {
 
@@ -166,7 +166,8 @@ public class AuditLog {
     }
 
     // Constructors
-    public AuditLog() {}
+    public AuditLog() {
+    }
 
     public AuditLog(String username, AuditAction action, EventType eventType, AuditResult result) {
         this.username = username;
@@ -387,16 +388,16 @@ public class AuditLog {
 
     // Utility methods
     public boolean isSecurityEvent() {
-        return eventType == EventType.SECURITY_EVENT || 
-               action == AuditAction.LOGIN_FAILED ||
-               action == AuditAction.UNAUTHORIZED_ACCESS ||
-               action == AuditAction.DATA_BREACH_ATTEMPT;
+        return eventType == EventType.SECURITY_EVENT ||
+                action == AuditAction.LOGIN_FAILED ||
+                action == AuditAction.UNAUTHORIZED_ACCESS ||
+                action == AuditAction.DATA_BREACH_ATTEMPT;
     }
 
     public boolean isHighSeverity() {
-        return severity == Severity.HIGH || 
-               severity == Severity.CRITICAL || 
-               severity == Severity.EMERGENCY;
+        return severity == Severity.HIGH ||
+                severity == Severity.CRITICAL ||
+                severity == Severity.EMERGENCY;
     }
 
     public boolean isFailureEvent() {
@@ -405,8 +406,10 @@ public class AuditLog {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         AuditLog auditLog = (AuditLog) o;
         return Objects.equals(id, auditLog.id);
     }

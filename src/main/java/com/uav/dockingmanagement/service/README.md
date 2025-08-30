@@ -25,6 +25,7 @@ The service layer contains the business logic for the UAV Docking Management Sys
 **Purpose**: Manages UAV lifecycle, validation, and business operations.
 
 **Key Responsibilities**:
+
 - UAV CRUD operations with validation
 - Region assignment and access control
 - Status management and transitions
@@ -32,6 +33,7 @@ The service layer contains the business logic for the UAV Docking Management Sys
 - Integration with hibernate pod operations
 
 **Usage Example**:
+
 ```java
 @Autowired
 private UAVService uavService;
@@ -52,6 +54,7 @@ if ("OPEN THE DOOR".equals(accessResult)) {
 ```
 
 **Configuration**:
+
 - No specific configuration required
 - Uses standard JPA transaction management
 - Integrates with validation framework
@@ -61,6 +64,7 @@ if ("OPEN THE DOOR".equals(accessResult)) {
 **Purpose**: Handles real-time location tracking, history management, and geospatial operations.
 
 **Key Responsibilities**:
+
 - Real-time location updates with validation
 - Historical location data management
 - Flight path reconstruction
@@ -68,6 +72,7 @@ if ("OPEN THE DOOR".equals(accessResult)) {
 - WebSocket broadcasting for real-time updates
 
 **Usage Example**:
+
 ```java
 @Autowired
 private LocationService locationService;
@@ -85,6 +90,7 @@ List<LocationHistory> flightPath = locationService.getFlightPath(
 ```
 
 **Configuration**:
+
 ```properties
 # Location validation settings
 app.location.max-altitude-meters=500
@@ -101,12 +107,14 @@ app.websocket.broadcast-interval=5000
 **Purpose**: Manages geographical boundaries and violation detection.
 
 **Key Responsibilities**:
+
 - Geofence creation and management
 - Real-time violation detection
 - Notification and alert generation
 - Spatial calculations and queries
 
 **Usage Example**:
+
 ```java
 @Autowired
 private GeofenceService geofenceService;
@@ -124,6 +132,7 @@ Map<String, Object> result = geofenceService.checkPointAgainstGeofences(
 ```
 
 **Configuration**:
+
 ```properties
 # Geofence settings
 app.geofence.default-priority=1
@@ -137,12 +146,14 @@ app.geofence.max-radius-meters=10000
 **Purpose**: Manages docking station operations and capacity.
 
 **Key Responsibilities**:
+
 - Docking station lifecycle management
 - Capacity tracking and availability
 - Proximity searches and routing
 - Status monitoring and alerts
 
 **Usage Example**:
+
 ```java
 @Autowired
 private DockingStationService dockingStationService;
@@ -163,12 +174,14 @@ dockingStationService.updateOccupancy(stationId, 2);
 **Purpose**: Provides real-time system monitoring and WebSocket broadcasting.
 
 **Key Responsibilities**:
+
 - System statistics collection
 - Real-time data broadcasting
 - Performance monitoring
 - Alert generation and distribution
 
 **Usage Example**:
+
 ```java
 @Autowired
 private RealTimeMonitoringService monitoringService;
@@ -182,6 +195,7 @@ Map<String, Object> metrics = monitoringService.generateSystemStatistics();
 ```
 
 **Configuration**:
+
 ```properties
 # Monitoring intervals
 app.monitoring.system-stats-interval=30000
@@ -198,12 +212,14 @@ app.websocket.heartbeat-interval=25000
 **Purpose**: Initializes sample data for development and testing.
 
 **Key Responsibilities**:
+
 - Sample data creation
 - Database seeding
 - Test data generation
 - Development environment setup
 
 **Usage Example**:
+
 ```java
 @Autowired
 private DataInitializationService dataInitService;
@@ -216,6 +232,7 @@ dataInitService.initializeUAVsWithLocations();
 ```
 
 **Configuration**:
+
 ```properties
 # Data initialization
 app.data.init-sample-data=true

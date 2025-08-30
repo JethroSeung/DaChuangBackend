@@ -7,8 +7,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -27,7 +25,7 @@ class HibernatePodTest {
     @BeforeEach
     void setUp() {
         hibernatePod = new HibernatePod();
-        
+
         testUAV1 = new UAV();
         testUAV1.setId(1);
         testUAV1.setRfidTag("TEST001");
@@ -51,7 +49,7 @@ class HibernatePodTest {
     void testRemoveUAVFromHibernatePod() {
         hibernatePod.addUAV(testUAV1);
         hibernatePod.removeUAV(testUAV1);
-        
+
         assertFalse(testUAV1.isInHibernatePod());
         assertEquals(0, hibernatePod.getCurrentCapacity());
         assertFalse(hibernatePod.containsUAV(testUAV1));
@@ -130,13 +128,13 @@ class HibernatePodTest {
     void testCapacityOverflowHandling() {
         // Test scenario where database has more hibernating UAVs than capacity
         HibernatePod newHibernatePod = new HibernatePod();
-        
+
         // Add 6 UAVs (more than capacity of 5)
         for (int i = 0; i < 6; i++) {
             UAV uav = new UAV();
             uav.setId(i + 1);
             uav.setRfidTag("OVERFLOW" + (i + 1));
-            
+
             if (i < 5) {
                 assertTrue(newHibernatePod.addUAV(uav));
             } else {

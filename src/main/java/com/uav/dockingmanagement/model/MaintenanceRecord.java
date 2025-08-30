@@ -23,7 +23,7 @@ public class MaintenanceRecord {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uav_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("uav-maintenanceRecords")
     private UAV uav;
 
     @Enumerated(EnumType.STRING)
@@ -132,7 +132,8 @@ public class MaintenanceRecord {
     }
 
     // Constructors
-    public MaintenanceRecord() {}
+    public MaintenanceRecord() {
+    }
 
     public MaintenanceRecord(UAV uav, MaintenanceType maintenanceType, String title) {
         this.uav = uav;
@@ -339,8 +340,8 @@ public class MaintenanceRecord {
 
     // Utility methods
     public boolean isOverdue() {
-        return scheduledDate != null && scheduledDate.isBefore(LocalDateTime.now()) && 
-               status != MaintenanceStatus.COMPLETED && status != MaintenanceStatus.CANCELLED;
+        return scheduledDate != null && scheduledDate.isBefore(LocalDateTime.now()) &&
+                status != MaintenanceStatus.COMPLETED && status != MaintenanceStatus.CANCELLED;
     }
 
     public boolean isCompleted() {
@@ -360,8 +361,10 @@ public class MaintenanceRecord {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         MaintenanceRecord that = (MaintenanceRecord) o;
         return Objects.equals(id, that.id);
     }

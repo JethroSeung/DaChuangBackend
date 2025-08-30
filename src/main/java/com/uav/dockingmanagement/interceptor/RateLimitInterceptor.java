@@ -1,6 +1,6 @@
 package com.uav.dockingmanagement.interceptor;
 
-import com.uav.dockingmanagement.config.RateLimitingConfig;
+import com.uav.dockingmanagement.service.RateLimitingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.lang.NonNull;
@@ -22,7 +22,8 @@ import java.util.Map;
 
 /**
  * Rate limiting interceptor for API endpoints
- * Implements sliding window rate limiting with different limits for different user types
+ * Implements sliding window rate limiting with different limits for different
+ * user types
  */
 @Component
 public class RateLimitInterceptor implements HandlerInterceptor {
@@ -30,14 +31,14 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private static final Logger logger = LoggerFactory.getLogger(RateLimitInterceptor.class);
 
     @Autowired
-    private RateLimitingConfig.RateLimitService rateLimitService;
+    private RateLimitingService rateLimitingService;
 
     @Autowired
     private ObjectMapper objectMapper;
 
     // Rate limit configurations
     private static final Map<String, RateLimitConfig> RATE_LIMITS = new HashMap<>();
-    
+
     static {
         // API endpoint rate limits (requests per minute)
         RATE_LIMITS.put("ADMIN", new RateLimitConfig(1000, 60)); // 1000 requests per minute
@@ -45,7 +46,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         RATE_LIMITS.put("USER", new RateLimitConfig(100, 60)); // 100 requests per minute
         RATE_LIMITS.put("ANONYMOUS", new RateLimitConfig(20, 60)); // 20 requests per minute
         RATE_LIMITS.put("API_KEY", new RateLimitConfig(2000, 60)); // 2000 requests per minute for API keys
-        
+
         // Special limits for specific endpoints
         RATE_LIMITS.put("LOGIN", new RateLimitConfig(5, 300)); // 5 login attempts per 5 minutes
         RATE_LIMITS.put("PASSWORD_RESET", new RateLimitConfig(3, 3600)); // 3 password resets per hour
@@ -54,10 +55,11 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {
+    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+            @NonNull Object handler) throws Exception {
         String requestURI = request.getRequestURI();
         String method = request.getMethod();
-        
+
         // Skip rate limiting for non-API endpoints
         if (!requestURI.startsWith("/api/")) {
             return true;
@@ -66,32 +68,32 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         // Get client identifier and user role
         String clientId = getClientIdentifier(request);
         String userRole = getUserRole();
-        
+
         // Determine rate limit configuration
         RateLimitConfig config = getRateLimitConfig(requestURI, method, userRole);
-        
+
         // Check rate limit
         String rateLimitKey = String.format("%s:%s:%s", userRole, clientId, getRateLimitCategory(requestURI));
-        boolean allowed = rateLimitService.isAllowed(rateLimitKey, config.maxRequests, config.windowSeconds);
-        
+        boolean allowed = rateLimitingService.isAllowed(rateLimitKey, config.maxRequests, (int) config.windowSeconds);
+
         // Get rate limit info for headers
-        RateLimitingConfig.RateLimitInfo rateLimitInfo = rateLimitService.getRateLimitInfo(
-            rateLimitKey, config.maxRequests, config.windowSeconds);
-        
+        RateLimitingService.RateLimitStatus rateLimitStatus = rateLimitingService.getRateLimitStatus(
+                rateLimitKey, userRole);
+
         // Add rate limit headers
-        addRateLimitHeaders(response, rateLimitInfo);
-        
+        addRateLimitHeaders(response, rateLimitStatus);
+
         if (!allowed) {
-            handleRateLimitExceeded(request, response, rateLimitInfo);
+            handleRateLimitExceeded(request, response, rateLimitStatus);
             return false;
         }
-        
+
         // Log rate limit usage for monitoring
-        if (rateLimitInfo.getRemaining() < config.maxRequests * 0.1) { // Less than 10% remaining
-            logger.warn("Rate limit warning for {}: {}/{} requests used", 
-                       clientId, config.maxRequests - rateLimitInfo.getRemaining(), config.maxRequests);
+        if (rateLimitStatus.getRemaining() < config.maxRequests * 0.1) { // Less than 10% remaining
+            logger.warn("Rate limit warning for {}: {}/{} requests used",
+                    clientId, config.maxRequests - rateLimitStatus.getRemaining(), config.maxRequests);
         }
-        
+
         return true;
     }
 
@@ -101,13 +103,13 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         if (apiKey != null && !apiKey.isEmpty()) {
             return "api_key:" + apiKey.substring(0, Math.min(8, apiKey.length()));
         }
-        
+
         // Try to get authenticated user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
             return "user:" + auth.getName();
         }
-        
+
         // Fall back to IP address
         String clientIP = getClientIP(request);
         return "ip:" + clientIP;
@@ -118,12 +120,12 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
             return xForwardedFor.split(",")[0].trim();
         }
-        
+
         String xRealIP = request.getHeader("X-Real-IP");
         if (xRealIP != null && !xRealIP.isEmpty()) {
             return xRealIP;
         }
-        
+
         return request.getRemoteAddr();
     }
 
@@ -132,12 +134,12 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         if (auth == null || !auth.isAuthenticated()) {
             return "ANONYMOUS";
         }
-        
+
         // Check for API key authentication
         if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_API_KEY"))) {
             return "API_KEY";
         }
-        
+
         // Check user roles
         if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
             return "ADMIN";
@@ -146,7 +148,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         } else if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER"))) {
             return "USER";
         }
-        
+
         return "USER"; // Default role
     }
 
@@ -155,19 +157,19 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         if (requestURI.contains("/login") || requestURI.contains("/authenticate")) {
             return RATE_LIMITS.get("LOGIN");
         }
-        
+
         if (requestURI.contains("/password-reset") || requestURI.contains("/forgot-password")) {
             return RATE_LIMITS.get("PASSWORD_RESET");
         }
-        
+
         if (requestURI.contains("/export") || requestURI.contains("/download")) {
             return RATE_LIMITS.get("EXPORT");
         }
-        
+
         if (requestURI.contains("/bulk") || (method.equals("POST") && requestURI.contains("/batch"))) {
             return RATE_LIMITS.get("BULK_OPERATION");
         }
-        
+
         // Default rate limit based on user role
         return RATE_LIMITS.getOrDefault(userRole, RATE_LIMITS.get("USER"));
     }
@@ -184,37 +186,36 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         }
     }
 
-    private void addRateLimitHeaders(HttpServletResponse response, RateLimitingConfig.RateLimitInfo rateLimitInfo) {
-        response.setHeader("X-RateLimit-Limit", String.valueOf(rateLimitInfo.getLimit()));
-        response.setHeader("X-RateLimit-Remaining", String.valueOf(rateLimitInfo.getRemaining()));
-        response.setHeader("X-RateLimit-Reset", String.valueOf(System.currentTimeMillis() / 1000 + rateLimitInfo.getResetTime()));
-        response.setHeader("X-RateLimit-Window", String.valueOf(rateLimitInfo.getWindowSize()));
+    private void addRateLimitHeaders(HttpServletResponse response,
+            RateLimitingService.RateLimitStatus rateLimitStatus) {
+        response.setHeader("X-RateLimit-Limit", String.valueOf(rateLimitStatus.getLimit()));
+        response.setHeader("X-RateLimit-Remaining", String.valueOf(rateLimitStatus.getRemaining()));
+        response.setHeader("X-RateLimit-Reset", String.valueOf(rateLimitStatus.getResetTimeSeconds()));
     }
 
-    private void handleRateLimitExceeded(HttpServletRequest request, HttpServletResponse response, 
-                                       RateLimitingConfig.RateLimitInfo rateLimitInfo) throws IOException {
-        
+    private void handleRateLimitExceeded(HttpServletRequest request, HttpServletResponse response,
+            RateLimitingService.RateLimitStatus rateLimitStatus) throws IOException {
+
         String clientId = getClientIdentifier(request);
         logger.warn("Rate limit exceeded for client: {} on endpoint: {}", clientId, request.getRequestURI());
-        
+
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        
+
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("error", "Rate limit exceeded");
         errorResponse.put("message", "Too many requests. Please try again later.");
         errorResponse.put("status", HttpStatus.TOO_MANY_REQUESTS.value());
         errorResponse.put("timestamp", System.currentTimeMillis());
         errorResponse.put("path", request.getRequestURI());
-        
+
         Map<String, Object> rateLimitDetails = new HashMap<>();
-        rateLimitDetails.put("limit", rateLimitInfo.getLimit());
-        rateLimitDetails.put("remaining", rateLimitInfo.getRemaining());
-        rateLimitDetails.put("resetTime", rateLimitInfo.getResetTime());
-        rateLimitDetails.put("windowSize", rateLimitInfo.getWindowSize());
-        
+        rateLimitDetails.put("limit", rateLimitStatus.getLimit());
+        rateLimitDetails.put("remaining", rateLimitStatus.getRemaining());
+        rateLimitDetails.put("resetTime", rateLimitStatus.getResetTimeSeconds());
+
         errorResponse.put("rateLimit", rateLimitDetails);
-        
+
         String jsonResponse = objectMapper.writeValueAsString(errorResponse);
         response.getWriter().write(jsonResponse);
     }

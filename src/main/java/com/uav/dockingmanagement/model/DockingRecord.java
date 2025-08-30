@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "docking_records", indexes = {
-    @Index(name = "idx_docking_record_uav", columnList = "uav_id"),
-    @Index(name = "idx_docking_record_station", columnList = "docking_station_id"),
-    @Index(name = "idx_docking_record_dock_time", columnList = "dock_time"),
-    @Index(name = "idx_docking_record_status", columnList = "status")
+        @Index(name = "idx_docking_record_uav", columnList = "uav_id"),
+        @Index(name = "idx_docking_record_station", columnList = "docking_station_id"),
+        @Index(name = "idx_docking_record_dock_time", columnList = "dock_time"),
+        @Index(name = "idx_docking_record_status", columnList = "status")
 })
 public class DockingRecord {
 
@@ -25,12 +25,12 @@ public class DockingRecord {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uav_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("uav-dockingRecords")
     private UAV uav;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "docking_station_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("dockingStation-dockingRecords")
     private DockingStation dockingStation;
 
     @CreationTimestamp
@@ -63,7 +63,8 @@ public class DockingRecord {
     private Long totalDockingDurationMinutes;
 
     // Constructors
-    public DockingRecord() {}
+    public DockingRecord() {
+    }
 
     public DockingRecord(UAV uav, DockingStation dockingStation, String purpose) {
         this.uav = uav;
@@ -191,7 +192,8 @@ public class DockingRecord {
     }
 
     public long getDockingDurationMinutes() {
-        if (dockTime == null) return 0;
+        if (dockTime == null)
+            return 0;
         LocalDateTime endTime = undockTime != null ? undockTime : LocalDateTime.now();
         return java.time.Duration.between(dockTime, endTime).toMinutes();
     }

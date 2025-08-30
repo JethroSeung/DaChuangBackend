@@ -5,6 +5,7 @@ import com.uav.dockingmanagement.repository.DockingStationRepository;
 import com.uav.dockingmanagement.service.DockingStationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +16,8 @@ import java.util.Optional;
 
 /**
  * REST Controller for Docking Station management
- * Provides endpoints for station operations, status monitoring, and location services
+ * Provides endpoints for station operations, status monitoring, and location
+ * services
  */
 @RestController
 @RequestMapping("/api/docking-stations")
@@ -49,7 +51,7 @@ public class DockingStationController {
         try {
             Optional<DockingStation> station = dockingStationRepository.findById(id);
             return station.map(ResponseEntity::ok)
-                         .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                    .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -61,7 +63,7 @@ public class DockingStationController {
     @PostMapping
     public ResponseEntity<Map<String, Object>> createStation(@RequestBody DockingStation station) {
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
             // Validate required fields
             if (station.getName() == null || station.getName().trim().isEmpty()) {
@@ -69,13 +71,13 @@ public class DockingStationController {
                 response.put("message", "Station name is required");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
-            
+
             if (station.getLatitude() == null || station.getLongitude() == null) {
                 response.put("success", false);
                 response.put("message", "Station coordinates are required");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
-            
+
             if (station.getMaxCapacity() == null || station.getMaxCapacity() <= 0) {
                 response.put("success", false);
                 response.put("message", "Valid max capacity is required");
@@ -102,13 +104,13 @@ public class DockingStationController {
             }
 
             DockingStation savedStation = dockingStationRepository.save(station);
-            
+
             response.put("success", true);
             response.put("message", "Docking station created successfully");
             response.put("station", savedStation);
-            
+
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error creating station: " + e.getMessage());
@@ -120,9 +122,10 @@ public class DockingStationController {
      * Update docking station
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateStation(@PathVariable Long id, @RequestBody DockingStation stationUpdate) {
+    public ResponseEntity<Map<String, Object>> updateStation(@PathVariable Long id,
+            @RequestBody DockingStation stationUpdate) {
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
             Optional<DockingStation> existingStationOpt = dockingStationRepository.findById(id);
             if (existingStationOpt.isEmpty()) {
@@ -132,7 +135,7 @@ public class DockingStationController {
             }
 
             DockingStation existingStation = existingStationOpt.get();
-            
+
             // Update fields
             if (stationUpdate.getName() != null) {
                 existingStation.setName(stationUpdate.getName());
@@ -175,13 +178,13 @@ public class DockingStationController {
             }
 
             DockingStation savedStation = dockingStationRepository.save(existingStation);
-            
+
             response.put("success", true);
             response.put("message", "Station updated successfully");
             response.put("station", savedStation);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error updating station: " + e.getMessage());
@@ -195,7 +198,7 @@ public class DockingStationController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> deleteStation(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
             Optional<DockingStation> stationOpt = dockingStationRepository.findById(id);
             if (stationOpt.isEmpty()) {
@@ -205,7 +208,7 @@ public class DockingStationController {
             }
 
             DockingStation station = stationOpt.get();
-            
+
             // Check if station has active dockings
             if (station.getCurrentOccupancy() > 0) {
                 response.put("success", false);
@@ -214,12 +217,12 @@ public class DockingStationController {
             }
 
             dockingStationRepository.delete(station);
-            
+
             response.put("success", true);
             response.put("message", "Station deleted successfully");
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error deleting station: " + e.getMessage());
@@ -322,7 +325,7 @@ public class DockingStationController {
             @RequestParam Double maxLongitude) {
         try {
             List<DockingStation> stations = dockingStationRepository.findStationsInArea(
-                minLatitude, maxLatitude, minLongitude, maxLongitude);
+                    minLatitude, maxLatitude, minLongitude, maxLongitude);
             return ResponseEntity.ok(stations);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -349,9 +352,9 @@ public class DockingStationController {
     public ResponseEntity<Map<String, Object>> updateStationStatus(
             @PathVariable Long id,
             @RequestBody Map<String, String> statusUpdate) {
-        
+
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
             Optional<DockingStation> stationOpt = dockingStationRepository.findById(id);
             if (stationOpt.isEmpty()) {
@@ -362,28 +365,117 @@ public class DockingStationController {
 
             DockingStation station = stationOpt.get();
             String newStatus = statusUpdate.get("status");
-            
+
             try {
                 DockingStation.StationStatus status = DockingStation.StationStatus.valueOf(newStatus.toUpperCase());
                 station.setStatus(status);
                 dockingStationRepository.save(station);
-                
+
                 response.put("success", true);
                 response.put("message", "Station status updated successfully");
                 response.put("newStatus", status);
-                
+
                 return ResponseEntity.ok(response);
-                
+
             } catch (IllegalArgumentException e) {
                 response.put("success", false);
                 response.put("message", "Invalid status value");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             }
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error updating station status: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Dock UAV at station
+     */
+    @PostMapping("/{id}/dock")
+    public ResponseEntity<Map<String, Object>> dockUAV(
+            @PathVariable Long id,
+            @RequestParam Integer uavId,
+            @RequestParam String purpose) {
+
+        try {
+            Map<String, Object> result = dockingStationService.dockUAV(uavId, id, purpose);
+
+            if ((Boolean) result.get("success")) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(result);
+            } else {
+                return ResponseEntity.badRequest()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(result);
+            }
+
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error docking UAV: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(response);
+        }
+    }
+
+    /**
+     * Undock UAV from station
+     */
+    @PostMapping("/{id}/undock")
+    public ResponseEntity<Map<String, Object>> undockUAV(
+            @PathVariable Long id,
+            @RequestParam Integer uavId) {
+
+        try {
+            Map<String, Object> result = dockingStationService.undockUAV(uavId);
+
+            if ((Boolean) result.get("success")) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(result);
+            } else {
+                return ResponseEntity.badRequest()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(result);
+            }
+
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error undocking UAV: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(response);
+        }
+    }
+
+    /**
+     * Find optimal docking station
+     */
+    @GetMapping("/optimal")
+    public ResponseEntity<DockingStation> findOptimalStation(
+            @RequestParam Double latitude,
+            @RequestParam Double longitude,
+            @RequestParam String purpose) {
+
+        try {
+            Optional<DockingStation> optimalStation = dockingStationService.findOptimalStation(latitude, longitude,
+                    purpose);
+
+            if (optimalStation.isPresent()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(optimalStation.get());
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

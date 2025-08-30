@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Test data initializer for integration tests
@@ -49,13 +50,18 @@ public class TestDataInitializer {
         DockingStation station3 = createTestDockingStation(3L, "Test Station 3", 40.7505, -73.9934, 4, 2, region2);
 
         // Create test UAVs
-        UAV uav1 = createTestUAV(1L, "UAV001", "DJI Phantom 4", "DJI", "Test Owner 1", "RFID001", 40.7128, -74.0060, 100.0);
-        UAV uav2 = createTestUAV(2L, "UAV002", "DJI Mavic Pro", "DJI", "Test Owner 2", "RFID002", 40.7589, -73.9851, 150.0);
-        UAV uav3 = createTestUAV(3L, "UAV003", "Parrot Anafi", "Parrot", "Test Owner 3", "RFID003", 40.7505, -73.9934, 0.0);
+        UAV uav1 = createTestUAV(1L, "UAV001", "DJI Phantom 4", "DJI", "Test Owner 1", "RFID001", 40.7128, -74.0060,
+                100.0);
+        UAV uav2 = createTestUAV(2L, "UAV002", "DJI Mavic Pro", "DJI", "Test Owner 2", "RFID002", 40.7589, -73.9851,
+                150.0);
+        UAV uav3 = createTestUAV(3L, "UAV003", "Parrot Anafi", "Parrot", "Test Owner 3", "RFID003", 40.7505, -73.9934,
+                0.0);
 
         // Create test geofences
-        Geofence geofence1 = createTestGeofence(1L, "Test Geofence 1", "Test restricted area", 40.7128, -74.0060, 1000, region1);
-        Geofence geofence2 = createTestGeofence(2L, "Test Geofence 2", "Test safe zone", 40.7589, -73.9851, 500, region1);
+        Geofence geofence1 = createTestGeofence(1L, "Test Geofence 1", "Test restricted area", 40.7128, -74.0060, 1000,
+                region1);
+        Geofence geofence2 = createTestGeofence(2L, "Test Geofence 2", "Test safe zone", 40.7589, -73.9851, 500,
+                region1);
 
         // Create test location history
         createTestLocationHistory(1L, uav1, 40.7128, -74.0060, 100.0);
@@ -69,8 +75,19 @@ public class TestDataInitializer {
 
     @Transactional
     public void clearAllData() {
-        batteryStatusRepository.deleteAll();
+        // Delete in proper order to avoid foreign key constraint violations
+        // First, clear the bidirectional relationships
+
+        // Clear UAV-BatteryStatus relationships
+        List<UAV> uavs = uavRepository.findAll();
+        for (UAV uav : uavs) {
+            uav.setBatteryStatus(null);
+        }
+        uavRepository.saveAll(uavs);
+
+        // Now delete entities in proper order
         locationHistoryRepository.deleteAll();
+        batteryStatusRepository.deleteAll();
         geofenceRepository.deleteAll();
         uavRepository.deleteAll();
         dockingStationRepository.deleteAll();
@@ -83,7 +100,8 @@ public class TestDataInitializer {
         return regionRepository.save(region);
     }
 
-    private DockingStation createTestDockingStation(Long id, String name, double lat, double lon, int capacity, int occupancy, Region region) {
+    private DockingStation createTestDockingStation(Long id, String name, double lat, double lon, int capacity,
+            int occupancy, Region region) {
         DockingStation station = new DockingStation();
         station.setName(name);
         station.setLatitude(lat);
@@ -95,7 +113,8 @@ public class TestDataInitializer {
         return dockingStationRepository.save(station);
     }
 
-    private UAV createTestUAV(Long id, String serialNumber, String model, String manufacturer, String owner, String rfidTag, double lat, double lon, double alt) {
+    private UAV createTestUAV(Long id, String serialNumber, String model, String manufacturer, String owner,
+            String rfidTag, double lat, double lon, double alt) {
         UAV uav = new UAV();
         uav.setSerialNumber(serialNumber);
         uav.setModel(model);
@@ -120,7 +139,8 @@ public class TestDataInitializer {
         return uavRepository.save(uav);
     }
 
-    private Geofence createTestGeofence(Long id, String name, String description, double lat, double lon, int radius, Region region) {
+    private Geofence createTestGeofence(Long id, String name, String description, double lat, double lon, int radius,
+            Region region) {
         Geofence geofence = new Geofence();
         geofence.setName(name);
         geofence.setDescription(description);
@@ -139,7 +159,7 @@ public class TestDataInitializer {
         history.setUav(uav);
         history.setLatitude(lat);
         history.setLongitude(lon);
-        history.setAltitudeMeters((double) alt);
+        history.setAltitudeMeters(alt);
         history.setTimestamp(LocalDateTime.now());
         history.setSpeedKmh(25.5);
         history.setHeadingDegrees(180.0);
@@ -166,6 +186,7 @@ public class TestDataInitializer {
         battery.setEstimatedFlightTimeMinutes(25);
         battery.setRemainingCapacityMah(4750);
 
+        // Save battery first, then update UAV reference
         return batteryStatusRepository.save(battery);
     }
 }

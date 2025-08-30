@@ -12,10 +12,10 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "geofences", indexes = {
-    @Index(name = "idx_geofence_name", columnList = "name"),
-    @Index(name = "idx_geofence_type", columnList = "fence_type"),
-    @Index(name = "idx_geofence_status", columnList = "status"),
-    @Index(name = "idx_geofence_center", columnList = "center_latitude, center_longitude")
+        @Index(name = "idx_geofence_name", columnList = "name"),
+        @Index(name = "idx_geofence_type", columnList = "fence_type"),
+        @Index(name = "idx_geofence_status", columnList = "status"),
+        @Index(name = "idx_geofence_center", columnList = "center_latitude, center_longitude")
 })
 public class Geofence {
 
@@ -109,7 +109,8 @@ public class Geofence {
     private LocalDateTime expiresAt;
 
     // Constructors
-    public Geofence() {}
+    public Geofence() {
+    }
 
     public Geofence(String name, FenceType fenceType, BoundaryType boundaryType) {
         this.name = name;
@@ -118,7 +119,8 @@ public class Geofence {
     }
 
     // Static factory methods for common geofence types
-    public static Geofence createCircularFence(String name, double centerLat, double centerLon, double radiusMeters, BoundaryType boundaryType) {
+    public static Geofence createCircularFence(String name, double centerLat, double centerLon, double radiusMeters,
+            BoundaryType boundaryType) {
         Geofence fence = new Geofence(name, FenceType.CIRCULAR, boundaryType);
         fence.setCenterLatitude(centerLat);
         fence.setCenterLongitude(centerLon);
@@ -353,8 +355,8 @@ public class Geofence {
     public boolean isActive() {
         LocalDateTime now = LocalDateTime.now();
         return status == FenceStatus.ACTIVE &&
-               (activeFrom == null || now.isAfter(activeFrom)) &&
-               (activeUntil == null || now.isBefore(activeUntil));
+                (activeFrom == null || now.isAfter(activeFrom)) &&
+                (activeUntil == null || now.isBefore(activeUntil));
     }
 
     public void recordViolation() {
@@ -375,27 +377,74 @@ public class Geofence {
         if (centerLatitude == null || centerLongitude == null || radiusMeters == null) {
             return false;
         }
-        
+
         double distance = calculateDistance(centerLatitude, centerLongitude, latitude, longitude);
         return distance <= radiusMeters;
     }
 
     private boolean isPointInPolygon(double latitude, double longitude) {
-        // Simplified polygon check - in production, use a proper geometry library
-        // This is a basic implementation for demonstration
-        return false; // TODO: Implement proper polygon containment check
+        if (polygonCoordinates == null || polygonCoordinates.trim().isEmpty()) {
+            return false;
+        }
+
+        try {
+            // Parse polygon coordinates - expected format: [[lat1,lon1],[lat2,lon2],...]
+            String coords = polygonCoordinates.trim();
+            if (!coords.startsWith("[[") || !coords.endsWith("]]")) {
+                return false;
+            }
+
+            // Remove outer brackets and split by coordinate pairs
+            coords = coords.substring(2, coords.length() - 2);
+            String[] pairs = coords.split("\\],\\[");
+
+            if (pairs.length < 3) {
+                return false; // Need at least 3 points for a polygon
+            }
+
+            // Convert to coordinate arrays
+            double[] lats = new double[pairs.length];
+            double[] lons = new double[pairs.length];
+
+            for (int i = 0; i < pairs.length; i++) {
+                String[] coords_pair = pairs[i].split(",");
+                if (coords_pair.length != 2) {
+                    return false;
+                }
+                lats[i] = Double.parseDouble(coords_pair[0]);
+                lons[i] = Double.parseDouble(coords_pair[1]);
+            }
+
+            // Ray casting algorithm for point-in-polygon test
+            boolean inside = false;
+            int j = lats.length - 1;
+
+            for (int i = 0; i < lats.length; i++) {
+                if (((lats[i] > latitude) != (lats[j] > latitude)) &&
+                        (longitude < (lons[j] - lons[i]) * (latitude - lats[i]) / (lats[j] - lats[i]) + lons[i])) {
+                    inside = !inside;
+                }
+                j = i;
+            }
+
+            return inside;
+
+        } catch (Exception e) {
+            // If parsing fails, return false
+            return false;
+        }
     }
 
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         final int R = 6371; // Radius of the earth in km
-        
+
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+                        * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        
+
         return R * c * 1000; // Distance in meters
     }
 
@@ -408,7 +457,7 @@ public class Geofence {
 
     public enum BoundaryType {
         INCLUSION, // UAV must stay inside
-        EXCLUSION  // UAV must stay outside
+        EXCLUSION // UAV must stay outside
     }
 
     public enum FenceStatus {

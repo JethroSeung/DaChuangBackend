@@ -19,7 +19,8 @@ import java.util.Random;
 
 /**
  * Service for simulating real-time UAV movements and updates
- * Provides realistic movement patterns and WebSocket broadcasts for demonstration
+ * Provides realistic movement patterns and WebSocket broadcasts for
+ * demonstration
  */
 @Service
 public class RealTimeSimulationService {
@@ -55,10 +56,10 @@ public class RealTimeSimulationService {
 
         try {
             List<UAV> activeUAVs = uavRepository.findAll().stream()
-                .filter(uav -> uav.hasLocationData() && 
-                              uav.getOperationalStatus() != UAV.OperationalStatus.HIBERNATING &&
-                              uav.getOperationalStatus() != UAV.OperationalStatus.OUT_OF_SERVICE)
-                .toList();
+                    .filter(uav -> uav.hasLocationData() &&
+                            uav.getOperationalStatus() != UAV.OperationalStatus.HIBERNATING &&
+                            uav.getOperationalStatus() != UAV.OperationalStatus.OUT_OF_SERVICE)
+                    .toList();
 
             for (UAV uav : activeUAVs) {
                 simulateUAVMovement(uav);
@@ -85,7 +86,7 @@ public class RealTimeSimulationService {
 
             // Generate realistic movement based on operational status
             MovementPattern pattern = getMovementPattern(uav.getOperationalStatus());
-            
+
             // Calculate new position
             double[] newPosition = calculateNewPosition(currentLat, currentLon, currentAlt, pattern);
             double newLat = newPosition[0];
@@ -131,31 +132,29 @@ public class RealTimeSimulationService {
         switch (status) {
             case IN_FLIGHT:
                 return new MovementPattern(
-                    random.nextDouble() * 0.002 - 0.001, // lat change: ~±100m
-                    random.nextDouble() * 0.002 - 0.001, // lon change: ~±100m
-                    random.nextDouble() * 10 - 5,        // alt change: ±5m
-                    random.nextDouble() * 40 + 20,       // speed: 20-60 km/h
-                    random.nextDouble() * 360             // heading: 0-360°
+                        random.nextDouble() * 0.002 - 0.001, // lat change: ~±100m
+                        random.nextDouble() * 0.002 - 0.001, // lon change: ~±100m
+                        random.nextDouble() * 10 - 5, // alt change: ±5m
+                        random.nextDouble() * 40 + 20, // speed: 20-60 km/h
+                        random.nextDouble() * 360 // heading: 0-360°
                 );
             case READY:
                 return new MovementPattern(
-                    random.nextDouble() * 0.0005 - 0.00025, // small movement
-                    random.nextDouble() * 0.0005 - 0.00025,
-                    random.nextDouble() * 2 - 1,
-                    random.nextDouble() * 10 + 5,        // speed: 5-15 km/h
-                    random.nextDouble() * 360
-                );
+                        random.nextDouble() * 0.0005 - 0.00025, // small movement
+                        random.nextDouble() * 0.0005 - 0.00025,
+                        random.nextDouble() * 2 - 1,
+                        random.nextDouble() * 10 + 5, // speed: 5-15 km/h
+                        random.nextDouble() * 360);
             case CHARGING:
             case MAINTENANCE:
                 return new MovementPattern(0, 0, 0, 0, 0); // stationary
             default:
                 return new MovementPattern(
-                    random.nextDouble() * 0.001 - 0.0005,
-                    random.nextDouble() * 0.001 - 0.0005,
-                    random.nextDouble() * 5 - 2.5,
-                    random.nextDouble() * 20 + 10,
-                    random.nextDouble() * 360
-                );
+                        random.nextDouble() * 0.001 - 0.0005,
+                        random.nextDouble() * 0.001 - 0.0005,
+                        random.nextDouble() * 5 - 2.5,
+                        random.nextDouble() * 20 + 10,
+                        random.nextDouble() * 360);
         }
     }
 
@@ -172,7 +171,7 @@ public class RealTimeSimulationService {
         newLon += (random.nextGaussian() * 0.0001);
         newAlt += (random.nextGaussian() * 2);
 
-        return new double[]{newLat, newLon, newAlt};
+        return new double[] { newLat, newLon, newAlt };
     }
 
     /**
@@ -181,9 +180,10 @@ public class RealTimeSimulationService {
     private Integer simulateBatteryLevel(UAV uav) {
         // Get last known battery level from location history
         LocationHistory lastLocation = locationHistoryRepository.findLatestLocationByUavId(uav.getId()).orElse(null);
-        
-        int currentBattery = lastLocation != null && lastLocation.getBatteryLevel() != null ? 
-            lastLocation.getBatteryLevel() : 80;
+
+        int currentBattery = lastLocation != null && lastLocation.getBatteryLevel() != null
+                ? lastLocation.getBatteryLevel()
+                : 80;
 
         // Simulate battery drain based on operational status
         int batteryChange = 0;
@@ -203,7 +203,7 @@ public class RealTimeSimulationService {
         }
 
         int newBattery = Math.max(0, Math.min(100, currentBattery - batteryChange));
-        
+
         // Trigger low battery alert if needed
         if (newBattery <= 20 && currentBattery > 20) {
             triggerLowBatteryAlert(uav, newBattery);
@@ -253,7 +253,7 @@ public class RealTimeSimulationService {
             alert.put("message", String.format("UAV %s has low battery: %d%%", uav.getRfidTag(), batteryLevel));
 
             messagingTemplate.convertAndSend("/topic/alerts", alert);
-            
+
             logger.warn("Low battery alert for UAV {}: {}%", uav.getRfidTag(), batteryLevel);
 
         } catch (Exception e) {
@@ -292,7 +292,8 @@ public class RealTimeSimulationService {
     private void simulateStatusChange() {
         try {
             List<UAV> uavs = uavRepository.findAll();
-            if (uavs.isEmpty()) return;
+            if (uavs.isEmpty())
+                return;
 
             UAV uav = uavs.get(random.nextInt(uavs.size()));
             UAV.OperationalStatus oldStatus = uav.getOperationalStatus();
@@ -312,7 +313,7 @@ public class RealTimeSimulationService {
                 statusChange.put("newStatus", newStatus);
 
                 messagingTemplate.convertAndSend("/topic/status-changes", statusChange);
-                
+
                 logger.info("UAV {} status changed from {} to {}", uav.getRfidTag(), oldStatus, newStatus);
             }
 
@@ -345,7 +346,8 @@ public class RealTimeSimulationService {
     private void simulateMaintenanceAlert() {
         try {
             List<UAV> uavs = uavRepository.findAll();
-            if (uavs.isEmpty()) return;
+            if (uavs.isEmpty())
+                return;
 
             UAV uav = uavs.get(random.nextInt(uavs.size()));
 
@@ -358,7 +360,7 @@ public class RealTimeSimulationService {
             alert.put("message", String.format("UAV %s requires scheduled maintenance", uav.getRfidTag()));
 
             messagingTemplate.convertAndSend("/topic/alerts", alert);
-            
+
             logger.info("Maintenance alert triggered for UAV {}", uav.getRfidTag());
 
         } catch (Exception e) {

@@ -15,9 +15,9 @@ import java.util.List;
  */
 @Entity
 @Table(name = "docking_stations", indexes = {
-    @Index(name = "idx_docking_station_name", columnList = "name"),
-    @Index(name = "idx_docking_station_status", columnList = "status"),
-    @Index(name = "idx_docking_station_location", columnList = "latitude, longitude")
+        @Index(name = "idx_docking_station_name", columnList = "name"),
+        @Index(name = "idx_docking_station_status", columnList = "status"),
+        @Index(name = "idx_docking_station_location", columnList = "latitude, longitude")
 })
 public class DockingStation {
 
@@ -88,11 +88,12 @@ public class DockingStation {
 
     // Relationships
     @OneToMany(mappedBy = "dockingStation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonManagedReference("dockingStation-dockingRecords")
     private List<DockingRecord> dockingRecords = new ArrayList<>();
 
     // Constructors
-    public DockingStation() {}
+    public DockingStation() {
+    }
 
     public DockingStation(String name, Double latitude, Double longitude, Integer maxCapacity) {
         this.name = name;
@@ -273,22 +274,23 @@ public class DockingStation {
     // Utility methods
     public boolean isAvailable() {
         return status == StationStatus.OPERATIONAL &&
-               currentOccupancy != null &&
-               currentOccupancy >= 0 &&
-               maxCapacity != null &&
-               maxCapacity > 0 &&
-               currentOccupancy < maxCapacity;
+                currentOccupancy != null &&
+                currentOccupancy >= 0 &&
+                maxCapacity != null &&
+                maxCapacity > 0 &&
+                currentOccupancy < maxCapacity;
     }
 
     public boolean isFull() {
         return currentOccupancy != null &&
-               maxCapacity != null &&
-               currentOccupancy >= maxCapacity;
+                maxCapacity != null &&
+                currentOccupancy >= maxCapacity;
     }
 
     public double getOccupancyPercentage() {
-        return (maxCapacity != null && maxCapacity > 0 && currentOccupancy != null) ?
-               (double) currentOccupancy / maxCapacity * 100 : 0;
+        return (maxCapacity != null && maxCapacity > 0 && currentOccupancy != null)
+                ? (double) currentOccupancy / maxCapacity * 100
+                : 0;
     }
 
     public boolean needsMaintenance() {

@@ -203,7 +203,7 @@ class GeofenceTest {
 
     @Test
     void testViolationActions() {
-        String[] validActions = {"ALERT", "RETURN_TO_BASE", "LAND", "STOP", "REDIRECT"};
+        String[] validActions = { "ALERT", "RETURN_TO_BASE", "LAND", "STOP", "REDIRECT" };
 
         for (String action : validActions) {
             geofence.setViolationAction(action);
