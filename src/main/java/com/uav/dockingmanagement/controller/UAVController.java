@@ -1,4 +1,5 @@
 package com.uav.dockingmanagement.controller;
+
 import com.uav.dockingmanagement.model.HibernatePod;
 import com.uav.dockingmanagement.model.Region;
 import com.uav.dockingmanagement.model.UAV;
@@ -18,12 +19,13 @@ public class UAVController {
 
     @Autowired
     private UAVRepository uavRepository;
-    
+
     @Autowired
     private RegionRepository regionRepository;
 
     @Autowired
     private HibernatePod hibernatePod;
+
     // Show all UAVs
     @GetMapping("/")
     public String getAllUAVs(Model model) {
@@ -35,8 +37,9 @@ public class UAVController {
 
     // Add a new UAV
     @PostMapping("/add")
-    public String addUAV(@ModelAttribute UAV uav, @RequestParam(name = "regionIds", required = false) Integer[] regionIds,
-                         @RequestParam(name = "inHibernatePod", required = false) Boolean inHibernatePod, Model model) {
+    public String addUAV(@ModelAttribute UAV uav,
+            @RequestParam(name = "regionIds", required = false) Integer[] regionIds,
+            @RequestParam(name = "inHibernatePod", required = false) Boolean inHibernatePod, Model model) {
         try {
             System.out.println("Adding UAV with RFID: " + uav.getRfidTag() + ", Model: " + uav.getModel());
 
@@ -158,9 +161,9 @@ public class UAVController {
             uavRepository.save(uav);
 
             System.out.println("UAV status updated from " + oldStatus + " to " + uav.getStatus() +
-                             " for UAV: " + uav.getRfidTag());
+                    " for UAV: " + uav.getRfidTag());
             model.addAttribute("message", "UAV status updated: " + uav.getRfidTag() +
-                             " is now " + uav.getStatus());
+                    " is now " + uav.getStatus());
 
         } catch (Exception e) {
             System.err.println("Error updating UAV status for ID " + id + ": " + e.getMessage());
@@ -171,6 +174,3 @@ public class UAVController {
         return "redirect:/uav/";
     }
 }
-
-
-

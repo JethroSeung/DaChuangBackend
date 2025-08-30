@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Test data initializer for integration tests
@@ -70,6 +71,16 @@ public class TestDataInitializer {
     @Transactional
     public void clearAllData() {
         // Delete in proper order to avoid foreign key constraint violations
+        // First, clear the bidirectional relationships
+
+        // Clear UAV-BatteryStatus relationships
+        List<UAV> uavs = uavRepository.findAll();
+        for (UAV uav : uavs) {
+            uav.setBatteryStatus(null);
+        }
+        uavRepository.saveAll(uavs);
+
+        // Now delete entities in proper order
         locationHistoryRepository.deleteAll();
         batteryStatusRepository.deleteAll();
         geofenceRepository.deleteAll();
@@ -140,7 +151,7 @@ public class TestDataInitializer {
         history.setUav(uav);
         history.setLatitude(lat);
         history.setLongitude(lon);
-        history.setAltitudeMeters((double) alt);
+        history.setAltitudeMeters(alt);
         history.setTimestamp(LocalDateTime.now());
         history.setSpeedKmh(25.5);
         history.setHeadingDegrees(180.0);
@@ -167,11 +178,7 @@ public class TestDataInitializer {
         battery.setEstimatedFlightTimeMinutes(25);
         battery.setRemainingCapacityMah(4750);
 
-        // Set both sides of the bidirectional relationship
-        BatteryStatus savedBattery = batteryStatusRepository.save(battery);
-        uav.setBatteryStatus(savedBattery);
-        uavRepository.save(uav); // Update UAV with battery reference
-
-        return savedBattery;
+        // Save battery first, then update UAV reference
+        return batteryStatusRepository.save(battery);
     }
 }

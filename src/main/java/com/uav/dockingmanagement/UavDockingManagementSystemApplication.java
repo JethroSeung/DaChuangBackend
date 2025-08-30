@@ -20,6 +20,5 @@ public class UavDockingManagementSystemApplication {
         // - Secure login/logout functionality
         // - Default users: admin/admin123, operator/operator123, user/user123
 
-
     }
 }

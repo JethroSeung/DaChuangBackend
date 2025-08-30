@@ -131,13 +131,14 @@ public class RegionService {
                 Region east = createRegion("East");
                 Region west = createRegion("West");
                 logger.info("Sample regions created: North(ID:{}), South(ID:{}), East(ID:{}), West(ID:{})",
-                           north.getId(), south.getId(), east.getId(), west.getId());
+                        north.getId(), south.getId(), east.getId(), west.getId());
             } else {
                 logger.info("Sample regions already exist. Skipping initialization.");
             }
         } catch (Exception e) {
             // This can happen during tests or when database tables don't exist yet
-            logger.warn("Could not initialize sample regions from database: {}. This is normal during tests.", e.getMessage());
+            logger.warn("Could not initialize sample regions from database: {}. This is normal during tests.",
+                    e.getMessage());
         }
     }
 
@@ -217,7 +218,8 @@ public class RegionService {
             if (existing.isEmpty()) {
                 return true;
             }
-            // If we're updating a region, check if the existing region is the same one we're updating
+            // If we're updating a region, check if the existing region is the same one
+            // we're updating
             return excludeId != null && existing.get().getId() == excludeId;
         } catch (Exception e) {
             logger.error("Error checking region name uniqueness for {}: {}", regionName, e.getMessage());
@@ -282,19 +284,19 @@ public class RegionService {
         List<Map<String, Object>> result = new ArrayList<>();
         try {
             List<Region> allRegions = regionRepository.findAll();
-            
+
             for (Region region : allRegions) {
                 Map<String, Object> regionData = new HashMap<>();
                 regionData.put("id", region.getId());
                 regionData.put("name", region.getRegionName());
-                
+
                 List<UAV> uavsInRegion = getUAVsByRegion(region.getId());
                 regionData.put("uavCount", uavsInRegion.size());
                 regionData.put("uavs", uavsInRegion);
-                
+
                 result.add(regionData);
             }
-            
+
         } catch (Exception e) {
             logger.error("Error getting regions with UAV count: {}", e.getMessage());
         }
@@ -309,11 +311,11 @@ public class RegionService {
         if (!validateRegionName(regionName)) {
             throw new IllegalArgumentException("Invalid region name: " + regionName);
         }
-        
+
         if (!isRegionNameUnique(regionName, null)) {
             throw new IllegalArgumentException("Region name already exists: " + regionName);
         }
-        
+
         return createRegion(regionName);
     }
 
@@ -324,7 +326,7 @@ public class RegionService {
     @Transactional
     public List<Region> bulkCreateRegions(List<String> regionNames) {
         List<Region> createdRegions = new ArrayList<>();
-        
+
         for (String regionName : regionNames) {
             try {
                 if (validateRegionName(regionName) && isRegionNameUnique(regionName, null)) {
@@ -337,7 +339,7 @@ public class RegionService {
                 logger.error("Error creating region {}: {}", regionName, e.getMessage());
             }
         }
-        
+
         return createdRegions;
     }
 }

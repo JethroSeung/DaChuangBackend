@@ -25,7 +25,7 @@ public class RegionController {
 
     @Autowired
     private RegionService regionService;
-    
+
     @Autowired
     private UAVService uavService;
 
@@ -52,7 +52,8 @@ public class RegionController {
             }
         } catch (Exception e) {
             // This can happen during tests or when database tables don't exist yet
-            System.out.println("Could not initialize regions from database: " + e.getMessage() + ". This is normal during tests.");
+            System.out.println(
+                    "Could not initialize regions from database: " + e.getMessage() + ". This is normal during tests.");
         }
     }
 
@@ -79,13 +80,13 @@ public class RegionController {
     public String addRegionToUAV(@PathVariable int uavId, @RequestParam int regionId) {
         UAV uav = uavRepository.findById(uavId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid UAV ID: " + uavId));
-        
+
         Region region = regionRepository.findById(regionId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Region ID: " + regionId));
-        
+
         uav.getRegions().add(region);
         uavRepository.save(uav);
-        
+
         return "redirect:/";
     }
 
@@ -94,10 +95,10 @@ public class RegionController {
         // Get regions assigned to this UAV
         UAV uav = uavRepository.findById(uavId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid UAV ID: " + uavId));
-        
+
         // Get assigned regions for this UAV
         List<Region> assignedRegions = new ArrayList<>(uav.getRegions());
-        
+
         model.addAttribute("assignedRegions", assignedRegions);
         model.addAttribute("uavId", uavId);
         return "remove-region";

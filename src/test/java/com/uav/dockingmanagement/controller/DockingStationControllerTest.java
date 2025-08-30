@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -35,10 +35,10 @@ class DockingStationControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private DockingStationRepository dockingStationRepository;
 
-    @MockBean
+    @MockitoBean
     private DockingStationService dockingStationService;
 
     @Autowired
@@ -146,7 +146,7 @@ class DockingStationControllerTest {
                 .content(stationJson))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.station.id").value(1))
                 .andExpect(jsonPath("$.success").value(true));
 
         verify(dockingStationRepository, times(1)).findById(1L);
@@ -169,6 +169,7 @@ class DockingStationControllerTest {
 
     @Test
     void testDeleteStation() throws Exception {
+        testStation.setCurrentOccupancy(0); // Ensure no active dockings
         when(dockingStationRepository.findById(1L)).thenReturn(Optional.of(testStation));
         doNothing().when(dockingStationRepository).delete(testStation);
 
@@ -241,7 +242,7 @@ class DockingStationControllerTest {
 
         when(dockingStationService.undockUAV(1)).thenReturn(response);
 
-        mockMvc.perform(post("/api/docking-stations/undock")
+        mockMvc.perform(post("/api/docking-stations/1/undock")
                 .param("uavId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))

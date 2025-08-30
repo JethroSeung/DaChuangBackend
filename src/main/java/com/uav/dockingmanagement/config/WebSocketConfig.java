@@ -17,12 +17,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
-        // Enable a simple memory-based message broker to carry messages back to the client
+        // Enable a simple memory-based message broker to carry messages back to the
+        // client
         config.enableSimpleBroker("/topic", "/queue", "/user");
-        
-        // Set application destination prefix for messages bound for @MessageMapping methods
+
+        // Set application destination prefix for messages bound for @MessageMapping
+        // methods
         config.setApplicationDestinationPrefixes("/app");
-        
+
         // Set user destination prefix for user-specific messages
         config.setUserDestinationPrefix("/user");
     }
@@ -33,17 +35,17 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
-        
+
         // Register endpoint for dashboard real-time updates
         registry.addEndpoint("/ws/dashboard")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
-        
+
         // Register endpoint for notifications
         registry.addEndpoint("/ws/notifications")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
-        
+
         // Register endpoint for monitoring
         registry.addEndpoint("/ws/monitoring")
                 .setAllowedOriginPatterns("*")

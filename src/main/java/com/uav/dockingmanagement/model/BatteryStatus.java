@@ -21,7 +21,7 @@ public class BatteryStatus {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "uav_id", nullable = false, unique = true)
-    @JsonBackReference
+    @JsonBackReference("uav-batteryStatus")
     private UAV uav;
 
     @Column(name = "current_charge_percentage", nullable = false)
@@ -129,7 +129,8 @@ public class BatteryStatus {
     }
 
     // Constructors
-    public BatteryStatus() {}
+    public BatteryStatus() {
+    }
 
     public BatteryStatus(UAV uav, Integer capacityMah) {
         this.uav = uav;
@@ -380,16 +381,16 @@ public class BatteryStatus {
 
     // Utility methods
     public boolean needsMaintenance() {
-        return chargingCyclesSinceMaintenance > 100 || 
-               healthPercentage < 80 || 
-               batteryCondition == BatteryCondition.POOR ||
-               batteryCondition == BatteryCondition.CRITICAL;
+        return chargingCyclesSinceMaintenance > 100 ||
+                healthPercentage < 80 ||
+                batteryCondition == BatteryCondition.POOR ||
+                batteryCondition == BatteryCondition.CRITICAL;
     }
 
     public boolean needsReplacement() {
         return batteryCondition == BatteryCondition.REPLACE_SOON ||
-               batteryCondition == BatteryCondition.REPLACE_NOW ||
-               healthPercentage < 50;
+                batteryCondition == BatteryCondition.REPLACE_NOW ||
+                healthPercentage < 50;
     }
 
     public boolean isLowBattery() {
@@ -413,8 +414,10 @@ public class BatteryStatus {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         BatteryStatus that = (BatteryStatus) o;
         return Objects.equals(id, that.id);
     }

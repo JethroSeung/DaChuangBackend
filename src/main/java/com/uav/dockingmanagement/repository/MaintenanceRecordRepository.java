@@ -29,6 +29,12 @@ public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRe
     List<MaintenanceRecord> findByUavIdOrderByCreatedAtDesc(Integer uavId);
 
     /**
+     * Batch load maintenance records for multiple UAVs (for DataLoader)
+     */
+    @Query("SELECT mr FROM MaintenanceRecord mr WHERE mr.uav.id IN :uavIds ORDER BY mr.uav.id, mr.createdAt DESC")
+    List<MaintenanceRecord> findByUavIdInOrderByCreatedAtDesc(@Param("uavIds") List<Integer> uavIds);
+
+    /**
      * Find maintenance records by status
      */
     List<MaintenanceRecord> findByStatusOrderByCreatedAtDesc(MaintenanceRecord.MaintenanceStatus status);
@@ -53,8 +59,8 @@ public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRe
      * Find upcoming maintenance (within next 7 days)
      */
     @Query("SELECT mr FROM MaintenanceRecord mr WHERE mr.scheduledDate BETWEEN :now AND :sevenDaysFromNow AND mr.status = 'SCHEDULED' ORDER BY mr.scheduledDate ASC")
-    List<MaintenanceRecord> findUpcomingMaintenance(@Param("now") LocalDateTime now, 
-                                                   @Param("sevenDaysFromNow") LocalDateTime sevenDaysFromNow);
+    List<MaintenanceRecord> findUpcomingMaintenance(@Param("now") LocalDateTime now,
+            @Param("sevenDaysFromNow") LocalDateTime sevenDaysFromNow);
 
     /**
      * Find maintenance records by technician
@@ -72,14 +78,14 @@ public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRe
      */
     @Query("SELECT mr FROM MaintenanceRecord mr WHERE mr.scheduledDate BETWEEN :startDate AND :endDate ORDER BY mr.scheduledDate ASC")
     List<MaintenanceRecord> findByScheduledDateRange(@Param("startDate") LocalDateTime startDate,
-                                                    @Param("endDate") LocalDateTime endDate);
+            @Param("endDate") LocalDateTime endDate);
 
     /**
      * Find completed maintenance records within date range
      */
     @Query("SELECT mr FROM MaintenanceRecord mr WHERE mr.completedDate BETWEEN :startDate AND :endDate AND mr.status = 'COMPLETED' ORDER BY mr.completedDate DESC")
     List<MaintenanceRecord> findCompletedInDateRange(@Param("startDate") LocalDateTime startDate,
-                                                    @Param("endDate") LocalDateTime endDate);
+            @Param("endDate") LocalDateTime endDate);
 
     /**
      * Count maintenance records by UAV
@@ -134,14 +140,15 @@ public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRe
      * Get maintenance statistics for dashboard
      */
     @Query("SELECT " +
-           "COUNT(mr) as totalRecords, " +
-           "COUNT(CASE WHEN mr.status = 'COMPLETED' THEN 1 END) as completedRecords, " +
-           "COUNT(CASE WHEN mr.status = 'SCHEDULED' THEN 1 END) as scheduledRecords, " +
-           "COUNT(CASE WHEN mr.status = 'IN_PROGRESS' THEN 1 END) as inProgressRecords, " +
-           "COUNT(CASE WHEN mr.scheduledDate < CURRENT_TIMESTAMP AND mr.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 END) as overdueRecords, " +
-           "AVG(mr.actualDurationHours) as avgDuration, " +
-           "SUM(mr.cost) as totalCost " +
-           "FROM MaintenanceRecord mr")
+            "COUNT(mr) as totalRecords, " +
+            "COUNT(CASE WHEN mr.status = 'COMPLETED' THEN 1 END) as completedRecords, " +
+            "COUNT(CASE WHEN mr.status = 'SCHEDULED' THEN 1 END) as scheduledRecords, " +
+            "COUNT(CASE WHEN mr.status = 'IN_PROGRESS' THEN 1 END) as inProgressRecords, " +
+            "COUNT(CASE WHEN mr.scheduledDate < CURRENT_TIMESTAMP AND mr.status NOT IN ('COMPLETED', 'CANCELLED') THEN 1 END) as overdueRecords, "
+            +
+            "AVG(mr.actualDurationHours) as avgDuration, " +
+            "SUM(mr.cost) as totalCost " +
+            "FROM MaintenanceRecord mr")
     Object[] getMaintenanceStatistics();
 
     /**

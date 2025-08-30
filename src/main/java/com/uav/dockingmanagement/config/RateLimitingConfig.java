@@ -55,17 +55,17 @@ public class RateLimitingConfig {
             long windowStart = currentTime - (windowSizeSeconds * 1000);
 
             RateLimitBucket bucket = buckets.computeIfAbsent(key, k -> new RateLimitBucket());
-            
+
             synchronized (bucket) {
                 // Remove old requests outside the window
                 bucket.requests.removeIf(timestamp -> timestamp < windowStart);
-                
+
                 if (bucket.requests.size() < maxRequests) {
                     bucket.requests.add(currentTime);
                     bucket.lastAccess = currentTime;
                     return true;
                 }
-                
+
                 bucket.lastAccess = currentTime;
                 return false;
             }
@@ -85,10 +85,10 @@ public class RateLimitingConfig {
                 bucket.requests.removeIf(timestamp -> timestamp < windowStart);
                 int currentRequests = bucket.requests.size();
                 int remaining = Math.max(0, maxRequests - currentRequests);
-                
-                long resetTime = bucket.requests.isEmpty() ? 0 : 
-                    (bucket.requests.get(0) + (windowSizeSeconds * 1000) - currentTime) / 1000;
-                
+
+                long resetTime = bucket.requests.isEmpty() ? 0
+                        : (bucket.requests.get(0) + (windowSizeSeconds * 1000) - currentTime) / 1000;
+
                 return new RateLimitInfo(maxRequests, remaining, windowSizeSeconds, Math.max(0, resetTime));
             }
         }
@@ -96,9 +96,8 @@ public class RateLimitingConfig {
         private void cleanupExpiredBuckets() {
             long currentTime = System.currentTimeMillis();
             long expireTime = 10 * 60 * 1000; // 10 minutes
-            
-            buckets.entrySet().removeIf(entry -> 
-                currentTime - entry.getValue().lastAccess > expireTime);
+
+            buckets.entrySet().removeIf(entry -> currentTime - entry.getValue().lastAccess > expireTime);
         }
     }
 
@@ -115,6 +114,7 @@ public class RateLimitingConfig {
      */
     public interface RateLimitService {
         boolean isAllowed(String key, int maxRequests, long windowSizeSeconds);
+
         RateLimitInfo getRateLimitInfo(String key, int maxRequests, long windowSizeSeconds);
     }
 
@@ -134,9 +134,20 @@ public class RateLimitingConfig {
             this.resetTime = resetTime;
         }
 
-        public int getLimit() { return limit; }
-        public int getRemaining() { return remaining; }
-        public long getWindowSize() { return windowSize; }
-        public long getResetTime() { return resetTime; }
+        public int getLimit() {
+            return limit;
+        }
+
+        public int getRemaining() {
+            return remaining;
+        }
+
+        public long getWindowSize() {
+            return windowSize;
+        }
+
+        public long getResetTime() {
+            return resetTime;
+        }
     }
 }

@@ -12,10 +12,10 @@ import java.util.Objects;
  */
 @Entity
 @Table(name = "security_events", indexes = {
-    @Index(name = "idx_security_timestamp", columnList = "timestamp"),
-    @Index(name = "idx_security_type", columnList = "event_type"),
-    @Index(name = "idx_security_severity", columnList = "severity"),
-    @Index(name = "idx_security_source", columnList = "source_ip")
+        @Index(name = "idx_security_timestamp", columnList = "timestamp"),
+        @Index(name = "idx_security_type", columnList = "event_type"),
+        @Index(name = "idx_security_severity", columnList = "severity"),
+        @Index(name = "idx_security_source", columnList = "source_ip")
 })
 public class SecurityEvent {
 
@@ -161,7 +161,8 @@ public class SecurityEvent {
     }
 
     // Constructors
-    public SecurityEvent() {}
+    public SecurityEvent() {
+    }
 
     public SecurityEvent(SecurityEventType eventType, Severity severity, String title) {
         this.eventType = eventType;
@@ -432,16 +433,16 @@ public class SecurityEvent {
 
     // Utility methods
     public boolean isHighSeverity() {
-        return severity == Severity.HIGH || 
-               severity == Severity.CRITICAL || 
-               severity == Severity.EMERGENCY;
+        return severity == Severity.HIGH ||
+                severity == Severity.CRITICAL ||
+                severity == Severity.EMERGENCY;
     }
 
     public boolean requiresImmediateAttention() {
-        return severity == Severity.CRITICAL || 
-               severity == Severity.EMERGENCY ||
-               eventType == SecurityEventType.DATA_BREACH_ATTEMPT ||
-               eventType == SecurityEventType.INTRUSION_ATTEMPT;
+        return severity == Severity.CRITICAL ||
+                severity == Severity.EMERGENCY ||
+                eventType == SecurityEventType.DATA_BREACH_ATTEMPT ||
+                eventType == SecurityEventType.INTRUSION_ATTEMPT;
     }
 
     public boolean isActive() {
@@ -456,8 +457,10 @@ public class SecurityEvent {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         SecurityEvent that = (SecurityEvent) o;
         return Objects.equals(id, that.id);
     }

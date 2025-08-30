@@ -12,10 +12,10 @@ import java.util.Objects;
  */
 @Entity
 @Table(name = "notifications", indexes = {
-    @Index(name = "idx_notification_recipient", columnList = "recipient_username"),
-    @Index(name = "idx_notification_type", columnList = "notification_type"),
-    @Index(name = "idx_notification_status", columnList = "status"),
-    @Index(name = "idx_notification_created", columnList = "created_at")
+        @Index(name = "idx_notification_recipient", columnList = "recipient_username"),
+        @Index(name = "idx_notification_type", columnList = "notification_type"),
+        @Index(name = "idx_notification_status", columnList = "status"),
+        @Index(name = "idx_notification_created", columnList = "created_at")
 })
 public class Notification {
 
@@ -170,7 +170,8 @@ public class Notification {
     }
 
     // Constructors
-    public Notification() {}
+    public Notification() {
+    }
 
     public Notification(String title, String message, NotificationType type, String recipientUsername) {
         this.title = title;
@@ -523,8 +524,10 @@ public class Notification {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Notification that = (Notification) o;
         return Objects.equals(id, that.id);
     }

@@ -35,10 +35,10 @@ public class FlightLogService {
     /**
      * Create a new flight log
      */
-    @CacheEvict(value = {"flightLogs", "statistics"}, allEntries = true)
+    @CacheEvict(value = { "flightLogs", "statistics" }, allEntries = true)
     public FlightLog createFlightLog(FlightLog flightLog) {
         logger.info("Creating new flight log for mission: {}", flightLog.getMissionName());
-        
+
         // Validate UAV exists
         if (flightLog.getUav() == null || flightLog.getUav().getId() == 0) {
             throw new IllegalArgumentException("UAV is required for flight log");
@@ -98,7 +98,7 @@ public class FlightLogService {
     /**
      * Start a flight
      */
-    @CacheEvict(value = {"flightLogs", "statistics"}, allEntries = true)
+    @CacheEvict(value = { "flightLogs", "statistics" }, allEntries = true)
     public FlightLog startFlight(Long flightLogId) {
         Optional<FlightLog> flightLogOpt = flightLogRepository.findById(flightLogId);
         if (flightLogOpt.isEmpty()) {
@@ -122,7 +122,7 @@ public class FlightLogService {
     /**
      * Complete a flight
      */
-    @CacheEvict(value = {"flightLogs", "statistics"}, allEntries = true)
+    @CacheEvict(value = { "flightLogs", "statistics" }, allEntries = true)
     public FlightLog completeFlight(Long flightLogId, FlightLog flightData) {
         Optional<FlightLog> flightLogOpt = flightLogRepository.findById(flightLogId);
         if (flightLogOpt.isEmpty()) {
@@ -178,7 +178,7 @@ public class FlightLogService {
     /**
      * Abort a flight
      */
-    @CacheEvict(value = {"flightLogs", "statistics"}, allEntries = true)
+    @CacheEvict(value = { "flightLogs", "statistics" }, allEntries = true)
     public FlightLog abortFlight(Long flightLogId, String reason) {
         Optional<FlightLog> flightLogOpt = flightLogRepository.findById(flightLogId);
         if (flightLogOpt.isEmpty()) {
@@ -188,8 +188,8 @@ public class FlightLogService {
         FlightLog flightLog = flightLogOpt.get();
         flightLog.setFlightStatus(FlightLog.FlightStatus.ABORTED);
         flightLog.setFlightEndTime(LocalDateTime.now());
-        flightLog.setNotes(flightLog.getNotes() != null ? 
-            flightLog.getNotes() + "\nAborted: " + reason : "Aborted: " + reason);
+        flightLog.setNotes(
+                flightLog.getNotes() != null ? flightLog.getNotes() + "\nAborted: " + reason : "Aborted: " + reason);
 
         // Update UAV operational status
         UAV uav = flightLog.getUav();
@@ -197,15 +197,15 @@ public class FlightLogService {
         uavRepository.save(uav);
 
         FlightLog savedLog = flightLogRepository.save(flightLog);
-        logger.warn("Flight aborted for mission: {} (ID: {}). Reason: {}", 
-                   flightLog.getMissionName(), flightLogId, reason);
+        logger.warn("Flight aborted for mission: {} (ID: {}). Reason: {}",
+                flightLog.getMissionName(), flightLogId, reason);
         return savedLog;
     }
 
     /**
      * Record emergency landing
      */
-    @CacheEvict(value = {"flightLogs", "statistics"}, allEntries = true)
+    @CacheEvict(value = { "flightLogs", "statistics" }, allEntries = true)
     public FlightLog recordEmergencyLanding(Long flightLogId, Double latitude, Double longitude, String reason) {
         Optional<FlightLog> flightLogOpt = flightLogRepository.findById(flightLogId);
         if (flightLogOpt.isEmpty()) {
@@ -218,8 +218,8 @@ public class FlightLogService {
         flightLog.setFlightEndTime(LocalDateTime.now());
         flightLog.setEndLatitude(latitude);
         flightLog.setEndLongitude(longitude);
-        flightLog.setNotes(flightLog.getNotes() != null ? 
-            flightLog.getNotes() + "\nEmergency Landing: " + reason : "Emergency Landing: " + reason);
+        flightLog.setNotes(flightLog.getNotes() != null ? flightLog.getNotes() + "\nEmergency Landing: " + reason
+                : "Emergency Landing: " + reason);
 
         // Update UAV operational status
         UAV uav = flightLog.getUav();
@@ -230,15 +230,15 @@ public class FlightLogService {
         uavRepository.save(uav);
 
         FlightLog savedLog = flightLogRepository.save(flightLog);
-        logger.error("Emergency landing recorded for mission: {} (ID: {}). Reason: {}", 
-                    flightLog.getMissionName(), flightLogId, reason);
+        logger.error("Emergency landing recorded for mission: {} (ID: {}). Reason: {}",
+                flightLog.getMissionName(), flightLogId, reason);
         return savedLog;
     }
 
     /**
      * Update flight log
      */
-    @CacheEvict(value = {"flightLogs", "statistics"}, allEntries = true)
+    @CacheEvict(value = { "flightLogs", "statistics" }, allEntries = true)
     public FlightLog updateFlightLog(Long id, FlightLog updatedFlightLog) {
         Optional<FlightLog> existingLogOpt = flightLogRepository.findById(id);
         if (existingLogOpt.isEmpty()) {
@@ -246,7 +246,7 @@ public class FlightLogService {
         }
 
         FlightLog existingLog = existingLogOpt.get();
-        
+
         // Update fields
         if (updatedFlightLog.getMissionName() != null) {
             existingLog.setMissionName(updatedFlightLog.getMissionName());
@@ -272,12 +272,12 @@ public class FlightLogService {
     /**
      * Delete flight log
      */
-    @CacheEvict(value = {"flightLogs", "statistics"}, allEntries = true)
+    @CacheEvict(value = { "flightLogs", "statistics" }, allEntries = true)
     public void deleteFlightLog(Long id) {
         if (!flightLogRepository.existsById(id)) {
             throw new IllegalArgumentException("Flight log not found with ID: " + id);
         }
-        
+
         flightLogRepository.deleteById(id);
         logger.info("Flight log deleted: {}", id);
     }
@@ -308,8 +308,8 @@ public class FlightLogService {
         Double averageFlightDuration = flightLogRepository.getAverageFlightDurationByUav(uav);
         Double maxAltitude = flightLogRepository.getMaxAltitudeByUav(uav);
 
-        return new FlightStatistics(totalFlightTime, totalDistance, totalFlights, 
-                                  completedFlights, averageFlightDuration, maxAltitude);
+        return new FlightStatistics(totalFlightTime, totalDistance, totalFlights,
+                completedFlights, averageFlightDuration, maxAltitude);
     }
 
     /**
@@ -337,9 +337,9 @@ public class FlightLogService {
         private final Double averageFlightDurationMinutes;
         private final Double maxAltitudeMeters;
 
-        public FlightStatistics(Integer totalFlightTimeMinutes, Double totalDistanceKm, 
-                              long totalFlights, long completedFlights, 
-                              Double averageFlightDurationMinutes, Double maxAltitudeMeters) {
+        public FlightStatistics(Integer totalFlightTimeMinutes, Double totalDistanceKm,
+                long totalFlights, long completedFlights,
+                Double averageFlightDurationMinutes, Double maxAltitudeMeters) {
             this.totalFlightTimeMinutes = totalFlightTimeMinutes;
             this.totalDistanceKm = totalDistanceKm;
             this.totalFlights = totalFlights;
@@ -349,11 +349,28 @@ public class FlightLogService {
         }
 
         // Getters
-        public Integer getTotalFlightTimeMinutes() { return totalFlightTimeMinutes; }
-        public Double getTotalDistanceKm() { return totalDistanceKm; }
-        public long getTotalFlights() { return totalFlights; }
-        public long getCompletedFlights() { return completedFlights; }
-        public Double getAverageFlightDurationMinutes() { return averageFlightDurationMinutes; }
-        public Double getMaxAltitudeMeters() { return maxAltitudeMeters; }
+        public Integer getTotalFlightTimeMinutes() {
+            return totalFlightTimeMinutes;
+        }
+
+        public Double getTotalDistanceKm() {
+            return totalDistanceKm;
+        }
+
+        public long getTotalFlights() {
+            return totalFlights;
+        }
+
+        public long getCompletedFlights() {
+            return completedFlights;
+        }
+
+        public Double getAverageFlightDurationMinutes() {
+            return averageFlightDurationMinutes;
+        }
+
+        public Double getMaxAltitudeMeters() {
+            return maxAltitudeMeters;
+        }
     }
 }

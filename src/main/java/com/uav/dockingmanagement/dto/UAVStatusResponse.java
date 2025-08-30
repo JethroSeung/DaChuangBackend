@@ -13,7 +13,8 @@ public class UAVStatusResponse {
     private UAVSummary uav;
 
     // Constructors
-    public UAVStatusResponse() {}
+    public UAVStatusResponse() {
+    }
 
     public UAVStatusResponse(boolean success, String message) {
         this.success = success;
@@ -81,7 +82,8 @@ public class UAVStatusResponse {
         private boolean inHibernatePod;
         private int regionCount;
 
-        public UAVSummary() {}
+        public UAVSummary() {
+        }
 
         public UAVSummary(UAV uav) {
             this.id = uav.getId();

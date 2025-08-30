@@ -141,7 +141,7 @@ class UAVDockingWorkflowIntegrationTest {
 
         // Step 4: Update UAV location (simulate movement)
         locationService.updateUAVLocation(testUAV, 40.7129, -74.0059, 55.0);
-        
+
         // Verify location was updated
         UAV refreshedUAV = uavRepository.findById(testUAV.getId()).orElseThrow();
         assertEquals(40.7129, refreshedUAV.getCurrentLatitude());
@@ -241,7 +241,7 @@ class UAVDockingWorkflowIntegrationTest {
 
         result = dockingStationService.dockUAV(testUAV.getId(), testStation.getId(), "CHARGING");
         assertFalse((Boolean) result.get("success"));
-        assertTrue(result.get("message").toString().contains("not available"));
+        assertTrue(result.get("message").toString().contains("not operational"));
 
         // Reset station
         testStation.setStatus(DockingStation.StationStatus.OPERATIONAL);
@@ -295,7 +295,7 @@ class UAVDockingWorkflowIntegrationTest {
 
         // Test location updates
         locationService.updateUAVLocation(testUAV, 40.7140, -74.0050, 60.0);
-        
+
         UAV updatedUAV = uavRepository.findById(testUAV.getId()).orElseThrow();
         assertEquals(40.7140, updatedUAV.getCurrentLatitude());
         assertEquals(-74.0050, updatedUAV.getCurrentLongitude());
@@ -304,7 +304,7 @@ class UAVDockingWorkflowIntegrationTest {
         // Test location history
         List<LocationHistory> history = locationHistoryRepository.findByUavIdOrderByTimestampDesc(testUAV.getId());
         assertFalse(history.isEmpty());
-        
+
         LocationHistory latestLocation = history.get(0);
         assertEquals(40.7140, latestLocation.getLatitude());
         assertEquals(-74.0050, latestLocation.getLongitude());

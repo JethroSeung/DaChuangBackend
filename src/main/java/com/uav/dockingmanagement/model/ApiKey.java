@@ -14,10 +14,10 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "api_keys", indexes = {
-    @Index(name = "idx_api_key_hash", columnList = "key_hash", unique = true),
-    @Index(name = "idx_api_key_name", columnList = "name"),
-    @Index(name = "idx_api_key_status", columnList = "status"),
-    @Index(name = "idx_api_key_expiry", columnList = "expires_at")
+        @Index(name = "idx_api_key_hash", columnList = "key_hash", unique = true),
+        @Index(name = "idx_api_key_name", columnList = "name"),
+        @Index(name = "idx_api_key_status", columnList = "status"),
+        @Index(name = "idx_api_key_expiry", columnList = "expires_at")
 })
 public class ApiKey {
 
@@ -49,14 +49,12 @@ public class ApiKey {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    @CollectionTable(name = "api_key_permissions", 
-                    joinColumns = @JoinColumn(name = "api_key_id"))
+    @CollectionTable(name = "api_key_permissions", joinColumns = @JoinColumn(name = "api_key_id"))
     @Column(name = "permission")
     private Set<ApiPermission> permissions;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "api_key_scopes", 
-                    joinColumns = @JoinColumn(name = "api_key_id"))
+    @CollectionTable(name = "api_key_scopes", joinColumns = @JoinColumn(name = "api_key_id"))
     @Column(name = "scope", length = 100)
     private Set<String> scopes;
 
@@ -158,7 +156,8 @@ public class ApiKey {
     }
 
     // Constructors
-    public ApiKey() {}
+    public ApiKey() {
+    }
 
     public ApiKey(String name, String keyHash, String keyPrefix, String ownerUsername) {
         this.name = name;
@@ -432,7 +431,7 @@ public class ApiKey {
 
     public boolean isRateLimitExceeded() {
         return (rateLimitPerHour != null && currentHourUsage >= rateLimitPerHour) ||
-               (rateLimitPerDay != null && currentDayUsage >= rateLimitPerDay);
+                (rateLimitPerDay != null && currentDayUsage >= rateLimitPerDay);
     }
 
     public void incrementUsage() {
@@ -451,14 +450,16 @@ public class ApiKey {
     }
 
     public boolean needsRenewal() {
-        return autoRenew && expiresAt != null && 
-               expiresAt.isBefore(LocalDateTime.now().plusDays(7));
+        return autoRenew && expiresAt != null &&
+                expiresAt.isBefore(LocalDateTime.now().plusDays(7));
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         ApiKey apiKey = (ApiKey) o;
         return Objects.equals(id, apiKey.id);
     }

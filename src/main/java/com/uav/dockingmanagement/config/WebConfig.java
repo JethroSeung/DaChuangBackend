@@ -118,8 +118,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Bean
     public org.springframework.core.task.AsyncTaskExecutor asyncTaskExecutor() {
-        org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor executor =
-            new org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor();
+        org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor executor = new org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor();
         executor.setCorePoolSize(10);
         executor.setMaxPoolSize(50);
         executor.setQueueCapacity(100);

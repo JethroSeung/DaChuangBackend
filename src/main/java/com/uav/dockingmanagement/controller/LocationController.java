@@ -20,12 +20,18 @@ import java.util.Optional;
 /**
  * REST Controller for UAV Location Tracking and Management
  *
- * <p>This controller provides comprehensive endpoints for managing UAV location data,
- * including real-time location updates, historical tracking, flight path analysis,
+ * <p>
+ * This controller provides comprehensive endpoints for managing UAV location
+ * data,
+ * including real-time location updates, historical tracking, flight path
+ * analysis,
  * and geospatial queries. It serves as the primary interface for location-based
- * operations in the UAV management system.</p>
+ * operations in the UAV management system.
+ * </p>
  *
- * <p>Key features include:</p>
+ * <p>
+ * Key features include:
+ * </p>
  * <ul>
  * <li>Real-time location updates with validation</li>
  * <li>Historical location data retrieval and analysis</li>
@@ -35,9 +41,11 @@ import java.util.Optional;
  * <li>Integration with geofencing and alert systems</li>
  * </ul>
  *
- * <p>All location data is validated for accuracy and stored with timestamps
+ * <p>
+ * All location data is validated for accuracy and stored with timestamps
  * for audit and analysis purposes. The controller supports both individual
- * and batch operations for optimal performance.</p>
+ * and batch operations for optimal performance.
+ * </p>
  *
  * @author UAV Management System Team
  * @version 1.0
@@ -67,7 +75,10 @@ public class LocationController {
     /**
      * Updates the current location of a specific UAV.
      *
-     * <p>This endpoint accepts location data for a UAV and performs the following operations:</p>
+     * <p>
+     * This endpoint accepts location data for a UAV and performs the following
+     * operations:
+     * </p>
      * <ul>
      * <li>Validates the UAV exists and is operational</li>
      * <li>Validates location coordinates and optional parameters</li>
@@ -77,9 +88,13 @@ public class LocationController {
      * <li>Broadcasts real-time updates via WebSocket</li>
      * </ul>
      *
-     * <p><strong>Security:</strong> Requires OPERATOR or ADMIN role</p>
+     * <p>
+     * <strong>Security:</strong> Requires OPERATOR or ADMIN role
+     * </p>
      *
-     * <p><strong>Validation Rules:</strong></p>
+     * <p>
+     * <strong>Validation Rules:</strong>
+     * </p>
      * <ul>
      * <li>Latitude: -90.0 to 90.0 degrees</li>
      * <li>Longitude: -180.0 to 180.0 degrees</li>
@@ -88,9 +103,11 @@ public class LocationController {
      * <li>Battery Level: 0 to 100 percent</li>
      * </ul>
      *
-     * @param uavId The unique identifier of the UAV to update
-     * @param locationData Map containing location information with the following structure:
-     *                    <pre>
+     * @param uavId        The unique identifier of the UAV to update
+     * @param locationData Map containing location information with the following
+     *                     structure:
+     *
+     *                     <pre>
      *                    {
      *                      "latitude": 40.7589,      // Required: Latitude in decimal degrees
      *                      "longitude": -73.9851,    // Required: Longitude in decimal degrees
@@ -100,7 +117,7 @@ public class LocationController {
      *                      "batteryLevel": 75,       // Optional: Battery level (0-100)
      *                      "timestamp": "2024-01-15T10:30:00Z" // Optional: Custom timestamp
      *                    }
-     *                    </pre>
+     *                     </pre>
      *
      * @return ResponseEntity containing:
      *         <ul>
@@ -110,7 +127,8 @@ public class LocationController {
      *         <li>500 Internal Server Error: Database or processing error</li>
      *         </ul>
      *
-     * @apiNote Location updates trigger real-time WebSocket broadcasts to connected clients
+     * @apiNote Location updates trigger real-time WebSocket broadcasts to connected
+     *          clients
      * @apiNote Geofence violations are automatically checked and alerts generated
      *
      * @see LocationHistory
@@ -122,9 +140,9 @@ public class LocationController {
     public ResponseEntity<Map<String, Object>> updateLocation(
             @PathVariable Integer uavId,
             @RequestBody Map<String, Object> locationData) {
-        
+
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
             Optional<UAV> uavOpt = uavRepository.findById(uavId);
             if (uavOpt.isEmpty()) {
@@ -134,18 +152,21 @@ public class LocationController {
             }
 
             UAV uav = uavOpt.get();
-            
+
             // Extract location data
             Double latitude = Double.valueOf(locationData.get("latitude").toString());
             Double longitude = Double.valueOf(locationData.get("longitude").toString());
-            Double altitude = locationData.containsKey("altitude") ? 
-                Double.valueOf(locationData.get("altitude").toString()) : null;
-            Double speed = locationData.containsKey("speed") ? 
-                Double.valueOf(locationData.get("speed").toString()) : null;
-            Double heading = locationData.containsKey("heading") ? 
-                Double.valueOf(locationData.get("heading").toString()) : null;
-            Integer batteryLevel = locationData.containsKey("batteryLevel") ? 
-                Integer.valueOf(locationData.get("batteryLevel").toString()) : null;
+            Double altitude = locationData.containsKey("altitude")
+                    ? Double.valueOf(locationData.get("altitude").toString())
+                    : null;
+            Double speed = locationData.containsKey("speed") ? Double.valueOf(locationData.get("speed").toString())
+                    : null;
+            Double heading = locationData.containsKey("heading")
+                    ? Double.valueOf(locationData.get("heading").toString())
+                    : null;
+            Integer batteryLevel = locationData.containsKey("batteryLevel")
+                    ? Integer.valueOf(locationData.get("batteryLevel").toString())
+                    : null;
 
             // Update UAV current location
             uav.setCurrentLatitude(latitude);
@@ -159,7 +180,7 @@ public class LocationController {
             locationHistory.setSpeedKmh(speed);
             locationHistory.setHeadingDegrees(heading);
             locationHistory.setBatteryLevel(batteryLevel);
-            
+
             if (locationData.containsKey("accuracy")) {
                 locationHistory.setAccuracyMeters(Double.valueOf(locationData.get("accuracy").toString()));
             }
@@ -183,9 +204,9 @@ public class LocationController {
             response.put("success", true);
             response.put("message", "Location updated successfully");
             response.put("timestamp", LocalDateTime.now());
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error updating location: " + e.getMessage());
@@ -257,7 +278,8 @@ public class LocationController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
         try {
-            List<LocationHistory> history = locationHistoryRepository.findByUavIdAndTimestampBetween(uavId, startTime, endTime);
+            List<LocationHistory> history = locationHistoryRepository.findByUavIdAndTimestampBetween(uavId, startTime,
+                    endTime);
             return ResponseEntity.ok(history);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -293,10 +315,10 @@ public class LocationController {
         try {
             LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
             LocalDateTime now = LocalDateTime.now();
-            
+
             List<LocationHistory> locations = locationHistoryRepository.findLocationsInArea(
-                minLatitude, maxLatitude, minLongitude, maxLongitude, since, now);
-            
+                    minLatitude, maxLatitude, minLongitude, maxLongitude, since, now);
+
             return ResponseEntity.ok(locations);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -327,16 +349,16 @@ public class LocationController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
         try {
             Map<String, Object> stats = new HashMap<>();
-            
+
             long recordCount = locationHistoryRepository.countByUavIdAndTimestampBetween(uavId, startTime, endTime);
             Double avgSpeed = locationHistoryRepository.getAverageSpeed(uavId, startTime, endTime);
             Double maxAltitude = locationHistoryRepository.getMaxAltitude(uavId, startTime, endTime);
-            
+
             stats.put("recordCount", recordCount);
             stats.put("averageSpeed", avgSpeed);
             stats.put("maxAltitude", maxAltitude);
             stats.put("period", Map.of("start", startTime, "end", endTime));
-            
+
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -355,7 +377,7 @@ public class LocationController {
         try {
             LocalDateTime since = LocalDateTime.now().minusMinutes(minutesBack);
             List<LocationHistory> nearbyLocations = locationHistoryRepository.findLocationsNearPoint(
-                latitude, longitude, radiusKm, since);
+                    latitude, longitude, radiusKm, since);
             return ResponseEntity.ok(nearbyLocations);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -368,17 +390,17 @@ public class LocationController {
     @PostMapping("/bulk-update")
     public ResponseEntity<Map<String, Object>> bulkUpdateLocations(
             @RequestBody List<Map<String, Object>> locationUpdates) {
-        
+
         Map<String, Object> response = new HashMap<>();
         int successCount = 0;
         int errorCount = 0;
-        
+
         try {
             for (Map<String, Object> update : locationUpdates) {
                 try {
                     Integer uavId = Integer.valueOf(update.get("uavId").toString());
                     ResponseEntity<Map<String, Object>> result = updateLocation(uavId, update);
-                    
+
                     if (result.getStatusCode() == HttpStatus.OK) {
                         successCount++;
                     } else {
@@ -388,14 +410,14 @@ public class LocationController {
                     errorCount++;
                 }
             }
-            
+
             response.put("success", true);
             response.put("successCount", successCount);
             response.put("errorCount", errorCount);
             response.put("totalProcessed", locationUpdates.size());
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Error processing bulk update: " + e.getMessage());

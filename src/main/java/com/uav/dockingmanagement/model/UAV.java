@@ -1,4 +1,5 @@
 package com.uav.dockingmanagement.model;
+
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -8,26 +9,42 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Entity representing an Unmanned Aerial Vehicle (UAV) in the management system.
+ * Entity representing an Unmanned Aerial Vehicle (UAV) in the management
+ * system.
  *
- * <p>This entity serves as the core model for UAV management, containing comprehensive
- * information about each drone including identification, specifications, operational
- * status, location data, and relationships to other system entities.</p>
+ * <p>
+ * This entity serves as the core model for UAV management, containing
+ * comprehensive
+ * information about each drone including identification, specifications,
+ * operational
+ * status, location data, and relationships to other system entities.
+ * </p>
  *
- * <p>Key features and relationships:</p>
+ * <p>
+ * Key features and relationships:
+ * </p>
  * <ul>
- * <li><strong>Identification:</strong> RFID tag and serial number for unique identification</li>
- * <li><strong>Specifications:</strong> Physical and performance characteristics</li>
- * <li><strong>Location Tracking:</strong> Current position and historical data</li>
- * <li><strong>Region Access:</strong> Many-to-many relationship with authorized regions</li>
- * <li><strong>Flight History:</strong> One-to-many relationship with flight logs</li>
- * <li><strong>Maintenance:</strong> One-to-many relationship with maintenance records</li>
- * <li><strong>Battery Monitoring:</strong> One-to-one relationship with battery status</li>
+ * <li><strong>Identification:</strong> RFID tag and serial number for unique
+ * identification</li>
+ * <li><strong>Specifications:</strong> Physical and performance
+ * characteristics</li>
+ * <li><strong>Location Tracking:</strong> Current position and historical
+ * data</li>
+ * <li><strong>Region Access:</strong> Many-to-many relationship with authorized
+ * regions</li>
+ * <li><strong>Flight History:</strong> One-to-many relationship with flight
+ * logs</li>
+ * <li><strong>Maintenance:</strong> One-to-many relationship with maintenance
+ * records</li>
+ * <li><strong>Battery Monitoring:</strong> One-to-one relationship with battery
+ * status</li>
  * </ul>
  *
- * <p>The entity supports both operational and administrative use cases, providing
+ * <p>
+ * The entity supports both operational and administrative use cases, providing
  * real-time status information for flight operations and comprehensive data for
- * fleet management and analytics.</p>
+ * fleet management and analytics.
+ * </p>
  *
  * @author UAV Management System Team
  * @version 1.0
@@ -85,53 +102,71 @@ public class UAV {
     /**
      * Many-to-many relationship with regions that this UAV is authorized to access.
      *
-     * <p>This relationship defines the geographical areas where the UAV is permitted
+     * <p>
+     * This relationship defines the geographical areas where the UAV is permitted
      * to operate. Access control systems use this information to grant or deny
-     * entry to restricted zones.</p>
+     * entry to restricted zones.
+     * </p>
      *
-     * <p>The relationship is managed through a join table 'uav_regions' with
-     * foreign keys to both UAV and Region entities.</p>
+     * <p>
+     * The relationship is managed through a join table 'uav_regions' with
+     * foreign keys to both UAV and Region entities.
+     * </p>
      */
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
-    @JoinTable(
-            name = "uav_regions",
-            joinColumns = @JoinColumn(name = "uav_id"),
-            inverseJoinColumns = @JoinColumn(name = "region_id")
-    )
+    @JoinTable(name = "uav_regions", joinColumns = @JoinColumn(name = "uav_id"), inverseJoinColumns = @JoinColumn(name = "region_id"))
     private Set<Region> regions = new HashSet<>();
 
     /**
      * One-to-many relationship with flight log records.
      *
-     * <p>Contains historical flight data including start/end times, routes,
+     * <p>
+     * Contains historical flight data including start/end times, routes,
      * performance metrics, and operational notes. Used for analytics,
-     * compliance reporting, and operational analysis.</p>
+     * compliance reporting, and operational analysis.
+     * </p>
      */
     @OneToMany(mappedBy = "uav", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonManagedReference("uav-flightLogs")
     private List<FlightLog> flightLogs = new ArrayList<>();
 
     /**
      * One-to-many relationship with maintenance records.
      *
-     * <p>Tracks all maintenance activities including scheduled maintenance,
+     * <p>
+     * Tracks all maintenance activities including scheduled maintenance,
      * repairs, upgrades, and inspections. Critical for airworthiness
-     * compliance and operational safety.</p>
+     * compliance and operational safety.
+     * </p>
      */
     @OneToMany(mappedBy = "uav", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonManagedReference("uav-maintenanceRecords")
     private List<MaintenanceRecord> maintenanceRecords = new ArrayList<>();
 
     /**
-     * One-to-one relationship with current battery status.
+     * One-to-many relationship with current battery status.
      *
-     * <p>Provides real-time battery information including charge level,
+     * <p>
+     * Provides real-time battery information including charge level,
      * health status, and charging state. Essential for flight safety
-     * and operational planning.</p>
+     * and operational planning.
+     * </p>
      */
     @OneToOne(mappedBy = "uav", fetch = FetchType.LAZY)
-    @JsonManagedReference
+    @JsonManagedReference("uav-batteryStatus")
     private BatteryStatus batteryStatus;
+
+    /**
+     * One-to-many relationship with docking records.
+     *
+     * <p>
+     * Tracks all docking activities including dock/undock times,
+     * purposes, and station information.
+     * </p>
+     */
+    @OneToMany(mappedBy = "uav", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference("uav-dockingRecords")
+    private List<DockingRecord> dockingRecords = new ArrayList<>();
 
     /**
      * Manufacturer's serial number for the UAV.

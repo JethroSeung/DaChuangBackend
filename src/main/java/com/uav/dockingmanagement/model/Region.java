@@ -1,5 +1,4 @@
 
-
 package com.uav.dockingmanagement.model;
 
 import jakarta.persistence.*;

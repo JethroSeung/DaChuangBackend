@@ -27,36 +27,35 @@ public class CacheConfig {
 
         // Define cache names with different characteristics
         cacheManager.setCacheNames(Arrays.asList(
-            // Original caches
-            "uavs",           // Cache for UAV data
-            "regions",        // Cache for region data
-            "statistics",     // Cache for system statistics
-            "hibernatePod",   // Cache for hibernate pod status
+                // Original caches
+                "uavs", // Cache for UAV data
+                "regions", // Cache for region data
+                "statistics", // Cache for system statistics
+                "hibernatePod", // Cache for hibernate pod status
 
-            // Short-term caches (5 minutes)
-            "uavStatus",
-            "batteryStatus",
-            "flightActivity",
-            "systemHealth",
+                // Short-term caches (5 minutes)
+                "uavStatus",
+                "batteryStatus",
+                "flightActivity",
+                "systemHealth",
 
-            // Medium-term caches (15 minutes)
-            "uavList",
-            "regionList",
-            "maintenanceSchedule",
-            "flightLogs",
+                // Medium-term caches (15 minutes)
+                "uavList",
+                "regionList",
+                "maintenanceSchedule",
+                "flightLogs",
 
-            // Long-term caches (1 hour)
-            "analytics",
-            "reports",
-            "userProfiles",
-            "dashboardData",
+                // Long-term caches (1 hour)
+                "analytics",
+                "reports",
+                "userProfiles",
+                "dashboardData",
 
-            // Very long-term caches (24 hours)
-            "systemConfig",
-            "permissions",
-            "lookupData",
-            "auditLogs"
-        ));
+                // Very long-term caches (24 hours)
+                "systemConfig",
+                "permissions",
+                "lookupData",
+                "auditLogs"));
 
         cacheManager.setAllowNullValues(false);
         return cacheManager;
@@ -69,12 +68,11 @@ public class CacheConfig {
     public CacheManager sessionCacheManager() {
         ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager();
         cacheManager.setCacheNames(Arrays.asList(
-            "userSessions",
-            "authTokens",
-            "rateLimits",
-            "temporaryData",
-            "apiKeys"
-        ));
+                "userSessions",
+                "authTokens",
+                "rateLimits",
+                "temporaryData",
+                "apiKeys"));
         return cacheManager;
     }
 
@@ -85,13 +83,12 @@ public class CacheConfig {
     public CacheManager realTimeCacheManager() {
         ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager();
         cacheManager.setCacheNames(Arrays.asList(
-            "liveUAVData",
-            "flightTelemetry",
-            "sensorReadings",
-            "alertsQueue",
-            "notifications",
-            "emergencyAlerts"
-        ));
+                "liveUAVData",
+                "flightTelemetry",
+                "sensorReadings",
+                "alertsQueue",
+                "notifications",
+                "emergencyAlerts"));
         return cacheManager;
     }
 }

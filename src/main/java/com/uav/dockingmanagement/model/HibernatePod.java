@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
-public class HibernatePod {  //休眠仓类
+public class HibernatePod { // 休眠仓类
     private static final Logger logger = LoggerFactory.getLogger(HibernatePod.class);
 
     private int maxCapacity = 5; // 休眠仓最大容量
@@ -22,7 +22,8 @@ public class HibernatePod {  //休眠仓类
     private UAVRepository uavRepository;
 
     /**
-     * Initialize hibernate pod by loading UAVs from database that are marked as in hibernate pod
+     * Initialize hibernate pod by loading UAVs from database that are marked as in
+     * hibernate pod
      */
     @PostConstruct
     public void initializeFromDatabase() {
@@ -43,7 +44,8 @@ public class HibernatePod {  //休眠仓类
                 logger.info("Initialized HibernatePod with {} UAVs from database", uavs.size());
             } catch (Exception e) {
                 // This can happen during tests or when database tables don't exist yet
-                logger.warn("Could not initialize HibernatePod from database: {}. Starting with empty pod.", e.getMessage());
+                logger.warn("Could not initialize HibernatePod from database: {}. Starting with empty pod.",
+                        e.getMessage());
                 uavs.clear();
             }
         }

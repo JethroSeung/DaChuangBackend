@@ -193,68 +193,73 @@ public class DockingStationService {
      */
     public Map<String, Object> getStationStatistics() {
         Map<String, Object> stats = new HashMap<>();
-        
+
         try {
             // Basic counts
             long totalStations = dockingStationRepository.count();
             long operationalStations = dockingStationRepository.countByStatus(DockingStation.StationStatus.OPERATIONAL);
             long maintenanceStations = dockingStationRepository.countByStatus(DockingStation.StationStatus.MAINTENANCE);
             long offlineStations = dockingStationRepository.countByStatus(DockingStation.StationStatus.OFFLINE);
-            
+
             stats.put("totalStations", totalStations);
             stats.put("operationalStations", operationalStations);
             stats.put("maintenanceStations", maintenanceStations);
             stats.put("offlineStations", offlineStations);
-            
+
             // Capacity statistics
             Integer totalCapacity = dockingStationRepository.getTotalCapacity();
             Integer currentOccupancy = dockingStationRepository.getCurrentTotalOccupancy();
-            
+
             stats.put("totalCapacity", totalCapacity != null ? totalCapacity : 0);
             stats.put("currentOccupancy", currentOccupancy != null ? currentOccupancy : 0);
-            stats.put("availableCapacity", (totalCapacity != null ? totalCapacity : 0) - (currentOccupancy != null ? currentOccupancy : 0));
-            
+            stats.put("availableCapacity",
+                    (totalCapacity != null ? totalCapacity : 0) - (currentOccupancy != null ? currentOccupancy : 0));
+
             if (totalCapacity != null && totalCapacity > 0) {
                 double occupancyRate = (double) (currentOccupancy != null ? currentOccupancy : 0) / totalCapacity * 100;
                 stats.put("occupancyRate", Math.round(occupancyRate * 100.0) / 100.0);
             } else {
                 stats.put("occupancyRate", 0.0);
             }
-            
+
             // Station type breakdown
-            long standardStations = dockingStationRepository.findByStationType(DockingStation.StationType.STANDARD).size();
-            long chargingStations = dockingStationRepository.findByStationType(DockingStation.StationType.CHARGING).size();
-            long maintenanceStationsType = dockingStationRepository.findByStationType(DockingStation.StationType.MAINTENANCE).size();
-            long emergencyStations = dockingStationRepository.findByStationType(DockingStation.StationType.EMERGENCY).size();
-            
+            long standardStations = dockingStationRepository.findByStationType(DockingStation.StationType.STANDARD)
+                    .size();
+            long chargingStations = dockingStationRepository.findByStationType(DockingStation.StationType.CHARGING)
+                    .size();
+            long maintenanceStationsType = dockingStationRepository
+                    .findByStationType(DockingStation.StationType.MAINTENANCE).size();
+            long emergencyStations = dockingStationRepository.findByStationType(DockingStation.StationType.EMERGENCY)
+                    .size();
+
             Map<String, Long> stationTypes = new HashMap<>();
             stationTypes.put("STANDARD", standardStations);
             stationTypes.put("CHARGING", chargingStations);
             stationTypes.put("MAINTENANCE", maintenanceStationsType);
             stationTypes.put("EMERGENCY", emergencyStations);
             stats.put("stationTypes", stationTypes);
-            
+
             // Feature availability
             long chargingAvailable = dockingStationRepository.findByChargingAvailableTrue().size();
             long maintenanceAvailable = dockingStationRepository.findByMaintenanceAvailableTrue().size();
             long weatherProtected = dockingStationRepository.findByWeatherProtectedTrue().size();
-            
+
             Map<String, Long> features = new HashMap<>();
             features.put("chargingAvailable", chargingAvailable);
             features.put("maintenanceAvailable", maintenanceAvailable);
             features.put("weatherProtected", weatherProtected);
             stats.put("features", features);
-            
+
             // Stations needing maintenance
             List<DockingStation> stationsNeedingMaintenance = dockingStationRepository.findStationsNeedingMaintenance();
             stats.put("stationsNeedingMaintenance", stationsNeedingMaintenance.size());
-            
+
             stats.put("timestamp", LocalDateTime.now());
-            
+
         } catch (Exception e) {
             logger.error("Error getting station statistics: {}", e.getMessage(), e);
         }
-        
+
         return stats;
     }
 
@@ -264,7 +269,7 @@ public class DockingStationService {
     @Transactional
     public Map<String, Object> dockUAV(Integer uavId, Long stationId, String purpose) {
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
             // Validate UAV
             Optional<UAV> uavOpt = uavRepository.findById(uavId);
@@ -273,7 +278,7 @@ public class DockingStationService {
                 result.put("message", "UAV not found");
                 return result;
             }
-            
+
             // Validate station
             Optional<DockingStation> stationOpt = dockingStationRepository.findById(stationId);
             if (stationOpt.isEmpty()) {
@@ -281,10 +286,10 @@ public class DockingStationService {
                 result.put("message", "Docking station not found");
                 return result;
             }
-            
+
             UAV uav = uavOpt.get();
             DockingStation station = stationOpt.get();
-            
+
             // Check if UAV is already docked
             Optional<DockingRecord> existingDocking = dockingRecordRepository.findCurrentDockingByUavId(uavId);
             if (existingDocking.isPresent()) {
@@ -292,7 +297,7 @@ public class DockingStationService {
                 result.put("message", "UAV is already docked at another station");
                 return result;
             }
-            
+
             // Check if station is full first (more specific error)
             if (station.isFull()) {
                 result.put("success", false);
@@ -313,21 +318,21 @@ public class DockingStationService {
                 result.put("message", "Station is not available for docking");
                 return result;
             }
-            
+
             // Create docking record
             DockingRecord dockingRecord = new DockingRecord(uav, station, purpose);
-            
+
             // Set battery level if available
             if (uav.getBatteryStatus() != null) {
                 dockingRecord.setBatteryLevelOnArrival(uav.getBatteryStatus().getCurrentChargePercentage());
             }
-            
+
             dockingRecordRepository.save(dockingRecord);
-            
+
             // Update station occupancy
             station.setCurrentOccupancy(station.getCurrentOccupancy() + 1);
             dockingStationRepository.save(station);
-            
+
             // Update UAV status if needed
             if (purpose != null && purpose.equalsIgnoreCase("CHARGING")) {
                 uav.setOperationalStatus(UAV.OperationalStatus.CHARGING);
@@ -335,22 +340,22 @@ public class DockingStationService {
                 uav.setOperationalStatus(UAV.OperationalStatus.MAINTENANCE);
             }
             uavRepository.save(uav);
-            
+
             // Broadcast docking event
             broadcastDockingEvent("DOCKED", uav, station, dockingRecord);
-            
+
             result.put("success", true);
             result.put("message", "UAV docked successfully");
             result.put("dockingRecord", dockingRecord);
-            
+
             logger.info("UAV {} docked at station {} for {}", uav.getRfidTag(), station.getName(), purpose);
-            
+
         } catch (Exception e) {
             logger.error("Error docking UAV: {}", e.getMessage(), e);
             result.put("success", false);
             result.put("message", "Error docking UAV: " + e.getMessage());
         }
-        
+
         return result;
     }
 
@@ -360,7 +365,7 @@ public class DockingStationService {
     @Transactional
     public Map<String, Object> undockUAV(Integer uavId) {
         Map<String, Object> result = new HashMap<>();
-        
+
         try {
             // Find current docking
             Optional<DockingRecord> dockingOpt = dockingRecordRepository.findCurrentDockingByUavId(uavId);
@@ -369,45 +374,45 @@ public class DockingStationService {
                 result.put("message", "UAV is not currently docked");
                 return result;
             }
-            
+
             DockingRecord dockingRecord = dockingOpt.get();
             UAV uav = dockingRecord.getUav();
             DockingStation station = dockingRecord.getDockingStation();
-            
+
             // Complete docking record
             dockingRecord.completeDocking();
-            
+
             // Set battery level on departure if available
             if (uav.getBatteryStatus() != null) {
                 dockingRecord.setBatteryLevelOnDeparture(uav.getBatteryStatus().getCurrentChargePercentage());
             }
-            
+
             dockingRecordRepository.save(dockingRecord);
-            
+
             // Update station occupancy
             station.setCurrentOccupancy(Math.max(0, station.getCurrentOccupancy() - 1));
             dockingStationRepository.save(station);
-            
+
             // Update UAV status
             uav.setOperationalStatus(UAV.OperationalStatus.READY);
             uavRepository.save(uav);
-            
+
             // Broadcast undocking event
             broadcastDockingEvent("UNDOCKED", uav, station, dockingRecord);
-            
+
             result.put("success", true);
             result.put("message", "UAV undocked successfully");
             result.put("dockingRecord", dockingRecord);
-            
-            logger.info("UAV {} undocked from station {} after {} minutes", 
-                       uav.getRfidTag(), station.getName(), dockingRecord.getDockingDurationMinutes());
-            
+
+            logger.info("UAV {} undocked from station {} after {} minutes",
+                    uav.getRfidTag(), station.getName(), dockingRecord.getDockingDurationMinutes());
+
         } catch (Exception e) {
             logger.error("Error undocking UAV: {}", e.getMessage(), e);
             result.put("success", false);
             result.put("message", "Error undocking UAV: " + e.getMessage());
         }
-        
+
         return result;
     }
 
@@ -417,43 +422,43 @@ public class DockingStationService {
     public Optional<DockingStation> findOptimalStation(Double uavLatitude, Double uavLongitude, String purpose) {
         try {
             List<DockingStation> availableStations = dockingStationRepository.findAvailableStations();
-            
+
             if (availableStations.isEmpty()) {
                 return Optional.empty();
             }
-            
+
             // Filter by purpose if specified
             if (purpose != null) {
                 if (purpose.equalsIgnoreCase("CHARGING")) {
                     availableStations = availableStations.stream()
-                        .filter(DockingStation::getChargingAvailable)
-                        .toList();
+                            .filter(DockingStation::getChargingAvailable)
+                            .toList();
                 } else if (purpose.equalsIgnoreCase("MAINTENANCE")) {
                     availableStations = availableStations.stream()
-                        .filter(DockingStation::getMaintenanceAvailable)
-                        .toList();
+                            .filter(DockingStation::getMaintenanceAvailable)
+                            .toList();
                 }
             }
-            
+
             if (availableStations.isEmpty()) {
                 return Optional.empty();
             }
-            
+
             // Find nearest station
             DockingStation nearestStation = null;
             double minDistance = Double.MAX_VALUE;
-            
+
             for (DockingStation station : availableStations) {
-                double distance = calculateDistance(uavLatitude, uavLongitude, 
-                                                  station.getLatitude(), station.getLongitude());
+                double distance = calculateDistance(uavLatitude, uavLongitude,
+                        station.getLatitude(), station.getLongitude());
                 if (distance < minDistance) {
                     minDistance = distance;
                     nearestStation = station;
                 }
             }
-            
+
             return Optional.ofNullable(nearestStation);
-            
+
         } catch (Exception e) {
             logger.error("Error finding optimal station: {}", e.getMessage(), e);
             return Optional.empty();
@@ -465,14 +470,14 @@ public class DockingStationService {
      */
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         final int R = 6371; // Radius of the earth in km
-        
+
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+                        * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        
+
         return R * c; // Distance in km
     }
 
@@ -491,13 +496,13 @@ public class DockingStationService {
             event.put("stationName", station.getName());
             event.put("purpose", dockingRecord.getPurpose());
             event.put("dockingDuration", dockingRecord.getDockingDurationMinutes());
-            
+
             // Broadcast to all clients
             messagingTemplate.convertAndSend("/topic/docking-events", event);
-            
+
             // Broadcast to station-specific channel
             messagingTemplate.convertAndSend("/topic/station/" + station.getId() + "/events", event);
-            
+
         } catch (Exception e) {
             logger.error("Error broadcasting docking event: {}", e.getMessage(), e);
         }
@@ -508,39 +513,39 @@ public class DockingStationService {
      */
     public Map<String, Object> getStationUtilizationReport(LocalDateTime startTime, LocalDateTime endTime) {
         Map<String, Object> report = new HashMap<>();
-        
+
         try {
             List<Object[]> utilizationStats = dockingRecordRepository.getStationUtilizationStats(startTime, endTime);
-            
+
             Map<String, Map<String, Object>> stationStats = new HashMap<>();
-            
+
             for (Object[] stat : utilizationStats) {
                 Long stationId = (Long) stat[0];
                 Long dockingCount = (Long) stat[1];
                 Double avgDuration = (Double) stat[2];
-                
+
                 Optional<DockingStation> stationOpt = dockingStationRepository.findById(stationId);
                 if (stationOpt.isPresent()) {
                     DockingStation station = stationOpt.get();
-                    
+
                     Map<String, Object> stationData = new HashMap<>();
                     stationData.put("stationName", station.getName());
                     stationData.put("dockingCount", dockingCount);
                     stationData.put("averageDurationMinutes", avgDuration != null ? avgDuration : 0.0);
                     stationData.put("maxCapacity", station.getMaxCapacity());
-                    
+
                     stationStats.put(stationId.toString(), stationData);
                 }
             }
-            
+
             report.put("stationStats", stationStats);
             report.put("period", Map.of("start", startTime, "end", endTime));
             report.put("generatedAt", LocalDateTime.now());
-            
+
         } catch (Exception e) {
             logger.error("Error generating station utilization report: {}", e.getMessage(), e);
         }
-        
+
         return report;
     }
 
@@ -551,10 +556,10 @@ public class DockingStationService {
     public void initializeSampleStations() {
         try {
             long count = dockingStationRepository.count();
-            
+
             if (count == 0) {
                 logger.info("Initializing sample docking stations...");
-                
+
                 // Create sample stations
                 DockingStation station1 = new DockingStation("Central Hub", 40.7128, -74.0060, 10);
                 station1.setDescription("Main docking facility in downtown area");
@@ -563,14 +568,14 @@ public class DockingStationService {
                 station1.setMaintenanceAvailable(true);
                 station1.setWeatherProtected(true);
                 station1.setSecurityLevel("HIGH");
-                
+
                 DockingStation station2 = new DockingStation("North Terminal", 40.7589, -73.9851, 5);
                 station2.setDescription("Secondary facility in north district");
                 station2.setStationType(DockingStation.StationType.STANDARD);
                 station2.setChargingAvailable(true);
                 station2.setWeatherProtected(false);
                 station2.setSecurityLevel("MEDIUM");
-                
+
                 DockingStation station3 = new DockingStation("Emergency Station Alpha", 40.6892, -74.0445, 3);
                 station3.setDescription("Emergency response docking point");
                 station3.setStationType(DockingStation.StationType.EMERGENCY);
@@ -578,14 +583,14 @@ public class DockingStationService {
                 station3.setMaintenanceAvailable(false);
                 station3.setWeatherProtected(true);
                 station3.setSecurityLevel("HIGH");
-                
+
                 dockingStationRepository.save(station1);
                 dockingStationRepository.save(station2);
                 dockingStationRepository.save(station3);
-                
+
                 logger.info("Sample docking stations created successfully");
             }
-            
+
         } catch (Exception e) {
             logger.error("Error initializing sample stations: {}", e.getMessage(), e);
         }
