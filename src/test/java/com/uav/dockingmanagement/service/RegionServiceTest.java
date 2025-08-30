@@ -148,7 +148,7 @@ class RegionServiceTest {
     void testGetUAVsByRegionWithFallback() {
         // Simulate exception in primary method, should use fallback
         when(uavRepository.findByRegionId(1)).thenThrow(new RuntimeException("Database error"));
-        
+
         testUAV.getRegions().add(testRegion);
         List<UAV> allUAVs = Arrays.asList(testUAV);
         when(uavRepository.findAllWithRegions()).thenReturn(allUAVs);
@@ -242,7 +242,7 @@ class RegionServiceTest {
         assertEquals(5L, result.get("totalRegions"));
         assertEquals(10L, result.get("totalUAVs"));
         assertNotNull(result.get("timestamp"));
-        
+
         verify(regionRepository, times(1)).count();
         verify(uavRepository, times(1)).count();
     }
@@ -302,12 +302,12 @@ class RegionServiceTest {
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        
+
         Map<String, Object> regionData = result.get(0);
         assertEquals(1, regionData.get("id"));
         assertEquals("Test Region", regionData.get("name"));
         assertEquals(1, regionData.get("uavCount"));
-        
+
         verify(regionRepository, times(1)).findAll();
         verify(uavRepository, times(1)).findByRegionId(1);
     }
@@ -391,6 +391,5 @@ class RegionServiceTest {
         verify(regionRepository, times(3)).findByRegionName(anyString());
         verify(regionRepository, times(2)).save(any(Region.class));
     }
-
 
 }

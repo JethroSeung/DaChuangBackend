@@ -50,13 +50,18 @@ public class TestDataInitializer {
         DockingStation station3 = createTestDockingStation(3L, "Test Station 3", 40.7505, -73.9934, 4, 2, region2);
 
         // Create test UAVs
-        UAV uav1 = createTestUAV(1L, "UAV001", "DJI Phantom 4", "DJI", "Test Owner 1", "RFID001", 40.7128, -74.0060, 100.0);
-        UAV uav2 = createTestUAV(2L, "UAV002", "DJI Mavic Pro", "DJI", "Test Owner 2", "RFID002", 40.7589, -73.9851, 150.0);
-        UAV uav3 = createTestUAV(3L, "UAV003", "Parrot Anafi", "Parrot", "Test Owner 3", "RFID003", 40.7505, -73.9934, 0.0);
+        UAV uav1 = createTestUAV(1L, "UAV001", "DJI Phantom 4", "DJI", "Test Owner 1", "RFID001", 40.7128, -74.0060,
+                100.0);
+        UAV uav2 = createTestUAV(2L, "UAV002", "DJI Mavic Pro", "DJI", "Test Owner 2", "RFID002", 40.7589, -73.9851,
+                150.0);
+        UAV uav3 = createTestUAV(3L, "UAV003", "Parrot Anafi", "Parrot", "Test Owner 3", "RFID003", 40.7505, -73.9934,
+                0.0);
 
         // Create test geofences
-        Geofence geofence1 = createTestGeofence(1L, "Test Geofence 1", "Test restricted area", 40.7128, -74.0060, 1000, region1);
-        Geofence geofence2 = createTestGeofence(2L, "Test Geofence 2", "Test safe zone", 40.7589, -73.9851, 500, region1);
+        Geofence geofence1 = createTestGeofence(1L, "Test Geofence 1", "Test restricted area", 40.7128, -74.0060, 1000,
+                region1);
+        Geofence geofence2 = createTestGeofence(2L, "Test Geofence 2", "Test safe zone", 40.7589, -73.9851, 500,
+                region1);
 
         // Create test location history
         createTestLocationHistory(1L, uav1, 40.7128, -74.0060, 100.0);
@@ -95,7 +100,8 @@ public class TestDataInitializer {
         return regionRepository.save(region);
     }
 
-    private DockingStation createTestDockingStation(Long id, String name, double lat, double lon, int capacity, int occupancy, Region region) {
+    private DockingStation createTestDockingStation(Long id, String name, double lat, double lon, int capacity,
+            int occupancy, Region region) {
         DockingStation station = new DockingStation();
         station.setName(name);
         station.setLatitude(lat);
@@ -107,7 +113,8 @@ public class TestDataInitializer {
         return dockingStationRepository.save(station);
     }
 
-    private UAV createTestUAV(Long id, String serialNumber, String model, String manufacturer, String owner, String rfidTag, double lat, double lon, double alt) {
+    private UAV createTestUAV(Long id, String serialNumber, String model, String manufacturer, String owner,
+            String rfidTag, double lat, double lon, double alt) {
         UAV uav = new UAV();
         uav.setSerialNumber(serialNumber);
         uav.setModel(model);
@@ -132,7 +139,8 @@ public class TestDataInitializer {
         return uavRepository.save(uav);
     }
 
-    private Geofence createTestGeofence(Long id, String name, String description, double lat, double lon, int radius, Region region) {
+    private Geofence createTestGeofence(Long id, String name, String description, double lat, double lon, int radius,
+            Region region) {
         Geofence geofence = new Geofence();
         geofence.setName(name);
         geofence.setDescription(description);

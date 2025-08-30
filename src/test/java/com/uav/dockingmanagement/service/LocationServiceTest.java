@@ -75,7 +75,8 @@ class LocationServiceTest {
     void testUpdateUAVLocation() {
         when(uavRepository.save(any(UAV.class))).thenReturn(testUAV);
         when(locationHistoryRepository.save(any(LocationHistory.class))).thenReturn(testLocationHistory);
-        // No need to stub geofenceService.checkGeofenceViolations as it's called internally
+        // No need to stub geofenceService.checkGeofenceViolations as it's called
+        // internally
 
         locationService.updateUAVLocation(testUAV, 40.7130, -74.0058, 55.0);
 
@@ -155,19 +156,21 @@ class LocationServiceTest {
 
     @Test
     void testGetNearbyUAVs() {
-        when(locationHistoryRepository.findLocationsNearPoint(eq(40.7128), eq(-74.0060), eq(1000.0), any(LocalDateTime.class)))
-            .thenReturn(Arrays.asList(testLocationHistory));
+        when(locationHistoryRepository.findLocationsNearPoint(eq(40.7128), eq(-74.0060), eq(1000.0),
+                any(LocalDateTime.class)))
+                .thenReturn(Arrays.asList(testLocationHistory));
 
         List<Map<String, Object>> result = locationService.getNearbyUAVs(40.7128, -74.0060, 1000.0);
 
         assertEquals(1, result.size());
-        verify(locationHistoryRepository, times(1)).findLocationsNearPoint(eq(40.7128), eq(-74.0060), eq(1000.0), any(LocalDateTime.class));
+        verify(locationHistoryRepository, times(1)).findLocationsNearPoint(eq(40.7128), eq(-74.0060), eq(1000.0),
+                any(LocalDateTime.class));
     }
 
     @Test
     void testCalculateDistance() {
         double distance = locationService.calculateDistance(40.7128, -74.0060, 40.7130, -74.0058);
-        
+
         assertTrue(distance > 0);
         assertTrue(distance < 1000); // Should be less than 1km for nearby points
     }
@@ -175,7 +178,7 @@ class LocationServiceTest {
     @Test
     void testCalculateDistanceSamePoint() {
         double distance = locationService.calculateDistance(40.7128, -74.0060, 40.7128, -74.0060);
-        
+
         assertEquals(0.0, distance, 0.001);
     }
 
@@ -183,10 +186,11 @@ class LocationServiceTest {
     void testIsWithinRadius() {
         // Test point within radius
         assertTrue(locationService.isWithinRadius(40.7128, -74.0060, 40.7130, -74.0058, 1000.0));
-        
-        // Test point outside radius (distance is ~100km, so 50km radius should return false)
+
+        // Test point outside radius (distance is ~100km, so 50km radius should return
+        // false)
         assertFalse(locationService.isWithinRadius(40.7128, -74.0060, 41.0000, -75.0000, 50.0));
-        
+
         // Test same point
         assertTrue(locationService.isWithinRadius(40.7128, -74.0060, 40.7128, -74.0060, 0.0));
     }
@@ -242,7 +246,8 @@ class LocationServiceTest {
     void testCheckGeofenceViolations() {
         List<Geofence> activeGeofences = Arrays.asList(testGeofence);
         when(geofenceRepository.findCurrentlyActiveGeofences(any(LocalDateTime.class))).thenReturn(activeGeofences);
-        // Set up test geofence properties - point is outside inclusion geofence, so it's a violation
+        // Set up test geofence properties - point is outside inclusion geofence, so
+        // it's a violation
         testGeofence.setBoundaryType(Geofence.BoundaryType.INCLUSION);
 
         locationService.checkGeofenceViolations(testUAV, 40.7128, -74.0060, 50.0);
@@ -254,7 +259,8 @@ class LocationServiceTest {
     @Test
     void testCheckGeofenceViolationsNoViolations() {
         // No active geofences means no violations
-        when(geofenceRepository.findCurrentlyActiveGeofences(any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+        when(geofenceRepository.findCurrentlyActiveGeofences(any(LocalDateTime.class)))
+                .thenReturn(Collections.emptyList());
 
         locationService.checkGeofenceViolations(testUAV, 40.7128, -74.0060, 50.0);
 
@@ -285,19 +291,21 @@ class LocationServiceTest {
     @Test
     void testGetNearbyUAVsEmpty() {
         when(locationHistoryRepository.findLocationsNearPoint(eq(50.0), eq(0.0), eq(1000.0), any(LocalDateTime.class)))
-            .thenReturn(Collections.emptyList());
+                .thenReturn(Collections.emptyList());
 
         List<Map<String, Object>> result = locationService.getNearbyUAVs(50.0, 0.0, 1000.0);
 
         assertTrue(result.isEmpty());
-        verify(locationHistoryRepository, times(1)).findLocationsNearPoint(eq(50.0), eq(0.0), eq(1000.0), any(LocalDateTime.class));
+        verify(locationHistoryRepository, times(1)).findLocationsNearPoint(eq(50.0), eq(0.0), eq(1000.0),
+                any(LocalDateTime.class));
     }
 
     @Test
     void testUpdateUAVLocationNullValues() {
         when(uavRepository.save(any(UAV.class))).thenReturn(testUAV);
         when(locationHistoryRepository.save(any(LocationHistory.class))).thenReturn(testLocationHistory);
-        when(geofenceRepository.findCurrentlyActiveGeofences(any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+        when(geofenceRepository.findCurrentlyActiveGeofences(any(LocalDateTime.class)))
+                .thenReturn(Collections.emptyList());
 
         // Test with null altitude
         locationService.updateUAVLocation(testUAV, 40.7130, -74.0058, null);
@@ -326,7 +334,8 @@ class LocationServiceTest {
             assertNotNull(history.getTimestamp());
             return history;
         });
-        when(geofenceRepository.findCurrentlyActiveGeofences(any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+        when(geofenceRepository.findCurrentlyActiveGeofences(any(LocalDateTime.class)))
+                .thenReturn(Collections.emptyList());
 
         locationService.updateUAVLocation(testUAV, 40.7130, -74.0058, 55.0);
 

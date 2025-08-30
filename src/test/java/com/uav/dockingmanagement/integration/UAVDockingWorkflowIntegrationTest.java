@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @AutoConfigureWebMvc
 @ActiveProfiles("test")
-@Import({TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class})
+@Import({ TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class })
 @Transactional
 class UAVDockingWorkflowIntegrationTest {
 
@@ -102,7 +102,7 @@ class UAVDockingWorkflowIntegrationTest {
 
         // Verify the region was added
         assertTrue(testUAV.getRegions().contains(testRegion),
-                  "UAV should contain the test region after association");
+                "UAV should contain the test region after association");
 
         // Create test docking station
         testStation = new DockingStation();
@@ -154,13 +154,13 @@ class UAVDockingWorkflowIntegrationTest {
 
         // Step 5: Find optimal docking station
         Optional<DockingStation> optimalStation = dockingStationService.findOptimalStation(
-            40.7129, -74.0059, "CHARGING");
+                40.7129, -74.0059, "CHARGING");
         assertTrue(optimalStation.isPresent());
         assertEquals(testStation.getId(), optimalStation.get().getId());
 
         // Step 6: Dock the UAV
         Map<String, Object> dockingResult = dockingStationService.dockUAV(
-            testUAV.getId(), testStation.getId(), "CHARGING");
+                testUAV.getId(), testStation.getId(), "CHARGING");
         assertTrue((Boolean) dockingResult.get("success"));
         assertEquals("UAV docked successfully", dockingResult.get("message"));
 
@@ -227,7 +227,7 @@ class UAVDockingWorkflowIntegrationTest {
         dockingStationRepository.save(testStation);
 
         Map<String, Object> result = dockingStationService.dockUAV(
-            testUAV.getId(), testStation.getId(), "CHARGING");
+                testUAV.getId(), testStation.getId(), "CHARGING");
         assertFalse((Boolean) result.get("success"));
         assertTrue(result.get("message").toString().contains("full"));
 
@@ -316,7 +316,7 @@ class UAVDockingWorkflowIntegrationTest {
 
         // Check if our test UAV is in the nearby UAVs by ID
         boolean testUAVFound = nearbyUAVMaps.stream()
-            .anyMatch(map -> Objects.equals(testUAV.getId(), map.get("id")));
+                .anyMatch(map -> Objects.equals(testUAV.getId(), map.get("id")));
         assertTrue(testUAVFound, "Test UAV should be found in nearby UAVs");
 
         // Test UAVs in area
@@ -325,7 +325,7 @@ class UAVDockingWorkflowIntegrationTest {
 
         // Check if our test UAV is in the area by ID
         boolean testUAVInArea = uavsInAreaMaps.stream()
-            .anyMatch(map -> Objects.equals(testUAV.getId(), map.get("id")));
+                .anyMatch(map -> Objects.equals(testUAV.getId(), map.get("id")));
         assertTrue(testUAVInArea, "Test UAV should be found in the specified area");
     }
 

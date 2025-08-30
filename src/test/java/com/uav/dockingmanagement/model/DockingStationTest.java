@@ -122,7 +122,7 @@ class DockingStationTest {
     void testStationStatusEnum() {
         // Test all status values
         assertEquals(5, DockingStation.StationStatus.values().length);
-        
+
         assertNotNull(DockingStation.StationStatus.OPERATIONAL);
         assertNotNull(DockingStation.StationStatus.MAINTENANCE);
         assertNotNull(DockingStation.StationStatus.OUT_OF_SERVICE);
@@ -134,7 +134,7 @@ class DockingStationTest {
     void testStationTypeEnum() {
         // Test all type values
         assertEquals(5, DockingStation.StationType.values().length);
-        
+
         assertNotNull(DockingStation.StationType.STANDARD);
         assertNotNull(DockingStation.StationType.CHARGING);
         assertNotNull(DockingStation.StationType.MAINTENANCE);
@@ -145,7 +145,7 @@ class DockingStationTest {
     @Test
     void testDefaultValues() {
         DockingStation newStation = new DockingStation();
-        
+
         assertEquals(0, newStation.getCurrentOccupancy());
         assertEquals(DockingStation.StationStatus.OPERATIONAL, newStation.getStatus());
         assertEquals(DockingStation.StationType.STANDARD, newStation.getStationType());
@@ -209,16 +209,16 @@ class DockingStationTest {
     @Test
     void testTimestampFields() {
         DockingStation newStation = new DockingStation();
-        
+
         // Created and updated timestamps should be null initially
         assertNull(newStation.getCreatedAt());
         assertNull(newStation.getUpdatedAt());
-        
+
         // Test setting timestamps
         LocalDateTime now = LocalDateTime.now();
         newStation.setCreatedAt(now);
         newStation.setUpdatedAt(now);
-        
+
         assertEquals(now, newStation.getCreatedAt());
         assertEquals(now, newStation.getUpdatedAt());
     }
@@ -227,10 +227,10 @@ class DockingStationTest {
     void testMaintenanceFields() {
         LocalDateTime lastMaintenance = LocalDateTime.now().minusDays(30);
         LocalDateTime nextMaintenance = LocalDateTime.now().plusDays(30);
-        
+
         dockingStation.setLastMaintenanceDate(lastMaintenance);
         dockingStation.setNextMaintenanceDue(nextMaintenance);
-        
+
         assertEquals(lastMaintenance, dockingStation.getLastMaintenanceDate());
         assertEquals(nextMaintenance, dockingStation.getNextMaintenanceDue());
         assertFalse(dockingStation.needsMaintenance());
@@ -240,7 +240,7 @@ class DockingStationTest {
     void testOperationalHours() {
         dockingStation.setOperationalHours("24/7");
         assertEquals("24/7", dockingStation.getOperationalHours());
-        
+
         dockingStation.setOperationalHours("06:00-22:00");
         assertEquals("06:00-22:00", dockingStation.getOperationalHours());
     }
@@ -250,11 +250,11 @@ class DockingStationTest {
         // Test charging capability
         dockingStation.setChargingAvailable(false);
         assertFalse(dockingStation.getChargingAvailable());
-        
+
         // Test maintenance capability
         dockingStation.setMaintenanceAvailable(true);
         assertTrue(dockingStation.getMaintenanceAvailable());
-        
+
         // Test weather protection
         dockingStation.setWeatherProtected(false);
         assertFalse(dockingStation.getWeatherProtected());
@@ -264,14 +264,14 @@ class DockingStationTest {
     void testSecurityAndContact() {
         dockingStation.setSecurityLevel("HIGH");
         assertEquals("HIGH", dockingStation.getSecurityLevel());
-        
+
         dockingStation.setContactInfo("admin@station.com");
         assertEquals("admin@station.com", dockingStation.getContactInfo());
-        
+
         // Test null values
         dockingStation.setSecurityLevel(null);
         assertNull(dockingStation.getSecurityLevel());
-        
+
         dockingStation.setContactInfo(null);
         assertNull(dockingStation.getContactInfo());
     }

@@ -134,7 +134,8 @@ class FileUploadServiceTest {
 
         // Then
         assertEquals(2, files.size());
-        // Check that both uploaded files are in the list by checking the actual generated filenames
+        // Check that both uploaded files are in the list by checking the actual
+        // generated filenames
         String uploadedFilename1 = (String) result1.get("filename");
         String uploadedFilename2 = (String) result2.get("filename");
         assertTrue(files.stream().anyMatch(f -> uploadedFilename1.equals(f.get("filename"))));

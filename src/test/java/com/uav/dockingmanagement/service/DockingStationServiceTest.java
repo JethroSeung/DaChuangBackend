@@ -204,7 +204,7 @@ class DockingStationServiceTest {
         assertTrue((Boolean) result.get("success"));
         assertEquals("UAV docked successfully", result.get("message"));
         assertNotNull(result.get("dockingRecord"));
-        
+
         verify(uavRepository, times(1)).findById(1);
         verify(dockingStationRepository, times(1)).findById(1L);
         verify(dockingRecordRepository, times(1)).save(any(DockingRecord.class));
@@ -220,7 +220,7 @@ class DockingStationServiceTest {
 
         assertFalse((Boolean) result.get("success"));
         assertEquals("UAV not found", result.get("message"));
-        
+
         verify(uavRepository, times(1)).findById(999);
         verify(dockingStationRepository, never()).findById(anyLong());
     }
@@ -234,7 +234,7 @@ class DockingStationServiceTest {
 
         assertFalse((Boolean) result.get("success"));
         assertEquals("Docking station not found", result.get("message"));
-        
+
         verify(uavRepository, times(1)).findById(1);
         verify(dockingStationRepository, times(1)).findById(999L);
     }
@@ -249,7 +249,7 @@ class DockingStationServiceTest {
 
         assertFalse((Boolean) result.get("success"));
         assertTrue(result.get("message").toString().contains("full"));
-        
+
         verify(uavRepository, times(1)).findById(1);
         verify(dockingStationRepository, times(1)).findById(1L);
         verify(dockingRecordRepository, never()).save(any());
@@ -265,7 +265,7 @@ class DockingStationServiceTest {
 
         assertFalse((Boolean) result.get("success"));
         assertTrue(result.get("message").toString().contains("not operational"));
-        
+
         verify(uavRepository, times(1)).findById(1);
         verify(dockingStationRepository, times(1)).findById(1L);
         verify(dockingRecordRepository, never()).save(any());
@@ -383,10 +383,14 @@ class DockingStationServiceTest {
         when(dockingStationRepository.countByStatus(DockingStation.StationStatus.OFFLINE)).thenReturn(1L);
         when(dockingStationRepository.getTotalCapacity()).thenReturn(50);
         when(dockingStationRepository.getCurrentTotalOccupancy()).thenReturn(20);
-        when(dockingStationRepository.findByStationType(DockingStation.StationType.STANDARD)).thenReturn(Collections.emptyList());
-        when(dockingStationRepository.findByStationType(DockingStation.StationType.CHARGING)).thenReturn(Collections.emptyList());
-        when(dockingStationRepository.findByStationType(DockingStation.StationType.MAINTENANCE)).thenReturn(Collections.emptyList());
-        when(dockingStationRepository.findByStationType(DockingStation.StationType.EMERGENCY)).thenReturn(Collections.emptyList());
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.STANDARD))
+                .thenReturn(Collections.emptyList());
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.CHARGING))
+                .thenReturn(Collections.emptyList());
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.MAINTENANCE))
+                .thenReturn(Collections.emptyList());
+        when(dockingStationRepository.findByStationType(DockingStation.StationType.EMERGENCY))
+                .thenReturn(Collections.emptyList());
         when(dockingStationRepository.findStationsNeedingMaintenance()).thenReturn(Collections.emptyList());
 
         Map<String, Object> result = dockingStationService.getStationStatistics();

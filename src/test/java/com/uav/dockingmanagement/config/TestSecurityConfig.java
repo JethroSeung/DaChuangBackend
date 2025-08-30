@@ -9,7 +9,8 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Test security configuration that disables authentication for integration tests
+ * Test security configuration that disables authentication for integration
+ * tests
  * This allows tests to access all endpoints without authentication
  */
 @TestConfiguration
@@ -24,13 +25,12 @@ public class TestSecurityConfig {
     @Bean
     public SecurityFilterChain testFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(authz -> authz
-                .anyRequest().permitAll()
-            )
-            .httpBasic(AbstractHttpConfigurer::disable)
-            .formLogin(AbstractHttpConfigurer::disable)
-            .logout(AbstractHttpConfigurer::disable);
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authz -> authz
+                        .anyRequest().permitAll())
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .logout(AbstractHttpConfigurer::disable);
 
         return http.build();
     }

@@ -186,8 +186,7 @@ class DockingStationRepositoryTest {
         assertThat(result).hasSize(2);
         assertThat(result).extracting(DockingStation::getName)
                 .containsExactlyInAnyOrder("Central Station", "Emergency Response Station");
-        assertThat(result).allMatch(station ->
-                station.getStatus() == DockingStation.StationStatus.OPERATIONAL &&
+        assertThat(result).allMatch(station -> station.getStatus() == DockingStation.StationStatus.OPERATIONAL &&
                 station.getCurrentOccupancy() < station.getMaxCapacity());
     }
 
@@ -230,7 +229,7 @@ class DockingStationRepositoryTest {
         assertThat(result).allMatch(DockingStation::getChargingAvailable);
         assertThat(result).extracting(DockingStation::getName)
                 .containsExactlyInAnyOrder("Central Station", "Maintenance Hub",
-                                         "Fast Charging Station", "Emergency Response Station");
+                        "Fast Charging Station", "Emergency Response Station");
     }
 
     @Test
@@ -249,7 +248,8 @@ class DockingStationRepositoryTest {
     @Test
     @DisplayName("Should find stations within geographical area")
     void testFindStationsInArea() {
-        // Given - Define a bounding box around NYC (expanded to include all test stations)
+        // Given - Define a bounding box around NYC (expanded to include all test
+        // stations)
         Double minLat = 40.6800;
         Double maxLat = 40.8000;
         Double minLon = -74.1000;
@@ -261,8 +261,7 @@ class DockingStationRepositoryTest {
 
         // Then
         assertThat(result).hasSize(5); // All stations should be in this area
-        assertThat(result).allMatch(station ->
-                station.getLatitude() >= minLat && station.getLatitude() <= maxLat &&
+        assertThat(result).allMatch(station -> station.getLatitude() >= minLat && station.getLatitude() <= maxLat &&
                 station.getLongitude() >= minLon && station.getLongitude() <= maxLon);
     }
 
@@ -291,8 +290,7 @@ class DockingStationRepositoryTest {
         assertThat(result).hasSize(2);
         assertThat(result).extracting(DockingStation::getName)
                 .containsExactlyInAnyOrder("Maintenance Hub", "Offline Station");
-        assertThat(result).allMatch(station ->
-                station.getNextMaintenanceDue() != null &&
+        assertThat(result).allMatch(station -> station.getNextMaintenanceDue() != null &&
                 station.getNextMaintenanceDue().isBefore(LocalDateTime.now()));
     }
 
@@ -405,7 +403,7 @@ class DockingStationRepositoryTest {
         assertThat(result).allMatch(DockingStation::getWeatherProtected);
         assertThat(result).extracting(DockingStation::getName)
                 .containsExactlyInAnyOrder("Central Station", "Maintenance Hub",
-                                         "Fast Charging Station", "Emergency Response Station");
+                        "Fast Charging Station", "Emergency Response Station");
     }
 
     @Test
@@ -418,8 +416,7 @@ class DockingStationRepositoryTest {
         assertThat(result).hasSize(2);
         assertThat(result).extracting(DockingStation::getName)
                 .containsExactlyInAnyOrder("Central Station", "Emergency Response Station");
-        assertThat(result).allMatch(station ->
-                station.getCurrentOccupancy() < station.getMaxCapacity() &&
+        assertThat(result).allMatch(station -> station.getCurrentOccupancy() < station.getMaxCapacity() &&
                 station.getStatus() == DockingStation.StationStatus.OPERATIONAL);
     }
 
@@ -441,8 +438,8 @@ class DockingStationRepositoryTest {
         // When - Find operational charging stations
         List<DockingStation> operationalChargingStations = dockingStationRepository
                 .findStationsByCriteria(DockingStation.StationStatus.OPERATIONAL,
-                                      DockingStation.StationType.CHARGING,
-                                      true, null);
+                        DockingStation.StationType.CHARGING,
+                        true, null);
 
         // When - Find stations with maintenance capability
         List<DockingStation> maintenanceCapableStations = dockingStationRepository
@@ -451,8 +448,8 @@ class DockingStationRepositoryTest {
         // When - Find operational standard stations
         List<DockingStation> operationalStandardStations = dockingStationRepository
                 .findStationsByCriteria(DockingStation.StationStatus.OPERATIONAL,
-                                      DockingStation.StationType.STANDARD,
-                                      null, null);
+                        DockingStation.StationType.STANDARD,
+                        null, null);
 
         // Then
         assertThat(operationalChargingStations).hasSize(1);
@@ -552,8 +549,7 @@ class DockingStationRepositoryTest {
         assertThat(allStations).allMatch(station -> station.getCurrentOccupancy() != null);
         assertThat(allStations).allMatch(station -> station.getStatus() != null);
         assertThat(allStations).allMatch(station -> station.getStationType() != null);
-        assertThat(allStations).allMatch(station ->
-                station.getCurrentOccupancy() >= 0 &&
+        assertThat(allStations).allMatch(station -> station.getCurrentOccupancy() >= 0 &&
                 station.getCurrentOccupancy() <= station.getMaxCapacity());
     }
 
@@ -579,8 +575,7 @@ class DockingStationRepositoryTest {
 
         // Then
         assertThat(needsMaintenance).hasSize(2);
-        assertThat(needsMaintenance).allMatch(station ->
-                station.getNextMaintenanceDue() != null &&
+        assertThat(needsMaintenance).allMatch(station -> station.getNextMaintenanceDue() != null &&
                 station.getNextMaintenanceDue().isBefore(LocalDateTime.now()));
 
         // Verify specific stations

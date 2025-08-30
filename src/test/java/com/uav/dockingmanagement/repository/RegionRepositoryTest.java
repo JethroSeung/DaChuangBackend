@@ -102,7 +102,8 @@ class RegionRepositoryTest {
     @Test
     @DisplayName("Should find regions containing search term ignoring case")
     void testFindByRegionNameContainingIgnoreCase() {
-        // Note: H2 database has issues with LIKE ESCAPE characters in ContainingIgnoreCase queries
+        // Note: H2 database has issues with LIKE ESCAPE characters in
+        // ContainingIgnoreCase queries
         // This test documents the expected behavior but may fail with H2
         try {
             // When - Search for "america"
@@ -176,7 +177,8 @@ class RegionRepositoryTest {
     @Test
     @DisplayName("Should handle empty and null search terms")
     void testEmptyAndNullSearchTerms() {
-        // Note: H2 database has issues with LIKE ESCAPE characters in ContainingIgnoreCase queries
+        // Note: H2 database has issues with LIKE ESCAPE characters in
+        // ContainingIgnoreCase queries
         try {
             // When
             List<Region> emptySearch = regionRepository.findByRegionNameContainingIgnoreCase("");
@@ -202,7 +204,8 @@ class RegionRepositoryTest {
         entityManager.persistAndFlush(specialRegion2);
         entityManager.persistAndFlush(specialRegion3);
 
-        // Note: H2 database has issues with LIKE ESCAPE characters in ContainingIgnoreCase queries
+        // Note: H2 database has issues with LIKE ESCAPE characters in
+        // ContainingIgnoreCase queries
         try {
             // When
             List<Region> accentSearch = regionRepository.findByRegionNameContainingIgnoreCase("são");
@@ -233,7 +236,8 @@ class RegionRepositoryTest {
         entityManager.persistAndFlush(duplicate1);
         entityManager.persistAndFlush(duplicate2);
 
-        // When - Note: findByRegionName returns Optional and will throw exception if multiple results
+        // When - Note: findByRegionName returns Optional and will throw exception if
+        // multiple results
         try {
             Optional<Region> exactMatch = regionRepository.findByRegionName("Test Region");
             // This should not reach here with duplicates
@@ -275,7 +279,7 @@ class RegionRepositoryTest {
         assertThat(allRegions).allMatch(region -> !region.getRegionName().trim().isEmpty());
         assertThat(allRegions).extracting(Region::getRegionName)
                 .containsExactlyInAnyOrder("North America", "South America", "East Asia",
-                                         "West Europe", "Central Africa");
+                        "West Europe", "Central Africa");
     }
 
     @Test
@@ -299,7 +303,8 @@ class RegionRepositoryTest {
         assertThat(numbersFound).isPresent();
         assertThat(mixedFound).isPresent();
 
-        // Note: H2 database has issues with LIKE ESCAPE characters in ContainingIgnoreCase queries
+        // Note: H2 database has issues with LIKE ESCAPE characters in
+        // ContainingIgnoreCase queries
         try {
             List<Region> singleCharSearch = regionRepository.findByRegionNameContainingIgnoreCase("a");
             List<Region> numberSearch = regionRepository.findByRegionNameContainingIgnoreCase("123");
@@ -327,7 +332,8 @@ class RegionRepositoryTest {
         assertThat(found).isPresent();
         assertThat(found.get().getRegionName()).isEqualTo(longName);
 
-        // Note: H2 database has issues with LIKE ESCAPE characters in ContainingIgnoreCase queries
+        // Note: H2 database has issues with LIKE ESCAPE characters in
+        // ContainingIgnoreCase queries
         try {
             List<Region> containingSearch = regionRepository.findByRegionNameContainingIgnoreCase("AAA");
             assertThat(containingSearch).hasSize(1);
@@ -342,10 +348,11 @@ class RegionRepositoryTest {
     void testCaseInsensitiveOperations() {
         // Given
         String[] searchVariations = {
-            "america", "AMERICA", "America", "aMeRiCa", "AmErIcA"
+                "america", "AMERICA", "America", "aMeRiCa", "AmErIcA"
         };
 
-        // Note: H2 database has issues with LIKE ESCAPE characters in ContainingIgnoreCase queries
+        // Note: H2 database has issues with LIKE ESCAPE characters in
+        // ContainingIgnoreCase queries
         try {
             // When & Then
             for (String variation : searchVariations) {

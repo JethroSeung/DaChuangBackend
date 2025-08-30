@@ -38,7 +38,7 @@ import java.util.List;
 @SpringBootTest
 @AutoConfigureWebMvc
 @ActiveProfiles("test")
-@Import({TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class})
+@Import({ TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class })
 @Transactional
 public class UAVManagementSystemIntegrationTest {
 
@@ -71,7 +71,8 @@ public class UAVManagementSystemIntegrationTest {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
         objectMapper = new ObjectMapper();
 
-        // Initialize test data for each test (except for testStatistics which manages its own data)
+        // Initialize test data for each test (except for testStatistics which manages
+        // its own data)
         if (!isStatisticsTest()) {
             testDataInitializer.initializeTestData();
         }

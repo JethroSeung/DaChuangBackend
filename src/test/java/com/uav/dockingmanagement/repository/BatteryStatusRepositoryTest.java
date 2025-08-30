@@ -279,7 +279,8 @@ class BatteryStatusRepositoryTest {
 
         // Then
         assertThat(result).hasSize(2);
-        // Should include batteries with high maintenance cycles, poor health, or poor condition
+        // Should include batteries with high maintenance cycles, poor health, or poor
+        // condition
         assertThat(result).extracting(bs -> bs.getUav().getId())
                 .containsExactlyInAnyOrder(testUav2.getId(), testUav3.getId());
     }
@@ -300,7 +301,8 @@ class BatteryStatusRepositoryTest {
     @Test
     @DisplayName("Should find batteries by manufacturer containing text")
     void testFindByManufacturerContaining() {
-        // Note: H2 database has issues with LIKE ESCAPE characters in ContainingIgnoreCase queries
+        // Note: H2 database has issues with LIKE ESCAPE characters in
+        // ContainingIgnoreCase queries
         try {
             // When
             List<BatteryStatus> result = batteryStatusRepository
@@ -319,7 +321,8 @@ class BatteryStatusRepositoryTest {
     @Test
     @DisplayName("Should find batteries by model containing text")
     void testFindByModelContaining() {
-        // Note: H2 database has issues with LIKE ESCAPE characters in ContainingIgnoreCase queries
+        // Note: H2 database has issues with LIKE ESCAPE characters in
+        // ContainingIgnoreCase queries
         try {
             // When
             List<BatteryStatus> result = batteryStatusRepository
@@ -481,7 +484,8 @@ class BatteryStatusRepositoryTest {
         List<BatteryStatus> result = batteryStatusRepository.findStaleData(cutoffTime);
 
         // Then
-        // All our test data should be considered stale since it was created before cutoffTime
+        // All our test data should be considered stale since it was created before
+        // cutoffTime
         assertThat(result).hasSize(3);
     }
 
@@ -500,7 +504,8 @@ class BatteryStatusRepositoryTest {
     @Test
     @DisplayName("Should find batteries by serial number pattern")
     void testFindByBatterySerialNumberContaining() {
-        // Note: H2 database has issues with LIKE ESCAPE characters in ContainingIgnoreCase queries
+        // Note: H2 database has issues with LIKE ESCAPE characters in
+        // ContainingIgnoreCase queries
         try {
             // When
             List<BatteryStatus> result = batteryStatusRepository
@@ -679,7 +684,8 @@ class BatteryStatusRepositoryTest {
     @Test
     @DisplayName("Should handle null parameters gracefully")
     void testNullParameterHandling() {
-        // Note: H2 database has issues with LIKE ESCAPE characters in ContainingIgnoreCase queries
+        // Note: H2 database has issues with LIKE ESCAPE characters in
+        // ContainingIgnoreCase queries
         try {
             // When & Then
             List<BatteryStatus> manufacturerResult = batteryStatusRepository

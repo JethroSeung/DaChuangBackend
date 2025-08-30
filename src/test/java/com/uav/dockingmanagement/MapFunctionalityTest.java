@@ -36,7 +36,7 @@ import static org.hamcrest.Matchers.*;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import({TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class})
+@Import({ TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class })
 @Transactional
 public class MapFunctionalityTest {
 
@@ -99,7 +99,7 @@ public class MapFunctionalityTest {
 
         // Create test geofence
         testGeofence = Geofence.createCircularFence(
-            "Test Geofence", 40.7128, -74.0060, 1000.0, Geofence.BoundaryType.INCLUSION);
+                "Test Geofence", 40.7128, -74.0060, 1000.0, Geofence.BoundaryType.INCLUSION);
         testGeofence.setDescription("Test circular geofence");
         testGeofence.setPriorityLevel(2);
         testGeofence.setViolationAction("ALERT");
@@ -254,7 +254,7 @@ public class MapFunctionalityTest {
 
         // Test docking UAV
         Map<String, Object> dockingResult = dockingStationService.dockUAV(
-            testUAV.getId(), testStation.getId(), "CHARGING");
+                testUAV.getId(), testStation.getId(), "CHARGING");
         assertTrue((Boolean) dockingResult.get("success"));
 
         // Verify station occupancy increased

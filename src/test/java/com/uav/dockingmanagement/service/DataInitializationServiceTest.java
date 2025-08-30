@@ -303,7 +303,8 @@ class DataInitializationServiceTest {
         // When & Then - should not throw exception
         assertDoesNotThrow(() -> dataInitializationService.createAdditionalTestData());
 
-        // The method tries to create 10 UAVs (TEST-006 to TEST-015), each calling findByRfidTag once
+        // The method tries to create 10 UAVs (TEST-006 to TEST-015), each calling
+        // findByRfidTag once
         verify(uavRepository, times(10)).findByRfidTag(anyString());
     }
 

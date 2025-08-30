@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(UAVRestController.class)
 @ActiveProfiles("test")
-@Import({TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class})
+@Import({ TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class })
 class UAVRestControllerTest {
 
     @Autowired

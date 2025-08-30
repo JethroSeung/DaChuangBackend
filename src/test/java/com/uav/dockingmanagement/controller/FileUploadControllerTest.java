@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(FileUploadController.class)
 @ActiveProfiles("test")
-@Import({TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class})
+@Import({ TestRateLimitingConfig.class, TestSecurityConfig.class, TestWebConfig.class })
 class FileUploadControllerTest {
 
     @Autowired
@@ -55,8 +55,7 @@ class FileUploadControllerTest {
                 "message", "File uploaded successfully",
                 "filename", "test_123.txt",
                 "fileSize", 12L,
-                "uploadedAt", LocalDateTime.now()
-        );
+                "uploadedAt", LocalDateTime.now());
 
         when(fileUploadService.uploadFile(any(), eq("general"))).thenReturn(successResponse);
 
@@ -79,8 +78,7 @@ class FileUploadControllerTest {
 
         Map<String, Object> failureResponse = Map.of(
                 "success", false,
-                "message", "File type not allowed"
-        );
+                "message", "File type not allowed");
 
         when(fileUploadService.uploadFile(any(), eq("general"))).thenReturn(failureResponse);
 
@@ -107,8 +105,7 @@ class FileUploadControllerTest {
                 "message", "Uploaded 2 files successfully, 0 failed",
                 "totalFiles", 2,
                 "successCount", 2,
-                "failureCount", 0
-        );
+                "failureCount", 0);
 
         when(fileUploadService.uploadFiles(any(), eq("general"))).thenReturn(successResponse);
 
@@ -131,8 +128,7 @@ class FileUploadControllerTest {
                 "exists", true,
                 "filename", "test.txt",
                 "size", 1024L,
-                "contentType", "text/plain"
-        );
+                "contentType", "text/plain");
 
         when(fileUploadService.getFileInfo("test.txt", "general")).thenReturn(fileInfo);
 
@@ -163,8 +159,7 @@ class FileUploadControllerTest {
         // Given
         List<Map<String, Object>> files = List.of(
                 Map.of("filename", "file1.txt", "size", 1024L),
-                Map.of("filename", "file2.txt", "size", 2048L)
-        );
+                Map.of("filename", "file2.txt", "size", 2048L));
 
         when(fileUploadService.listFiles("general")).thenReturn(files);
 
@@ -212,8 +207,7 @@ class FileUploadControllerTest {
         Map<String, Object> successResponse = Map.of(
                 "success", true,
                 "message", "File uploaded successfully",
-                "filename", "manual_123.pdf"
-        );
+                "filename", "manual_123.pdf");
 
         when(fileUploadService.uploadFile(any(), eq("uav-docs/UAV001"))).thenReturn(successResponse);
 
@@ -236,8 +230,7 @@ class FileUploadControllerTest {
         Map<String, Object> successResponse = Map.of(
                 "success", true,
                 "message", "File uploaded successfully",
-                "filename", "maintenance_123.pdf"
-        );
+                "filename", "maintenance_123.pdf");
 
         when(fileUploadService.uploadFile(any(), eq("maintenance-reports/UAV001/MAINT001")))
                 .thenReturn(successResponse);
@@ -261,8 +254,7 @@ class FileUploadControllerTest {
         Map<String, Object> successResponse = Map.of(
                 "success", true,
                 "message", "File uploaded successfully",
-                "filename", "flight_data_123.csv"
-        );
+                "filename", "flight_data_123.csv");
 
         when(fileUploadService.uploadFile(any(), eq("flight-logs/FL001"))).thenReturn(successResponse);
 
@@ -284,8 +276,7 @@ class FileUploadControllerTest {
         Map<String, Object> successResponse = Map.of(
                 "success", true,
                 "message", "File uploaded successfully",
-                "filename", "config_123.json"
-        );
+                "filename", "config_123.json");
 
         when(fileUploadService.uploadFile(any(), eq("system-config/database"))).thenReturn(successResponse);
 
@@ -318,8 +309,7 @@ class FileUploadControllerTest {
 
         Map<String, Object> successResponse = Map.of(
                 "success", true,
-                "message", "File uploaded successfully"
-        );
+                "message", "File uploaded successfully");
 
         when(fileUploadService.uploadFile(any(), eq("general"))).thenReturn(successResponse);
 
@@ -338,8 +328,7 @@ class FileUploadControllerTest {
 
         Map<String, Object> successResponse = Map.of(
                 "success", true,
-                "message", "File uploaded successfully"
-        );
+                "message", "File uploaded successfully");
 
         when(fileUploadService.uploadFile(any(), eq("custom"))).thenReturn(successResponse);
 

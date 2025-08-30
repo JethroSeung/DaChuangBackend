@@ -286,9 +286,11 @@ class GeofenceServiceTest {
     @Test
     void testGetGeofencesNeedingAttention() {
         // Mock all the repository calls that getGeofencesNeedingAttention makes
-        when(geofenceRepository.findGeofencesExpiringSoon(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(Arrays.asList(testGeofence));
+        when(geofenceRepository.findGeofencesExpiringSoon(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(Arrays.asList(testGeofence));
         when(geofenceRepository.findGeofencesWithViolations()).thenReturn(Arrays.asList(testGeofence));
-        when(geofenceRepository.findGeofencesWithRecentViolations(any(LocalDateTime.class))).thenReturn(Arrays.asList(testGeofence));
+        when(geofenceRepository.findGeofencesWithRecentViolations(any(LocalDateTime.class)))
+                .thenReturn(Arrays.asList(testGeofence));
         when(geofenceRepository.findExpiredGeofences(any(LocalDateTime.class))).thenReturn(Arrays.asList(testGeofence));
 
         Map<String, Object> result = geofenceService.getGeofencesNeedingAttention();
@@ -300,7 +302,8 @@ class GeofenceServiceTest {
         assertTrue(result.containsKey("expired"));
         assertTrue(result.containsKey("timestamp"));
 
-        verify(geofenceRepository, times(1)).findGeofencesExpiringSoon(any(LocalDateTime.class), any(LocalDateTime.class));
+        verify(geofenceRepository, times(1)).findGeofencesExpiringSoon(any(LocalDateTime.class),
+                any(LocalDateTime.class));
         verify(geofenceRepository, times(1)).findGeofencesWithViolations();
         verify(geofenceRepository, times(1)).findGeofencesWithRecentViolations(any(LocalDateTime.class));
         verify(geofenceRepository, times(1)).findExpiredGeofences(any(LocalDateTime.class));
@@ -356,18 +359,24 @@ class GeofenceServiceTest {
         when(geofenceRepository.countByStatus(Geofence.FenceStatus.SUSPENDED)).thenReturn(1L);
 
         // Mock list-returning methods
-        when(geofenceRepository.findByFenceType(Geofence.FenceType.CIRCULAR)).thenReturn(Arrays.asList(testGeofence, testGeofence, testGeofence, testGeofence, testGeofence, testGeofence));
-        when(geofenceRepository.findByFenceType(Geofence.FenceType.POLYGONAL)).thenReturn(Arrays.asList(testGeofence, testGeofence));
-        when(geofenceRepository.findByBoundaryType(Geofence.BoundaryType.INCLUSION)).thenReturn(Arrays.asList(testGeofence, testGeofence, testGeofence, testGeofence, testGeofence, testGeofence, testGeofence));
-        when(geofenceRepository.findByBoundaryType(Geofence.BoundaryType.EXCLUSION)).thenReturn(Arrays.asList(testGeofence, testGeofence, testGeofence));
+        when(geofenceRepository.findByFenceType(Geofence.FenceType.CIRCULAR)).thenReturn(
+                Arrays.asList(testGeofence, testGeofence, testGeofence, testGeofence, testGeofence, testGeofence));
+        when(geofenceRepository.findByFenceType(Geofence.FenceType.POLYGONAL))
+                .thenReturn(Arrays.asList(testGeofence, testGeofence));
+        when(geofenceRepository.findByBoundaryType(Geofence.BoundaryType.INCLUSION)).thenReturn(Arrays.asList(
+                testGeofence, testGeofence, testGeofence, testGeofence, testGeofence, testGeofence, testGeofence));
+        when(geofenceRepository.findByBoundaryType(Geofence.BoundaryType.EXCLUSION))
+                .thenReturn(Arrays.asList(testGeofence, testGeofence, testGeofence));
 
         // Mock other methods
         when(geofenceRepository.findGeofencesWithViolations()).thenReturn(Arrays.asList(testGeofence));
-        when(geofenceRepository.findGeofencesWithRecentViolations(any(LocalDateTime.class))).thenReturn(Arrays.asList(testGeofence));
+        when(geofenceRepository.findGeofencesWithRecentViolations(any(LocalDateTime.class)))
+                .thenReturn(Arrays.asList(testGeofence));
         when(geofenceRepository.findGeofencesWithAltitudeRestrictions()).thenReturn(Arrays.asList(testGeofence));
         when(geofenceRepository.findTimeRestrictedGeofences()).thenReturn(Arrays.asList(testGeofence));
         when(geofenceRepository.findGeofencesWithNotifications()).thenReturn(Arrays.asList(testGeofence));
-        when(geofenceRepository.findGeofencesExpiringSoon(any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(Arrays.asList(testGeofence));
+        when(geofenceRepository.findGeofencesExpiringSoon(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(Arrays.asList(testGeofence));
 
         Map<String, Object> result = geofenceService.getGeofenceStatistics();
 

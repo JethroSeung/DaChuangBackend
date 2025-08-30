@@ -33,9 +33,9 @@ class WeatherServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         when(restTemplateBuilder.build()).thenReturn(restTemplate);
-        
+
         weatherService = new WeatherService(restTemplateBuilder);
-        
+
         // Set up test configuration
         ReflectionTestUtils.setField(weatherService, "weatherEnabled", false);
         ReflectionTestUtils.setField(weatherService, "apiKey", "");
@@ -81,7 +81,7 @@ class WeatherServiceTest {
         assertNotNull(result.get("flightSafe"));
         assertNotNull(result.get("conditions"));
         assertNotNull(result.get("recommendations"));
-        
+
         @SuppressWarnings("unchecked")
         Map<String, Object> conditions = (Map<String, Object>) result.get("conditions");
         assertTrue(conditions.containsKey("windSpeed"));
@@ -109,14 +109,13 @@ class WeatherServiceTest {
         // Given
         ReflectionTestUtils.setField(weatherService, "weatherEnabled", true);
         ReflectionTestUtils.setField(weatherService, "apiKey", "test-api-key");
-        
+
         Map<String, Object> mockResponse = Map.of(
                 "main", Map.of("temp", 22.0, "humidity", 65, "pressure", 1013.25),
                 "wind", Map.of("speed", 5.2, "deg", 180),
                 "weather", java.util.List.of(Map.of("description", "clear sky", "icon", "01d")),
-                "visibility", 10000
-        );
-        
+                "visibility", 10000);
+
         when(restTemplate.getForObject(any(String.class), eq(Map.class))).thenReturn(mockResponse);
 
         // When
@@ -137,7 +136,7 @@ class WeatherServiceTest {
         // Given
         ReflectionTestUtils.setField(weatherService, "weatherEnabled", true);
         ReflectionTestUtils.setField(weatherService, "apiKey", "test-api-key");
-        
+
         when(restTemplate.getForObject(any(String.class), eq(Map.class)))
                 .thenThrow(new RuntimeException("API Error"));
 
@@ -154,19 +153,19 @@ class WeatherServiceTest {
     void testFlightSafetyEvaluation() {
         // Test with safe conditions (mock data should be safe)
         Map<String, Object> result = weatherService.checkFlightConditions(40.7589, -73.9851);
-        
+
         assertTrue((Boolean) result.get("success"));
-        
+
         @SuppressWarnings("unchecked")
         Map<String, Object> conditions = (Map<String, Object>) result.get("conditions");
-        
+
         // Verify all safety checks are present
         assertTrue(conditions.containsKey("windSpeed"));
         assertTrue(conditions.containsKey("temperature"));
         assertTrue(conditions.containsKey("humidity"));
         assertTrue(conditions.containsKey("visibility"));
         assertTrue(conditions.containsKey("conditions"));
-        
+
         // Each condition should have value, safe flag, and threshold
         @SuppressWarnings("unchecked")
         Map<String, Object> windSpeed = (Map<String, Object>) conditions.get("windSpeed");
@@ -181,7 +180,7 @@ class WeatherServiceTest {
         // Given
         ReflectionTestUtils.setField(weatherService, "weatherEnabled", true);
         ReflectionTestUtils.setField(weatherService, "apiKey", "test-api-key");
-        
+
         when(restTemplate.getForObject(any(String.class), eq(Map.class))).thenReturn(null);
 
         // When
@@ -198,18 +197,15 @@ class WeatherServiceTest {
         // Given
         ReflectionTestUtils.setField(weatherService, "weatherEnabled", true);
         ReflectionTestUtils.setField(weatherService, "apiKey", "test-api-key");
-        
+
         Map<String, Object> mockResponse = Map.of(
                 "list", java.util.List.of(
                         Map.of(
                                 "dt_txt", "2024-01-01 12:00:00",
                                 "main", Map.of("temp", 20.0, "humidity", 60),
                                 "wind", Map.of("speed", 4.0),
-                                "weather", java.util.List.of(Map.of("description", "sunny"))
-                        )
-                )
-        );
-        
+                                "weather", java.util.List.of(Map.of("description", "sunny")))));
+
         when(restTemplate.getForObject(any(String.class), eq(Map.class))).thenReturn(mockResponse);
 
         // When
@@ -219,11 +215,11 @@ class WeatherServiceTest {
         assertTrue((Boolean) result.get("success"));
         assertEquals("openweathermap", result.get("source"));
         assertNotNull(result.get("forecast"));
-        
+
         @SuppressWarnings("unchecked")
         java.util.List<Map<String, Object>> forecast = (java.util.List<Map<String, Object>>) result.get("forecast");
         assertFalse(forecast.isEmpty());
-        
+
         Map<String, Object> firstItem = forecast.get(0);
         assertEquals("2024-01-01 12:00:00", firstItem.get("datetime"));
         assertEquals(20.0, firstItem.get("temperature"));
@@ -238,7 +234,7 @@ class WeatherServiceTest {
         // Given
         ReflectionTestUtils.setField(weatherService, "weatherEnabled", true);
         ReflectionTestUtils.setField(weatherService, "apiKey", "test-api-key");
-        
+
         when(restTemplate.getForObject(any(String.class), eq(Map.class)))
                 .thenThrow(new RuntimeException("Forecast API Error"));
 
@@ -259,23 +255,23 @@ class WeatherServiceTest {
 
         // Then
         assertTrue((Boolean) result.get("success"));
-        
+
         @SuppressWarnings("unchecked")
         Map<String, Object> conditions = (Map<String, Object>) result.get("conditions");
-        
+
         // Verify safety thresholds are applied correctly
         @SuppressWarnings("unchecked")
         Map<String, Object> windSpeed = (Map<String, Object>) conditions.get("windSpeed");
         assertEquals("< 15 m/s", windSpeed.get("threshold"));
-        
+
         @SuppressWarnings("unchecked")
         Map<String, Object> temperature = (Map<String, Object>) conditions.get("temperature");
         assertEquals("-10°C to 50°C", temperature.get("threshold"));
-        
+
         @SuppressWarnings("unchecked")
         Map<String, Object> humidity = (Map<String, Object>) conditions.get("humidity");
         assertEquals("< 90%", humidity.get("threshold"));
-        
+
         @SuppressWarnings("unchecked")
         Map<String, Object> visibility = (Map<String, Object>) conditions.get("visibility");
         assertEquals("> 1000m", visibility.get("threshold"));
